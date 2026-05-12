@@ -257,15 +257,45 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
         json.dump(summary, out, indent=2, ensure_ascii=False)
     print(f"summary saved → {summary_path}")
 
+def batch_convert_root_files(root_dir: Path, output_dir: Path):
+    """
+    批量将目录下所有 .root文件转换为pickle + summary.json
+    Args:
+        root_dir    : 存放ROOT文件的目录
+        output_dir  : 输出目录
+    """
+    root_files = sorted(root_dir.glob("*.root"))
+
+    if not root_files:
+        print(f'没有找到 .root 文件：{root_dir} ')
+        return
+
+    print(f"共找到 {len(root_files)} 个 ROOT 文件\n")
+
+    for idx, root_file in enumerate(root_files, 1):
+        print(f"[{idx}/{len(root_files)}] 正在处理: {root_file.name}")
+
+        try:
+            convert_root_to_pickle(root_file, output_dir)
+            print("完成\n")
+        except Exception as e:
+            print(f"处理失败: {root_file.name}")
+            print(f"错误信息: {e}\n")
+
+    print(f'全部转换完成')
 
 if __name__ == '__main__':
     # get_root_key()
     # look_TreeMc_TreeRec_SimulationParameterTree()
     # check_event()
     # check_node_feature()
-    convert_root_to_pickle(
-        root_path = PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root',
-        output_dir = PROJECT_ROOT / 'dataset' / 'processed'
+    # convert_root_to_pickle(
+    #     root_path = PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root',
+    #     output_dir = PROJECT_ROOT / 'dataset' / 'processed'
+    # )
+    batch_convert_root_files(
+        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' ),
+        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed'),
     )
 
 """
