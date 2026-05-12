@@ -38,7 +38,7 @@ class DGCNNClassifier(torch.nn.Module):
         def edge_mlp(in_dim, out_dim):
             # EdgeConv输入是 [x_i, x_j - x_i]，所以实际输入维度 × 2
             return nn.Sequential(
-                nn.Linear(in_dim * 2, out_dim * 2),
+                nn.Linear(in_dim * 2, out_dim),
                 nn.BatchNorm1d(out_dim),
                 nn.ReLU(),
                 nn.Linear(out_dim, out_dim),
@@ -115,6 +115,14 @@ if __name__ == "__main__":
     print(f"输出 logits:      {logits.shape}")
     print(f"预测类别:         {logits.argmax(dim=1)}")
     print(f"参数量:           {sum(p.numel() for p in model.parameters()):,}")
+
+
+"""
+输入 x.shape:     torch.Size([285, 5])
+输出 logits:      torch.Size([8, 2])
+预测类别:         tensor([0, 0, 0, 0, 0, 0, 0, 0])
+参数量:           53,346
+"""
 
 
 

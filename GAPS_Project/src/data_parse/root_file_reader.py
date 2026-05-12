@@ -74,23 +74,23 @@ def look_TreeMc_TreeRec_SimulationParameterTree():
 
     # 查看 TreeMc
     print('=== TreeMc branches ===')
-    tree_mc = f['TreeMc;1']
+    tree_mc = f['TreeMc']
     print(tree_mc.keys())
 
     # 查看 TreeRec
     print('\n=== TreeRec branches ===')
-    tree_rec = f['TreeRec;1']
+    tree_rec = f['TreeRec']
     print(tree_rec.keys())
 
     # 查看 SimulationParameterTree
     print('\n=== SimulationParameterTree branches ===')
-    tree_sim = f['SimulationParameterTree;1']
+    tree_sim = f['SimulationParameterTree']
     print(tree_sim.keys())
 
 
 def check_event():
-    tree_mc = f['TreeMc;1']
-    tree_rec = f['TreeRec;1']
+    tree_mc = f['TreeMc']
+    tree_rec = f['TreeRec']
 
     # 1. 总event数
     print(f'\n总event数：{tree_mc.num_entries}')
@@ -150,7 +150,7 @@ def check_node_feature():
     边的构建方式：用k近邻（k-NN），基于空间距离连接最近的k个hit。
     :return:
     """
-    tree_rec = f['TreeRec;1']
+    tree_rec = f['TreeRec']
     # 读取第一个event的各字段
     volume_id = tree_rec['Rec/hitseries_/hitseries_.volume_id_'].array()
     energy = tree_rec['Rec/hitseries_/hitseries_.energydep_'].array()
@@ -180,8 +180,8 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
     events = []
 
     with uproot.open(root_path) as file:
-        tree_rec = file["TreeRec;1"]
-        tree_mc = file["TreeMc;1"]
+        tree_rec = file["TreeRec"]
+        tree_mc = file["TreeMc"]
 
         all_energies = tree_rec["Rec/hitseries_/hitseries_.energydep_"].array()
         all_pos = tree_rec["Rec/hitseries_/hitseries_.hit_position_"].array()
