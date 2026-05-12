@@ -10,7 +10,7 @@ import GAPS_Project
 # 项目根目录（GAPS_Project/），所有路径基于此
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
-f = uproot.open(PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
+
 """
 
 """
@@ -91,6 +91,9 @@ def look_TreeMc_TreeRec_SimulationParameterTree():
 def check_event():
     tree_mc = f['TreeMc']
     tree_rec = f['TreeRec']
+
+    f = uproot.open(
+        PROJECT_ROOT / 'dataset' / 'tar_root' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
 
     # 1. 总event数
     print(f'\n总event数：{tree_mc.num_entries}')
