@@ -1,0 +1,7 @@
+torch~=2.7.0
+torch-geometric~=2.7.0
+uproot~=5.7.4
+numpy~=1.26.4
+pycore~=17.4.17
+matplotlib~=3.8.4
+scikit-learn~=1.4.2
