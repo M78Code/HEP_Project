@@ -293,9 +293,15 @@ if __name__ == '__main__':
     #     root_path = PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root',
     #     output_dir = PROJECT_ROOT / 'dataset' / 'processed'
     # )
+    # 反重氘核
     batch_convert_root_files(
-        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' ),
-        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed'),
+        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
+        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
+    )
+    # 反质子
+    batch_convert_root_files(
+        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
+        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
     )
 
 """

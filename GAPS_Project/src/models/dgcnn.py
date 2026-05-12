@@ -88,6 +88,33 @@ class DGCNNClassifier(torch.nn.Module):
         # 节点级 → 图级（mean + max 拼接，比单用mean信息更丰富）
         x_mean = global_mean_pool(x_fused, batch) # [batch, hidden]
         x_max = global_max_pool(x_fused, batch)  # [batch, hidden]
+        x_graph = torch.cat([x_mean, x_max], dim=1) # [batch, hidden*2]
+
+        return self.classifier(x_graph)
+
+
+# ── 快速测试 ────────────────────────────────────────────
+if __name__ == "__main__":
+    from pathlib import Path
+    import GAPS_Project
+    from torch_geometric.loader import DataLoader
+    from GAPS_Project.src.data_parse.gaps_dataset import GapsDataset
+
+    PROJECT_ROOT = Path(GAPS_Project.__file__).parent
+    pkl_path = PROJECT_ROOT / "dataset" / "test_sample" / \
+               "anti_deuteron_gaps_FTFP_BERT_1778138909.pkl"
+
+    dataset = GapsDataset([pkl_path])
+    loader = DataLoader(dataset, batch_size=8, shuffle=False)
+    batch = next(iter(loader))
+
+    model = DGCNNClassifier(in_channels=5, hidden_dim=64, k=8)
+    logits = model(batch.x, batch.edge_index, batch.batch)
+
+    print(f"输入 x.shape:     {batch.x.shape}")
+    print(f"输出 logits:      {logits.shape}")
+    print(f"预测类别:         {logits.argmax(dim=1)}")
+    print(f"参数量:           {sum(p.numel() for p in model.parameters()):,}")
 
 
 
