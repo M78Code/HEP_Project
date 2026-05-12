@@ -1,0 +1,35 @@
+通过Mac直接打开root文件，进行查看的方法
+1，安装root软件，brew install root
+2，直接定位到root文件路径下，
+比如：➜ tar_root (main) ✗
+3，打开root文件
+➜ tar_root (main) ✗ root anti_deuteron_gaps_FTFP_BERT_1778138909.root
+
+➜ tar_root (main) ✗ root anti_deuteron_gaps_FTFP_BERT_1778138909.root
+   ------------------------------------------------------------------
+  | Welcome to ROOT 6.38.04                        https://root.cern |
+  | (c) 1995-2025, The ROOT Team; conception: R. Brun, F. Rademakers |
+  | Built for macosxarm64 on Mar 11 2026, 21:39:24                   |
+  | From tags/6-38-04@6-38-04                                        |
+  | With Apple clang version 17.0.0 (clang-1700.6.4.2) std201703     |
+  | Try '.help'/'.?', '.demo', '.license', '.credits', '.quit'/'.q'  |
+   ------------------------------------------------------------------
+
+root [0]
+Attaching file anti_deuteron_gaps_FTFP_BERT_1778138909.root as _file0...
+Warning in <TClass::Init>: no dictionary for class CEventMc is available
+Warning in <TClass::Init>: no dictionary for class CEventBase is available
+Warning in <TClass::Init>: no dictionary for class CTrackMc is available
+Warning in <TClass::Init>: no dictionary for class CTrackBase is available
+Warning in <TClass::Init>: no dictionary for class CEventRec is available
+Warning in <TClass::Init>: no dictionary for class pair<string,vector<CTrackRec*> > is available
+Warning in <TClass::Init>: no dictionary for class GRecoHit is available
+Warning in <TClass::Init>: no dictionary for class CTrackRec is available
+Warning in <TClass::Init>: no dictionary for class GSimulationParameter is available
+(TFile *) 0x12be0adf0
+root [1] TBrowser b;
+
+4，通过图形界面查看
+root [1] TBrowser b;
+
+.q 退出root终端
