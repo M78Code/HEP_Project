@@ -27,7 +27,7 @@ else:
 print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ─────────────────────────────────────────────
-MODEL_NAME = 'GIN'  # 'GIN' | 'GravNet' | 'DGCNN'
+MODEL_NAME = 'GravNet'  # 'GIN' | 'GravNet' | 'DGCNN'
 EPOCHS = 30
 BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
