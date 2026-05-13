@@ -44,5 +44,15 @@ def clustering_demo():
     print(kmeans.labels_)
 
 
+def cuda_knn_ok():
+    import torch, torch_cluster
+    from torch_cluster import knn
+    x = torch.randn(10, 3).cuda()
+    b = torch.zeros(10, dtype=torch.long).cuda()
+    idx = knn(x, x, k=3, batch_x=b, batch_y=b)
+    print('CUDA knn OK:', idx.shape)
+
+
 if __name__ == '__main__':
-    clustering_demo()
+    # clustering_demo()
+    cuda_knn_ok()
