@@ -38,7 +38,7 @@ def save_split(events: list, output_path: Path, split_name: str):
     """保存split pkl + summary"""
     label_counts = {}
     for e in events:
-        key = str(e['key'])
+        key = str(e['label'])
         label_counts[key] = label_counts.get(key, 0) + 1
 
     with open(output_path, 'wb') as f:
