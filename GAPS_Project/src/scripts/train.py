@@ -28,10 +28,10 @@ print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ─────────────────────────────────────────────
 MODEL_NAME = 'GravNet'  # 'GIN' | 'GravNet' | 'DGCNN'
-EPOCHS = 30
+EPOCHS = 50
 BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
-STEP_SIZE = 10  # StepLR: 每10个epoch衰减一次
+STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 

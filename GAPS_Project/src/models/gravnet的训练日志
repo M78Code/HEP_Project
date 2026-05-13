@@ -1,0 +1,95 @@
+(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python train.py
+使用设备：cuda:0
+加载数据集...
+train batches: 23415
+val   batches: 5018
+test  batches: 5018
+
+模型: GravNet
+参数量: 71,114
+/home/a/miniconda3/lib/python3.13/site-packages/torch_geometric/utils/_scatter.py:91: UserWarning: The usage of `scatter(reduce='max')` can be accelerated via the 'torch-scatter' package, but it was not found
+  warnings.warn(
+Epoch   1/30 | train_loss: 0.1859  train_acc: 0.7390 | val_loss: 0.1768  val_acc: 0.7529 | lr: 0.000300
+  → best model saved (val_loss=0.1768)
+Epoch   2/30 | train_loss: 0.1766  train_acc: 0.7569 | val_loss: 0.1727  val_acc: 0.7620 | lr: 0.000300
+  → best model saved (val_loss=0.1727)
+Epoch   3/30 | train_loss: 0.1731  train_acc: 0.7630 | val_loss: 0.1685  val_acc: 0.7694 | lr: 0.000300
+  → best model saved (val_loss=0.1685)
+Epoch   4/30 | train_loss: 0.1706  train_acc: 0.7677 | val_loss: 0.1694  val_acc: 0.7693 | lr: 0.000300
+Epoch   5/30 | train_loss: 0.1685  train_acc: 0.7715 | val_loss: 0.1657  val_acc: 0.7772 | lr: 0.000300
+  → best model saved (val_loss=0.1657)
+Epoch   6/30 | train_loss: 0.1665  train_acc: 0.7749 | val_loss: 0.1645  val_acc: 0.7751 | lr: 0.000300
+  → best model saved (val_loss=0.1645)
+Epoch   7/30 | train_loss: 0.1648  train_acc: 0.7780 | val_loss: 0.1645  val_acc: 0.7794 | lr: 0.000300
+  → best model saved (val_loss=0.1645)
+Epoch   8/30 | train_loss: 0.1631  train_acc: 0.7809 | val_loss: 0.1607  val_acc: 0.7841 | lr: 0.000300
+  → best model saved (val_loss=0.1607)
+Epoch   9/30 | train_loss: 0.1616  train_acc: 0.7836 | val_loss: 0.1591  val_acc: 0.7861 | lr: 0.000300
+  → best model saved (val_loss=0.1591)
+Epoch  10/30 | train_loss: 0.1603  train_acc: 0.7860 | val_loss: 0.1590  val_acc: 0.7881 | lr: 0.000150
+  → best model saved (val_loss=0.1590)
+Epoch  11/30 | train_loss: 0.1562  train_acc: 0.7928 | val_loss: 0.1533  val_acc: 0.7966 | lr: 0.000150
+  → best model saved (val_loss=0.1533)
+Epoch  12/30 | train_loss: 0.1552  train_acc: 0.7949 | val_loss: 0.1535  val_acc: 0.7981 | lr: 0.000150
+Epoch  13/30 | train_loss: 0.1545  train_acc: 0.7960 | val_loss: 0.1524  val_acc: 0.7980 | lr: 0.000150
+  → best model saved (val_loss=0.1524)
+Epoch  14/30 | train_loss: 0.1539  train_acc: 0.7969 | val_loss: 0.1519  val_acc: 0.7979 | lr: 0.000150
+  → best model saved (val_loss=0.1519)
+Epoch  15/30 | train_loss: 0.1533  train_acc: 0.7981 | val_loss: 0.1518  val_acc: 0.7978 | lr: 0.000150
+  → best model saved (val_loss=0.1518)
+Epoch  16/30 | train_loss: 0.1527  train_acc: 0.7990 | val_loss: 0.1522  val_acc: 0.8000 | lr: 0.000150
+Epoch  17/30 | train_loss: 0.1523  train_acc: 0.7998 | val_loss: 0.1514  val_acc: 0.8013 | lr: 0.000150
+  → best model saved (val_loss=0.1514)
+Epoch  18/30 | train_loss: 0.1519  train_acc: 0.8003 | val_loss: 0.1500  val_acc: 0.8019 | lr: 0.000150
+  → best model saved (val_loss=0.1500)
+Epoch  19/30 | train_loss: 0.1515  train_acc: 0.8010 | val_loss: 0.1500  val_acc: 0.8021 | lr: 0.000150
+Epoch  20/30 | train_loss: 0.1511  train_acc: 0.8019 | val_loss: 0.1487  val_acc: 0.8034 | lr: 0.000075
+  → best model saved (val_loss=0.1487)
+Epoch  21/30 | train_loss: 0.1488  train_acc: 0.8056 | val_loss: 0.1484  val_acc: 0.8049 | lr: 0.000075
+  → best model saved (val_loss=0.1484)
+Epoch  22/30 | train_loss: 0.1484  train_acc: 0.8062 | val_loss: 0.1471  val_acc: 0.8074 | lr: 0.000075
+  → best model saved (val_loss=0.1471)
+Epoch  23/30 | train_loss: 0.1481  train_acc: 0.8066 | val_loss: 0.1465  val_acc: 0.8079 | lr: 0.000075
+  → best model saved (val_loss=0.1465)
+Epoch  24/30 | train_loss: 0.1479  train_acc: 0.8071 | val_loss: 0.1466  val_acc: 0.8078 | lr: 0.000075
+Epoch  25/30 | train_loss: 0.1476  train_acc: 0.8075 | val_loss: 0.1467  val_acc: 0.8078 | lr: 0.000075
+Epoch  26/30 | train_loss: 0.1475  train_acc: 0.8078 | val_loss: 0.1473  val_acc: 0.8063 | lr: 0.000075
+Epoch  27/30 | train_loss: 0.1472  train_acc: 0.8081 | val_loss: 0.1467  val_acc: 0.8080 | lr: 0.000075
+Epoch  28/30 | train_loss: 0.1471  train_acc: 0.8085 | val_loss: 0.1471  val_acc: 0.8075 | lr: 0.000075
+Epoch  29/30 | train_loss: 0.1469  train_acc: 0.8088 | val_loss: 0.1458  val_acc: 0.8087 | lr: 0.000075
+  → best model saved (val_loss=0.1458)
+Epoch  30/30 | train_loss: 0.1467  train_acc: 0.8091 | val_loss: 0.1475  val_acc: 0.8077 | lr: 0.000037
+
+训练完成，最优模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260513-151433_GravNet/20260513-151433_GravNet_best.pth
+
+
+GravNet 训练完成，结果明显优于 GIN。
+
+  ---
+  GIN vs GravNet 对比
+
+  ┌───────────────┬────────┬─────────┬──────────┐
+  │     指标      │  GIN   │ GravNet │   提升   │
+  ├───────────────┼────────┼─────────┼──────────┤
+  │ best val_loss │ 0.2044 │ 0.1458  │ -28.7%   │
+  ├───────────────┼────────┼─────────┼──────────┤
+  │ best val_acc  │ 69.27% │ 80.87%  │ +11.6%   │
+  ├───────────────┼────────┼─────────┼──────────┤
+  │ 参数量        │ 23,714 │ 71,114  │ 3×       │
+  ├───────────────┼────────┼─────────┼──────────┤
+  │ best epoch    │ 27/28  │ 29      │ 仍在上升 │
+  └───────────────┴────────┴─────────┴──────────┘
+
+  ---
+  GravNet 训练曲线分析
+
+  - 收敛速度快：Epoch 1 就达到 75.3%，GIN Epoch 1 才 67.6%
+  - 仍有上升空间：Epoch 29 出现新 best（0.1458），Epoch 30 略有反弹——说明 30 epoch 对 GravNet 可能偏少，还没完全收敛
+  - train/val 无过拟合：两者差距很小，模型泛化良好
+  - 学习率调度有效：每次 lr 减半后都有明显跳升（Epoch 11、21 附近）
+
+  ---
+  值得注意：Epoch 29 才出现最新 best，而 Epoch 30 val_loss 反弹到 0.1475，说明如果再跑几个 epoch（比如
+  40）还有可能继续提升。
+
+  接下来跑 DGCNN，跑完后三者对比，再决定是否要对 GravNet 加 epoch。
