@@ -14,7 +14,7 @@ def load_events_from_dir(pkl_dir: Path) -> list:
     for pkl_file in sorted(pkl_dir.glob('*.pkl')):
         with open(pkl_file, 'rb') as f:
             payload = pickle.load(f)
-        events.extend(payload['events'])
+        events.extend(payload['events']) # 把文件中的event列表合并成一个总列表
         print(f"  加载: {pkl_file.name} → {len(payload['events'])} events")
     return events
 
