@@ -52,7 +52,16 @@ def cuda_knn_ok():
     idx = knn(x, x, k=3, batch_x=b, batch_y=b)
     print('CUDA knn OK:', idx.shape)
 
+def check_beta():
+    import pickle
+    with open('../dataset/split/train.pkl', 'rb') as f:
+        data = pickle.load(f)
+    print(data)
+    print('\n')
+    print(data[0].keys())
+
 
 if __name__ == '__main__':
     # clustering_demo()
-    cuda_knn_ok()
+    # cuda_knn_ok()
+    check_beta()
