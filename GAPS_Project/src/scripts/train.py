@@ -27,8 +27,8 @@ else:
 print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ─────────────────────────────────────────────
-MODEL_NAME = 'GravNet'  # 'GIN' | 'GravNet' | 'DGCNN'
-EPOCHS = 60
+MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'
+EPOCHS = 50
 BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
 STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
