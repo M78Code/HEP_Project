@@ -108,7 +108,7 @@ if __name__ == "__main__":
     loader = DataLoader(dataset, batch_size=8, shuffle=False)
     batch = next(iter(loader))
 
-    model = DGCNNClassifier(in_channels=5, hidden_dim=64, k=8)
+    model = DGCNNClassifier(in_channels=6, hidden_dim=64, k=8)
     logits = model(batch.x, batch.edge_index, batch.batch)
 
     print(f"输入 x.shape:     {batch.x.shape}")
@@ -118,10 +118,10 @@ if __name__ == "__main__":
 
 
 """
-输入 x.shape:     torch.Size([285, 5])
+输入 x.shape:     torch.Size([285, 6])
 输出 logits:      torch.Size([8, 2])
-预测类别:         tensor([0, 0, 0, 0, 0, 0, 0, 0])
-参数量:           53,346
+预测类别:         tensor([1, 0, 1, 1, 1, 1, 1, 1])
+参数量:           53,474
 """
 
 

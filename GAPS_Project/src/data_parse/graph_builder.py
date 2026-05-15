@@ -58,17 +58,20 @@ class GraphBuilder:
         # ── 2. 处理NaN时间（填0）────────────────────
         times = np.where(np.isnan(times), 0.0, times)
 
-        # —— 3. 构建节点特征矩阵 [N, 5] ———————————————
+        # —— 3. 构建节点特征矩阵 [N, 6] ———————————————
         """
-        特征：[fX, fY, fZ, energy, time]
-        x.shape = [N, 5]，表示N个节点，每个节点5个特征，分别是[fX, fY, fZ, energy, time]（空间位置 + 能量 + 时间），这是GNN最核心输入
+        特征：[fX, fY, fZ, energy, time, beta] beta是事件级标题，广播到每个节点
+        x.shape = [N, 6]，表示N个节点，每个节点6个特征，分别是[fX, fY, fZ, energy, time, beta]（空间位置 + 能量 + 时间），这是GNN最核心输入
         """
+        beta = float(event.get('beta', 0.0))
+        beta_col = np.full(N, beta, dtype=np.float32)
         x = np.stack([
             positions[:, 0],    # fX
             positions[:, 1],    # fY
             positions[:, 2],    # fZ
             energies,           # energy
-            times               # time
+            times,              # time
+            beta_col            # beta (事件级速度，广播至每个节点)
         ], axis=1).astype(np.float32)
 
         if self.normalize:

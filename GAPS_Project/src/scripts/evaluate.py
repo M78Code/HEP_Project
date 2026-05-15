@@ -81,11 +81,11 @@ EVAL_MODELS = [
 
 def get_model(name: str):
     if name == 'GIN':
-        return GINClassifier(in_channels=5, hidden_dim=64)
+        return GINClassifier(in_channels=6, hidden_dim=64)
     elif name == 'GravNet':
-        return GravNetClassifier(in_channels=5, hidden_dim=64)
+        return GravNetClassifier(in_channels=6, hidden_dim=64)
     elif name == 'DGCNN':
-        return DGCNNClassifier(in_channels=5, hidden_dim=64, k=8)
+        return DGCNNClassifier(in_channels=6, hidden_dim=64, k=8)
     else:
         raise ValueError(f"Unknown model: {name}")
 

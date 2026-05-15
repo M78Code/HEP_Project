@@ -73,7 +73,7 @@ class GapsDataset(Dataset):
         每个节点的特征维度，5
         [fX, fY, fZ, energy, time]
         """
-        return 5
+        return self.get(0).x.shape[1]
         # return self._data_list[0].x.shape[1] if self._data_list else 0
 
     @property
@@ -86,7 +86,7 @@ class GapsDataset(Dataset):
 
 # ── 快速测试 ────────────────────────────────────────────
 if __name__ == "__main__":
-    pkl_path = PROJECT_ROOT / 'dataset' / 'processed' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
+    pkl_path = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
 
     dataset = GapsDataset([pkl_path], lazy=False)
     print(f'总event数：{len(dataset)}')
@@ -102,12 +102,12 @@ if __name__ == "__main__":
 
 """
 总event数：57
-节点特征维度：5
+节点特征维度：6
 类别数：2
 
 第0个图:
   节点数:         30
-  x.shape:        torch.Size([30, 5])
+  x.shape:        torch.Size([30, 6])
   edge_index:     torch.Size([2, 240])
   标签 y:         1
 """

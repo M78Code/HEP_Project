@@ -77,13 +77,13 @@ if __name__ == '__main__':
     from GAPS_Project.src.data_parse.gaps_dataset import GapsDataset
 
     PROJECT_ROOT = Path(GAPS_Project.__file__).parent
-    pkl_path = PROJECT_ROOT / 'dataset' / 'processed' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
+    pkl_path = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
 
     dataset = GapsDataset([pkl_path])
     loader = DataLoader(dataset, batch_size=8, shuffle=False)
     batch = next(iter(loader))
 
-    model = GINClassifier(in_channels=5, hidden_dim=64)
+    model = GINClassifier(in_channels=6, hidden_dim=64)
     logits = model(batch.x, batch.edge_index, batch.batch)
 
     print(f"输入 x.shape:     {batch.x.shape}")
@@ -93,8 +93,8 @@ if __name__ == '__main__':
 
 
 """
-输入 x.shape:     torch.Size([285, 5])    8个event合并，共285个节点，每节点5个特征
-输出 logits:      torch.Size([8, 2])      8个event，每个输出2个类别分数
-预测类别:         tensor([0, 0, 0, 0, 0, 0, 0, 0])  模型未训练，随机初始化偏向某一类，正常现象
-参数量:           23,714   轻量级模型，适合小数据集
+输入 x.shape:     torch.Size([285, 6])    8个event合并，共285个节点，每节点6个特征
+输出 logits:      torch.Size([8, 2])  8个event，每个输出2个类别分数
+预测类别:         tensor([1, 1, 1, 1, 1, 1, 1, 1])  模型未训练，随机初始化偏向某一类，正常现象
+参数量:           23,778   轻量级模型，适合小数据集
 """

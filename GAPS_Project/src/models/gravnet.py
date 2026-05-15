@@ -113,13 +113,13 @@ if __name__ == '__main__':
     from GAPS_Project.src.data_parse.gaps_dataset import GapsDataset
 
     PROJECT_PATH = Path(GAPS_Project.__file__).parent
-    pkl_path = PROJECT_PATH / 'dataset' / 'processed' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
+    pkl_path = PROJECT_PATH / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl'
 
     dataset = GapsDataset([pkl_path])
     loader = DataLoader(dataset, batch_size=8, shuffle=False)
     batch = next(iter(loader))
 
-    model = GravNetClassifier(in_channels=5, hidden_dim=64)
+    model = GravNetClassifier(in_channels=6, hidden_dim=64)
     logits = model(batch.x, batch.edge_index, batch.batch)
 
     print(f"输入 x.shape:     {batch.x.shape}")
@@ -129,10 +129,10 @@ if __name__ == '__main__':
 
 
 """
-输入 x.shape:     torch.Size([285, 5])
+输入 x.shape:     torch.Size([285, 6])
 输出 logits:      torch.Size([8, 2])
 预测类别:         tensor([0, 0, 0, 0, 0, 0, 0, 1])
-参数量:           71,114
+参数量:           71,242
 
 
 ⏺ 正确，与 GIN 对比：

@@ -75,16 +75,19 @@ def check_beta():
     # print(f"事件总数: {len(events)}")
     # print(f"第一个事件类型: {type(events[0])}")
     # print(f"第一个事件keys: {events[0].keys()}")
+    # 查看label的实际值
+    # labels = [e['label'] for e in events[:5]]
+    # print(f"前5个label值: {labels}")
+    # print(f"label类型: {type(labels[0])}")
 
-    betas = [e['beta'] for e in events[:10000]]
-    betas = np.array(betas)
+    betas = np.array([e['beta'] for e in events[:10000]])
     print(f"beta 范围: {betas.min():.4f} ~ {betas.max():.4f}")
     print(f"beta 均值: {betas.mean():.4f}  std: {betas.std():.4f}")
-    # 按label分组
-    antiP_betas = [e['beta'] for e in events[:10000] if e['label'] == 0]
-    antiD_betas = [e['beta'] for e in events[:10000] if e['label'] == 1]
-    print(f"antiP beta: {np.mean(antiP_betas):.4f} ± {np.std(antiP_betas):.4f}")
-    print(f"antiD beta: {np.mean(antiD_betas):.4f} ± {np.std(antiD_betas):.4f}")
+
+    antiP_betas = np.array([e['beta'] for e in events[:10000] if e['label'] == -2212])
+    antiD_betas = np.array([e['beta'] for e in events[:10000] if e['label'] == -1000010020])
+    print(f"antiP beta: {antiP_betas.mean():.4f} ± {antiP_betas.std():.4f}  (n={len(antiP_betas)})")
+    print(f"antiD beta: {antiD_betas.mean():.4f} ± {antiD_betas.std():.4f}  (n={len(antiD_betas)})")
 
 
 if __name__ == '__main__':
