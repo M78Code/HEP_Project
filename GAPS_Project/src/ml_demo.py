@@ -56,6 +56,7 @@ def cuda_knn_ok():
 
 def check_beta():
     import pickle
+    import numpy as np
     train_pkl_path = PROJECT_ROOT / 'dataset' / 'split' / 'train.pkl'
     with open(train_pkl_path, 'rb') as f:
         data = pickle.load(f)
@@ -71,9 +72,19 @@ def check_beta():
     #     print(f"第一个value类型: {type(data[first_key])}")
 
     events = data['events']
-    print(f"事件总数: {len(events)}")
-    print(f"第一个事件类型: {type(events[0])}")
-    print(f"第一个事件keys: {events[0].keys()}")
+    # print(f"事件总数: {len(events)}")
+    # print(f"第一个事件类型: {type(events[0])}")
+    # print(f"第一个事件keys: {events[0].keys()}")
+
+    betas = [e['beta'] for e in events[:10000]]
+    betas = np.array(betas)
+    print(f"beta 范围: {betas.min():.4f} ~ {betas.max():.4f}")
+    print(f"beta 均值: {betas.mean():.4f}  std: {betas.std():.4f}")
+    # 按label分组
+    antiP_betas = [e['beta'] for e in events[:10000] if e['label'] == 0]
+    antiD_betas = [e['beta'] for e in events[:10000] if e['label'] == 1]
+    print(f"antiP beta: {np.mean(antiP_betas):.4f} ± {np.std(antiP_betas):.4f}")
+    print(f"antiD beta: {np.mean(antiD_betas):.4f} ± {np.std(antiD_betas):.4f}")
 
 
 if __name__ == '__main__':
