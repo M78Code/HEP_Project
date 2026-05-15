@@ -71,21 +71,23 @@ print(f'使用设备：{DEVICE}')
 BATCH_SIZE = 256
 LAZY_LOAD = False
 
-# 要评估的模型列表：(模型名, 权重路径)
+# 要评估的模型列表：(模型名, 权重路径, in_channels)
 EVAL_MODELS = [
-    ('GIN', PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth'),
-    ('GravNet', PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth'),
-    ('DGCNN', PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth'),
+    ('GIN',      PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth',          5),
+    ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5),
+    ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5),
+    ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
 ]
 
 
-def get_model(name: str):
-    if name == 'GIN':
-        return GINClassifier(in_channels=6, hidden_dim=64)
-    elif name == 'GravNet':
-        return GravNetClassifier(in_channels=6, hidden_dim=64)
-    elif name == 'DGCNN':
-        return DGCNNClassifier(in_channels=6, hidden_dim=64, k=8)
+def get_model(name: str, in_channels: int = 6):
+    base_name = name.replace('_v2', '')
+    if base_name == 'GIN':
+        return GINClassifier(in_channels=in_channels, hidden_dim=64)
+    elif base_name == 'GravNet':
+        return GravNetClassifier(in_channels=in_channels, hidden_dim=64)
+    elif base_name == 'DGCNN':
+        return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8)
     else:
         raise ValueError(f"Unknown model: {name}")
 
@@ -215,9 +217,9 @@ def evaluate():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path in EVAL_MODELS:
+    for name, weight_path, in_ch in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name).to(DEVICE)
+        model = get_model(name, in_channels=in_ch).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
@@ -239,7 +241,7 @@ def analyze_only():
     """跳过推理，直接从已保存的npy文件读取结果"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     results = []
-    for name, _ in EVAL_MODELS:
+    for name, _, _in_ch in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -253,7 +255,7 @@ def analyze_threshold():
 
     # 加载已保存的推理结果
     results = []
-    for name, _ in EVAL_MODELS:
+    for name, _, _in_ch in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
