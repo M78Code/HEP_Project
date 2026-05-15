@@ -169,6 +169,32 @@ def plot_rejection_curve(results, save_path):
     print(f"Rejection曲线已保存: {save_path}")
 
 
+def print_rejection_at_efficiency(results, signal_efficiencies=(0.50, 0.80, 0.90, 0.95, 0.98, 0.99)):
+    """输出指定信号效率下各模型的背景抑制率"""
+    print(f"\n{'='*60}")
+    print('各信号效率下的背景抑制率 （Background Rejection = 1/FPR）')
+    print(f"{'Signal Eff':>12}", end="")
+    for name, _, _ in results:
+        print(f' {name:>12}', end="")
+    print()
+    print('-' * 60)
+
+    for target_eff in signal_efficiencies:
+        print(f' {target_eff:>12.2f}', end="")
+        for name, labels, probs in results:
+            fpr, tpr, _ = roc_curve(labels, probs)
+            # 找最接近 target_eff 的 tpr对应的fpr
+            idx = np.argmin(np.abs(tpr - target_eff))
+            fpr_at_etf = fpr[idx]
+            if fpr_at_etf == 0:
+                rejection_str = '>1e10'
+            else:
+                rejection = 1.0 / fpr_at_etf
+                rejection_str = f'{rejection:.2e}'
+            print(f"  {rejection_str:>12}", end="")
+        print()
+
+
 def evaluate():
     # 数据加载（只用test集）
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
@@ -194,6 +220,8 @@ def evaluate():
     plot_roc_curves(results, out_dir / "roc_curves.png")
     plot_rejection_curve(results, out_dir / "rejection_curve.png")
     print(f"\n所有结果保存至: {out_dir}")
+
+    plot_rejection_curve(results)
 
 
 if __name__ == '__main__':
