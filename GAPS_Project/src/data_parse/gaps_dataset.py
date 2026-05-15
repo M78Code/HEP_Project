@@ -22,9 +22,9 @@ class GapsDataset(Dataset):
         lazy        : bool              True=按需转换（省内存），False=全部预加载（快，服务器用）
     """
 
-    def __init__(self, pkl_files: list, k: int = 8, normalize: bool = True, lazy: bool = True):
+    def __init__(self, pkl_files: list, k: int = 8, normalize: bool = True, lazy: bool = True, use_beta: bool = True):
         super().__init__()
-        self.builder = GraphBuilder(k=k, normalize=normalize)
+        self.builder = GraphBuilder(k=k, normalize=normalize, use_beta=use_beta)
         self.lazy = lazy
         self.k = k
         self.normalize = normalize
