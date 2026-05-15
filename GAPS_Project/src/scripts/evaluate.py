@@ -94,14 +94,22 @@ def get_model(name: str):
 def run_inference(model, loader, device):
     """返回（all_labels, all_probs）numpy arrays"""
     model.eval()
-    all_labels, all_probs = [], []
+    all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
         logits = model(batch.x, batch.edge_index, batch.batch) # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())
         all_probs.append(probs.cpu().numpy())
-    return np.concatenate(all_labels), np.concatenate(all_probs)
+        # 取每个图的第一个节点的第5列（beta列，index=5）
+        beta_per_graph = []
+        ptr = batch.ptr.cpu().numpy()
+        for i in range(len(ptr) - 1):
+            beta_per_graph.append(batch.x[ptr[i], 5].item())
+        all_betas.append(np.array(beta_per_graph))
+    return (np.concatenate(all_labels),
+            np.concatenate(all_probs),
+            np.concatenate(all_betas))
 
 
 def print_metrics(name, labels, probs):
@@ -212,13 +220,14 @@ def evaluate():
         model = get_model(name).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
-        labels, probs = run_inference(model, test_loader, DEVICE)
+        labels, probs, betas = run_inference(model, test_loader, DEVICE)
         print_metrics(name, labels, probs)
         results.append((name, labels, probs))
 
         # 保存推理结果，供后续单独分析
         np.save(out_dir / f"{name}_labels.npy", labels)
         np.save(out_dir / f"{name}_probs.npy", probs)
+        np.save(out_dir / f"{name}_betas.npy", betas)
 
     # 绘图
     plot_roc_curves(results, out_dir / "roc_curves.png")
@@ -274,7 +283,7 @@ def analyze_threshold():
             f1 = 2 * precision * recall / (precision + recall + 1e-10)
             rejection = tn / (tn + fp + 1e-10) if (tn + fp) > 0 else 0
 
-            if f1 > best_t_f1:
+            if f1 > best_f1:
                 best_f1 = f1
                 best_t_f1 = t
                 best_recall_f1 = recall
