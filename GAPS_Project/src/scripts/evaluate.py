@@ -37,7 +37,7 @@ LAZY_LOAD = False
 
 # 要评估的模型列表：(模型名, 权重路径)
 EVAL_MODELS = [
-    ('GIN', PROJECT_ROOT / 'results/results/20260513-140442_GIN/20260513-140442_GIN_best.pth'),
+    ('GIN', PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth'),
     ('GravNet', PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth'),
     ('DGCNN', PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth'),
 ]
@@ -58,7 +58,7 @@ def get_model(name: str):
 def run_inference(model, loader, device):
     """返回（all_labels, all_probs）numpy arrays"""
     model.eval()
-    all_labels = [], all_probs = []
+    all_labels, all_probs = [], []
     for batch in loader:
         batch = batch.to(device=device)
         logits = model(batch.x, batch.edge_index, batch.batch) # [batch, 2] 原始分数
