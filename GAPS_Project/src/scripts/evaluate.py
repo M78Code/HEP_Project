@@ -9,10 +9,46 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import platform
 
+# 自动判断系统并设置字体
+system_name = platform.system()
 
-plt.rcParams['font.sans-serif'] = ['PingFang SC', 'Heiti TC', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']
+if system_name == "Darwin":  # macOS
+    plt.rcParams['font.sans-serif'] = [
+        'PingFang SC',
+        'Heiti TC',
+        'Microsoft YaHei',
+        'SimHei',
+        'Arial Unicode MS',
+        'DejaVu Sans'
+    ]
+
+elif system_name == "Linux":  # Ubuntu / Linux
+    plt.rcParams['font.sans-serif'] = [
+        'Noto Sans CJK JP',
+        'Noto Sans CJK SC',
+        'WenQuanYi Zen Hei',
+        'DejaVu Sans'
+    ]
+
+elif system_name == "Windows":  # Windows
+    plt.rcParams['font.sans-serif'] = [
+        'Microsoft YaHei',
+        'SimHei',
+        'Arial Unicode MS',
+        'DejaVu Sans'
+    ]
+
+else:  # 其他系统兜底
+    plt.rcParams['font.sans-serif'] = [
+        'DejaVu Sans'
+    ]
+
+# 解决负号显示为方块的问题
 plt.rcParams['axes.unicode_minus'] = False
+# 全局字体大小
+plt.rcParams['font.size'] = 12
 
 import GAPS_Project
 
