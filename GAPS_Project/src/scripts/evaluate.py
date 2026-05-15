@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from pathlib import Path
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve,
-                             confusion_matrix)
+                             confusion_matrix, precision_recall_curve)
 import matplotlib
 
 matplotlib.use("Agg")
@@ -216,13 +216,136 @@ def evaluate():
         print_metrics(name, labels, probs)
         results.append((name, labels, probs))
 
+        # 保存推理结果，供后续单独分析
+        np.save(out_dir / f"{name}_labels.npy", labels)
+        np.save(out_dir / f"{name}_probs.npy", probs)
+
     # 绘图
     plot_roc_curves(results, out_dir / "roc_curves.png")
     plot_rejection_curve(results, out_dir / "rejection_curve.png")
     print(f"\n所有结果保存至: {out_dir}")
 
-    plot_rejection_curve(results)
+
+def analyze_only():
+    """跳过推理，直接从已保存的npy文件读取结果"""
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+    results = []
+    for name, _ in EVAL_MODELS:
+        labels = np.load(out_dir / f"{name}_labels.npy")
+        probs = np.load(out_dir / f"{name}_probs.npy")
+        results.append((name, labels, probs))
+        print(f'已加载 {name}: {len(labels)} samples')
+
+    print_rejection_at_efficiency(results)
+
+def analyze_threshold():
+    """阈值优化分析，从已保存的npy文件读取，无需重新推理"""
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+
+    # 加载已保存的推理结果
+    results = []
+    for name, _ in EVAL_MODELS:
+        labels = np.load(out_dir / f"{name}_labels.npy")
+        probs = np.load(out_dir / f"{name}_probs.npy")
+        results.append((name, labels, probs))
+        print(f"已加载 {name}: {len(labels)} samples")
+
+    # ── 1. 各模型最优阈值搜索 ──────────────────────────
+    print(f"\n{'=' * 70}")
+    print("最优阈值搜索（按 F1 最大 / Rejection最大@Signal≥0.98）")
+    print(f"{'Model':>10} {'Best_T(F1)':>12} {'F1':>8} {'Recall':>8} "
+          f"{'Precision':>10} {'Rejection':>12}")
+    print("-" * 70)
+
+    for name, labels, probs in results:
+        thresholds = np.arange(0.01, 1.00, 0.01)
+        best_f1, best_t_f1 = 0, 0.5
+        best_rej, best_t_rej = 0, 0.5
+
+        for t in thresholds:
+            preds = (probs >= t).astype(int)
+            tp = ((preds == 1) & (labels == 1)).sum()
+            fp = ((preds == 1) & (labels == 0)).sum()
+            fn = ((preds == 0) & (labels == 1)).sum()
+            tn = ((preds == 0) & (labels == 0)).sum()
+
+            recall = tp / (tp + fn + 1e-10)
+            precision = tp / (tp + fp + 1e-10)
+            f1 = 2 * precision * recall / (precision + recall + 1e-10)
+            rejection = tn / (tn + fp + 1e-10) if (tn + fp) > 0 else 0
+
+            if f1 > best_t_f1:
+                best_f1 = f1
+                best_t_f1 = t
+                best_recall_f1 = recall
+                best_prec_f1 = precision
+                best_rej_f1 = rejection
+
+        print(f"{name:>10} {best_t_f1:>12.2f} {best_f1:>8.4f} "
+              f"{best_recall_f1:>8.4f} {best_prec_f1:>10.4f} {best_rej_f1:>12.4f}")
+
+    # ── 2. DGCNN 详细阈值扫描表 ────────────────────────
+    print(f'\n{'=' * 70}')
+    print("DGCNN 阈值扫描（Signal Efficiency ≥ 0.98 区间重点展示）")
+    print(f"{'Threshold':>10} {'Recall':>8} {'Precision':>10} "
+          f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
+    print("-" * 70)
+
+    name_dgcnn = 'DGCNN'
+    labels_d = next(l for n, l, _ in results if n == name_dgcnn)
+    probs_d = next(p for n, _, p in results if n == name_dgcnn)
+
+    for t in np.arange(0.01, 0.60, 0.02):
+        preds = (probs_d >= t).astype(int)
+        tp = ((preds == 1) & (labels_d == 1)).sum()
+        fp = ((preds == 1) & (labels_d == 0)).sum()
+        fn = ((preds == 0) & (labels_d == 1)).sum()
+        tn = ((preds == 0) & (labels_d == 0)).sum()
+
+        recall = tp / (tp + fn + 1e-10)
+        precision = tp / (tp + fp + 1e-10)
+        f1 = 2 * precision * recall / (precision + recall + 1e-10)
+        rej_rate = tn / (tn + fp + 1e-10)
+        fpr = fp / (fp + tn + 1e-10)
+        rej_power = 1 / fpr if fpr > 0 else float('inf')
+
+        print(f"{t:>10.2f} {recall:>8.4f} {precision:>10.4f} "
+              f"{f1:>8.4f} {rej_rate:>22.4f} {rej_power:>18.2f}")
+
+    # ── 3. Precision-Recall 曲线图 ─────────────────────
+    plt.figure(figsize=(7, 6))
+    for name, labels, probs in results:
+        precision_arr, recall_arr, _ = precision_recall_curve(labels, probs)
+        plt.plot(recall_arr, precision_arr, label=name)
+    plt.xlabel("Recall (Signal Efficiency)")
+    plt.ylabel("Precision (antiD Purity)")
+    plt.title("Precision-Recall Curve")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(out_dir / "precision_recall_curve.png", dpi=150)
+    print(f"\nPR曲线已保存: {out_dir / 'precision_recall_curve.png'}")
+
+    # ── 4. Rejection Power vs Signal Efficiency 曲线图 ─
+    plt.figure(figsize=(7, 6))
+    for name, labels, probs in results:
+        fpr, tpr, _ = roc_curve(labels, probs)
+        fpr_safe = np.where(fpr == 0, 1e-10, fpr)
+        rej_power = 1.0 / fpr_safe
+        plt.semilogy(tpr, rej_power, label=name)
+    plt.axvline(x=0.98, color='red', linestyle='--', linewidth=0.8, label='Signal Eff=0.98')
+    plt.xlabel("Signal Efficiency (Recall)")
+    plt.ylabel("Rejection Power (1/FPR)")
+    plt.title("Rejection Power vs Signal Efficiency")
+    plt.legend()
+    plt.grid(True, which='both', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(out_dir / "rejection_power_curve.png", dpi=150)
+    print(f"Rejection Power曲线已保存: {out_dir / 'rejection_power_curve.png'}")
 
 
 if __name__ == '__main__':
-    evaluate()
+    evaluate()        # 完整推理+评估（第一次运行）
+    # analyze_only()    # 只输出各效率下的Rejection表
+    # analyze_threshold()  # 阈值优化分析（无需重新推理）
+
