@@ -59,9 +59,21 @@ def check_beta():
     train_pkl_path = PROJECT_ROOT / 'dataset' / 'split' / 'train.pkl'
     with open(train_pkl_path, 'rb') as f:
         data = pickle.load(f)
-    print(data)
-    print('\n')
-    print(data[0].keys())
+    # print(f"类型: {type(data)}")
+    # if isinstance(data, list):
+    #     print(f"长度: {len(data)}")
+    #     print(f"第一个元素类型: {type(data[0])}")
+    #     print(f"第一个元素keys: {data[0].keys()}")
+    # elif isinstance(data, dict):
+    #     print(f"keys: {data.keys()}")
+    #     first_key = next(iter(data))
+    #     print(f"第一个key: {first_key}")
+    #     print(f"第一个value类型: {type(data[first_key])}")
+
+    events = data['events']
+    print(f"事件总数: {len(events)}")
+    print(f"第一个事件类型: {type(events[0])}")
+    print(f"第一个事件keys: {events[0].keys()}")
 
 
 if __name__ == '__main__':
