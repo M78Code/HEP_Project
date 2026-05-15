@@ -1,5 +1,7 @@
+from pathlib import Path
 
-
+import GAPS_Project
+PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
 def classification_demo():
     """
@@ -54,7 +56,8 @@ def cuda_knn_ok():
 
 def check_beta():
     import pickle
-    with open('../dataset/split/train.pkl', 'rb') as f:
+    train_pkl_path = PROJECT_ROOT / 'dataset' / 'split' / 'train.pkl'
+    with open(train_pkl_path, 'rb') as f:
         data = pickle.load(f)
     print(data)
     print('\n')
