@@ -71,12 +71,12 @@ print(f'使用设备：{DEVICE}')
 BATCH_SIZE = 256
 LAZY_LOAD = False
 
-# 要评估的模型列表：(模型名, 权重路径, in_channels, use_beta)
+# 要评估的模型列表：(模型名, 权重路径, in_channels)
 EVAL_MODELS = [
-    ('GIN',      PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth',          5, False),
-    ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5, False),
-    ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
-    ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6, True),
+    # ('GIN',      PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth',          5, False),
+    # ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5, False),
+    # ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
+    ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
 ]
 
 
@@ -93,7 +93,7 @@ def get_model(name: str, in_channels: int = 6):
 
 
 @torch.no_grad()
-def run_inference(model, loader, device, use_beta=True):
+def run_inference(model, loader, device):
     """返回（all_labels, all_probs, all_betas）numpy arrays"""
     model.eval()
     all_labels, all_probs, all_betas = [], [], []
@@ -103,15 +103,7 @@ def run_inference(model, loader, device, use_beta=True):
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())
         all_probs.append(probs.cpu().numpy())
-        # 取每个图的beta（仅6维特征时第5列有beta）
-        if use_beta:
-            beta_per_graph = []
-            ptr = batch.ptr.cpu().numpy()
-            for i in range(len(ptr) - 1):
-                beta_per_graph.append(batch.x[ptr[i], 5].item())
-        else:
-            beta_per_graph = [0.0] * batch.num_graphs
-        all_betas.append(np.array(beta_per_graph, dtype=np.float32))
+        all_betas.append(batch.beta.squeeze().cpu().numpy())
     return (np.concatenate(all_labels),
             np.concatenate(all_probs),
             np.concatenate(all_betas))
@@ -209,28 +201,23 @@ def print_rejection_at_efficiency(results, signal_efficiencies=(0.50, 0.80, 0.90
 
 
 def evaluate():
-    # 数据加载（只用test集）—— 5维和6维分别加载
+    # 数据加载（只用test集）
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
-    print('加载test数据集（5维，use_beta=False）...')
-    _, _, test_loader_5 = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD, use_beta=False)
-    print(f'test batches (5-dim): {len(test_loader_5)}')
-
-    print('加载test数据集（6维，use_beta=True）...')
-    _, _, test_loader_6 = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD, use_beta=True)
-    print(f'test batches (6-dim): {len(test_loader_6)}')
+    print('加载test数据集')
+    _, _, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD, use_beta=True)
+    print(f'test batches: {len(test_loader)}')
 
     # 输出目录
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch, use_beta in EVAL_MODELS:
+    for name, weight_path, in_ch in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
         model = get_model(name, in_channels=in_ch).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
-        loader = test_loader_6 if use_beta else test_loader_5
-        labels, probs, betas = run_inference(model, loader, DEVICE, use_beta=use_beta)
+        labels, probs, betas = run_inference(model, test_loader, DEVICE)
         print_metrics(name, labels, probs)
         results.append((name, labels, probs))
 
@@ -249,7 +236,7 @@ def analyze_only():
     """跳过推理，直接从已保存的npy文件读取结果"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     results = []
-    for name, _, _in_ch, _use_beta in EVAL_MODELS:
+    for name, _, _in_ch in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -263,7 +250,7 @@ def analyze_threshold():
 
     # 加载已保存的推理结果
     results = []
-    for name, _, _in_ch, _use_beta in EVAL_MODELS:
+    for name, _, _in_ch in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -310,7 +297,7 @@ def analyze_threshold():
           f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
     print("-" * 70)
 
-    name_dgcnn = 'DGCNN'
+    name_dgcnn = 'DGCNN_v2'
     labels_d = next(l for n, l, _ in results if n == name_dgcnn)
     probs_d = next(p for n, _, p in results if n == name_dgcnn)
 
@@ -373,8 +360,8 @@ def analyze_beta_window():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
     # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
-    labels = np.load(out_dir / 'DGCNN_labels.npy')
-    probs = np.load(out_dir / 'DGCNN_probs.npy')
+    labels = np.load(out_dir / 'DGCNN_v2_labels.npy')
+    probs = np.load(out_dir / 'DGCNN_v2_probs.npy')
     betas = np.load(out_dir / 'DGCNN_v2_betas.npy')
 
     # 定义定义β窗口
@@ -383,7 +370,7 @@ def analyze_beta_window():
         ('β∈[0.28, 0.38]', 0.28, 0.38),
         ('β∈[0.32, 0.36]', 0.32, 0.36),
         # ('β∈[0.250, 0.255]', 0.250, 0.255),   # Wada 2019 Section 5.3（antiD vs antiD，仅参考）
-        ('β∈[0.335, 0.345]', 0.335, 0.345),  # Wada 2019 Section 5.2（antiD vs antiP）
+        ('β∈[0.335, 0.340]', 0.335, 0.340),  # Wada 2019 Section 5.2（antiD vs antiP）
         ('β∈[0.30,0.35]', 0.30, 0.35),
         ('β∈[0.35,0.40]', 0.35, 0.40),
     ]
