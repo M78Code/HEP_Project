@@ -78,7 +78,7 @@ EVAL_MODELS = [
     # ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
     # ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
     # ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
-    ('DGCNN_v4', PROJECT_ROOT / 'results/PLACEHOLDER/PLACEHOLDER_best.pth', 9, 2),
+    ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
 ]
 
 
@@ -206,7 +206,7 @@ def evaluate():
     # 数据加载（只用test集）
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载test数据集')
-    _, _, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD, use_beta=True)
+    _, _, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
     print(f'test batches: {len(test_loader)}')
 
     # 输出目录
@@ -433,7 +433,7 @@ def analyze_beta_window():
 
 if __name__ == '__main__':
    evaluate()               # 完整推理+评估（第一次运行）
-    # analyze_only()        # 只输出各效率下的Rejection表
-    # analyze_threshold()   # 阈值优化分析（无需重新推理）
+   # analyze_only()        # 只输出各效率下的Rejection表
+   # analyze_threshold()   # 阈值优化分析（无需重新推理）
    # analyze_beta_window()    # β速度窗口分析（无需重新推理）
 

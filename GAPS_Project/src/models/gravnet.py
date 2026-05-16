@@ -37,8 +37,8 @@ class GravNetClassifier(nn.Module):
          dropout                : dropout率
     """
 
-    def __init__(self, in_channels: int = 5, hidden_dim: int = 64, space_dimensions: int = 4,
-                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3):
+    def __init__(self, in_channels: int = 9, hidden_dim: int = 64, space_dimensions: int = 4,
+                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3, graph_feat_dim: int = 2):
         super(GravNetClassifier, self).__init__()
         self.num_blocks = 4
 
@@ -66,7 +66,7 @@ class GravNetClassifier(nn.Module):
         # ── 分类头 ─────────────────────────────────────────
         # concat 4个block输出 + 原始特征的线性映射
         self.skip_linear = nn.Linear(in_channels, hidden_dim)
-        concat_dim = hidden_dim * self.num_blocks + hidden_dim
+        concat_dim = hidden_dim * self.num_blocks + hidden_dim + graph_feat_dim
 
         self.classifier = nn.Sequential(
             nn.Linear(concat_dim, hidden_dim),
@@ -78,7 +78,7 @@ class GravNetClassifier(nn.Module):
             nn.Linear(hidden_dim // 2, num_classes),
         )
 
-    def forward(self, x, edge_index, batch):
+    def forward(self, x, edge_index, batch, graph_feat=None):
         """
         Args:
             x           : 节点特征 [N_total, in_channels]
@@ -102,6 +102,8 @@ class GravNetClassifier(nn.Module):
 
         # 节点级 → 图级
         x_graph = global_mean_pool(x_cat, batch)
+        if graph_feat is not None:
+            x_graph = torch.cat([x_graph, graph_feat], dim=1)
         return self.classifier(x_graph)
 
 
