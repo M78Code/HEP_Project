@@ -37,14 +37,16 @@ FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
 LAZY_LOAD = False  # 服务器设False，Mac设True
 
+IN_CHANNEL = 9
+
 
 def get_model(name: str):
     if name == 'GIN':
-        return GINClassifier(in_channels=6, hidden_dim=64)
+        return GINClassifier(in_channels=IN_CHANNEL, hidden_dim=64)
     elif name == 'GravNet':
-        return GravNetClassifier(in_channels=6, hidden_dim=64)
+        return GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=64)
     elif name == 'DGCNN':
-        return DGCNNClassifier(in_channels=7, hidden_dim=64, k=8)
+        return DGCNNClassifier(in_channels=IN_CHANNEL, hidden_dim=64, k=8, graph_feat_dim=2)
     else:
         raise ValueError(f'Unknown model: {name}')
 
@@ -54,7 +56,7 @@ def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
     train_loader, val_loader, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE,
-                                                                         lazy=LAZY_LOAD, use_beta=True)
+                                                                         lazy=LAZY_LOAD)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
     print(f"test  batches: {len(test_loader)}")
@@ -87,7 +89,8 @@ def train():
         for batch in train_loader:
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            logits = model(batch.x, batch.edge_index, batch.batch)
+            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
             loss = criterion(logits, batch.y.squeeze())
             loss.backward()
             optimizer.step()
@@ -107,7 +110,8 @@ def train():
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
-                logits = model(batch.x, batch.edge_index, batch.batch)
+                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
 
                 val_loss += loss.item() * batch.num_graphs

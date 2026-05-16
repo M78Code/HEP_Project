@@ -42,7 +42,7 @@ def make_dataloaders(pkl_files: list, batch_size: int = 16, train_ratio: float =
     return train_loader, val_loader, test_loader
 
 
-def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle_train: bool = True, lazy: bool = True, use_beta: bool = True):
+def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle_train: bool = True, lazy: bool = True):
     """
     从预先分割好的 train/val/test.pkl 构建DataLoader
     适用于已有 data_splitter.py 生成的split文件时
@@ -51,14 +51,13 @@ def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle
         split_dir:      dataset/split/目录
         batch_size:     batch大小
         shuffle_train:  训练集是否打乱
-        use_beta:       是否在节点特征中包含beta（True→6维，False→5维）
     Returns:
         train_loader, val_loader, test_loader
     """
     split_dir = Path(split_dir)
-    train_dataset = GapsDataset([split_dir / 'train.pkl'], lazy=lazy, use_beta=use_beta)
-    val_dataset = GapsDataset([split_dir / 'val.pkl'], lazy=lazy, use_beta=use_beta)
-    test_dataset = GapsDataset([split_dir / 'test.pkl'], lazy=lazy, use_beta=use_beta)
+    train_dataset = GapsDataset([split_dir / 'train.pkl'], lazy=lazy)
+    val_dataset = GapsDataset([split_dir / 'val.pkl'], lazy=lazy)
+    test_dataset = GapsDataset([split_dir / 'test.pkl'], lazy=lazy)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

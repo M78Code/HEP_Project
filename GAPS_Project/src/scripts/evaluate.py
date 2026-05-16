@@ -77,17 +77,18 @@ EVAL_MODELS = [
     # ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5, False),
     # ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
     # ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
-    ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
+    # ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
+    ('DGCNN_v4', PROJECT_ROOT / 'results/PLACEHOLDER/PLACEHOLDER_best.pth', 9, 2),
 ]
 
 
-def get_model(name: str, in_channels: int = 7):
+def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 2):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'GravNet' in name:
         return GravNetClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'DGCNN' in name:
-        return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8)
+        return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8, graph_feat_dim=graph_feat_dim)
     else:
         raise ValueError(f"Unknown model: {name}")
 
@@ -99,7 +100,8 @@ def run_inference(model, loader, device):
     all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
-        logits = model(batch.x, batch.edge_index, batch.batch) # [batch, 2] 原始分数
+        graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+        logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat) # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())
         all_probs.append(probs.cpu().numpy())
@@ -212,9 +214,9 @@ def evaluate():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch in EVAL_MODELS:
+    for name, weight_path, in_ch, gf_dim in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name, in_channels=in_ch).to(DEVICE)
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
@@ -236,7 +238,7 @@ def analyze_only():
     """跳过推理，直接从已保存的npy文件读取结果"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     results = []
-    for name, _, _in_ch in EVAL_MODELS:
+    for name, _, _in_ch, _gf in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -250,7 +252,7 @@ def analyze_threshold():
 
     # 加载已保存的推理结果
     results = []
-    for name, _, _in_ch in EVAL_MODELS:
+    for name, _, _in_ch, _gf in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -297,7 +299,7 @@ def analyze_threshold():
           f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
     print("-" * 70)
 
-    name_dgcnn = 'DGCNN_v3'
+    name_dgcnn = 'DGCNN_v4'
     labels_d = next(l for n, l, _ in results if n == name_dgcnn)
     probs_d = next(p for n, _, p in results if n == name_dgcnn)
 
@@ -360,9 +362,9 @@ def analyze_beta_window():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
     # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
-    labels = np.load(out_dir / 'DGCNN_v2_labels.npy')
-    probs = np.load(out_dir / 'DGCNN_v2_probs.npy')
-    betas = np.load(out_dir / 'DGCNN_v2_betas.npy')
+    labels = np.load(out_dir / 'DGCNN_v4_labels.npy')
+    probs = np.load(out_dir / 'DGCNN_v4_probs.npy')
+    betas = np.load(out_dir / 'DGCNN_v4_betas.npy')
 
     # 定义定义β窗口
     windows = [

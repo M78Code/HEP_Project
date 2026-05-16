@@ -7,9 +7,10 @@ from torch_geometric.data import Data
 from torch_geometric.nn import knn_graph
 
 """
-设计节点特征微量：
-每个节点 = [fX, fY, fZ, energy, time], 共5维，time的NaN填0
-边的构建方式：用k近邻（k-NN），基于空间距离连接最近的k个hit
+  节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
+    det_type  : 0=TOF(1XX), 1=Si(Li)(2XX)
+    layer_norm: (volume_id // 1000000) % 100 / 16.0
+  图级属性：beta, n_hits, total_energy
 """
 
 """
@@ -37,33 +38,34 @@ class GraphBuilder:
     Args:
       k         : int    k近邻边数，每个节点连接最近的k个节点
       normalize : bool   是否对节点特征归一化（默认True）
-      use_beta  : bool   节点特征是否包含beta（True→7维，False→6维）
-    节点特征：[fX, fY, fZ, energy, time, beta, dE/dx]，共7维
-    图级属性：beta（原始未归一化，用于β窗口分析）
+    节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
+    图级属性：beta, n_hits, total_energy
     """
-    def __init__(self, k: int = 8, normalize: bool = True, use_beta: bool = True):
+    def __init__(self, k: int = 8, normalize: bool = True):
         self.k = k
         self.normalize = normalize
-        self.use_beta = use_beta
 
     def build_from_dict(self, event: dict) -> Data:
         """
         从pickle中的event字典构建PyG图
-        :param event: {'energy': array(N,), 'positions': array(N,3), 'times': array(N,), 'label': int, ...}
+        ::param event: {'energy': array(N,), 'positions': array(N,3), 'times': array(N,), 'volume_id': array(N,), 'label': int, 'beta': float, ...}
         """
 
         # ── 1. 读取数据 ──────────────────────────
         energies = event['energy']  # (N,)
         positions = event['positions']  # (N, 3)
         times = event['times']  # (N,)
+        volume_ids = event.get('volume_id', np.zeros(len(energies), dtype=np.int64))
         label = event['label']
         N = len(energies)
 
         # ── 2. 处理NaN时间（填0）────────────────────
         times = np.where(np.isnan(times), 0.0, times)
 
-        # ── 3. 提取原始beta（图级属性，不参与归一化）────
+        # ── 3. 图级标量 ────────────────────────────
         beta_val = float(event.get('beta', 0.0))
+        n_hits = float(N)
+        total_energy = float(energies.sum())
 
         # ── 4. 计算 dE/dx（每个hit能量 / k近邻平均距离）──
         # Bethe-Bloch: dE/dx ∝ 1/β²，antiD β更低 → dE/dx更大，是关键判别量
@@ -76,42 +78,33 @@ class GraphBuilder:
         else:
             dEdx = np.zeros(N, dtype=np.float32)
 
-        # ── 5. 构建节点特征矩阵 ───────────────────────
-        if self.use_beta:
-            """
-            # [N, 7]：[fX, fY, fZ, energy, time, beta, dE/dx]
-            """
-            beta_col = np.full(N, beta_val, dtype=np.float32)
-            x = np.stack([
-                positions[:, 0],    # fX
-                positions[:, 1],    # fY
-                positions[:, 2],    # fZ
-                energies,           # energy
-                times,              # time
-                beta_col,           # beta (事件级速度，广播至每个节点)
-                dEdx,               # dE/dx（每hit能量损失率，关键判别量）
-            ], axis=1).astype(np.float32)
-        else:
-            """
-            # [N, 6]：[fX, fY, fZ, energy, time, dE/dx]
-            """
-            x = np.stack([
-                positions[:, 0],    # fX
-                positions[:, 1],    # fY
-                positions[:, 2],    # fZ
-                energies,           # energy
-                times,              # time
-                dEdx,               # dE/dx
-            ], axis=1).astype(np.float32)
+        # ── 5. volume_id → det_type, layer_norm ──
+        layer_idx = (volume_ids // 1000000).astype(np.int64)  # e.g. 200,201,...
+        det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
+        layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
+
+        # ── 6. 构建节点特征矩阵（9维）───────────────
+        beta_col = np.full(N, beta_val, dtype=np.float32)
+        x = np.stack([
+            positions[:, 0],  # fX
+            positions[:, 1],  # fY
+            positions[:, 2],  # fZ
+            energies,  # energy
+            times,  # time
+            beta_col,  # beta
+            dEdx,  # dE/dx
+            det_type,  # 探测器类型
+            layer_norm,  # 层号归一化
+        ], axis=1).astype(np.float32)
 
         if self.normalize:
             x = self._normalize(x)
 
-        #  —— 6. 构建边（k近邻边，基于空间距离）—————————————
+        #  —— 7. 构建边（k近邻边，基于空间距离）—————————————
         pos_tensor = torch.tensor(positions, dtype=torch.float32)
         edge_index = knn_graph(pos_tensor, k=self.k, loop=False)
 
-        # ── 6. 标签（PDG→0/1分类）────────────────────
+        # ── 8. 标签（PDG→0/1分类）────────────────────
         # 反质子=-2212 → 0，反重氘核=-1000010020 → 1
         y = torch.tensor([1 if label == No_ANTIDEUTERON else 0], dtype=torch.long)
 
@@ -130,7 +123,9 @@ class GraphBuilder:
             pos=pos_tensor,
             y=y,
             num_nodes=N,
-            beta=torch.tensor([beta_val], dtype=torch.float32), # 原始未归一化beta，图级属性
+            beta=torch.tensor([beta_val], dtype=torch.float32),
+            n_hits=torch.tensor([n_hits], dtype=torch.float32),
+            total_energy=torch.tensor([total_energy], dtype=torch.float32),
         )
 
     def _normalize(self, x):

@@ -15,22 +15,24 @@ class DGCNNClassifier(torch.nn.Module):
     边特征：h([x_i, x_j - x_i])，捕捉节点自身特征 + 与邻居的相对关系
 
     架构：
-        输入 x [N, 5]
+        输入 x [N, in_channels]
         → DynamicEdgeConv × 3层（每层动态重建图）
-        → 每层输出concat → Linear
+        → 每层输出concat → fusion Linear
         → global_mean_pool + global_max_pool（拼接）
+        → [可选] 拼接图级特征 graph_feat [batch, graph_feat_dim]
         → MLP → [batch, 2]
 
     Args：
-        in_channels: 节点特征维度（默认5）
-        hidden_dim : 隐层维度
-        k          : 每层动态k-NN的邻居数
-        num_classes: 分类数
-        dropout    : dropout率
+        in_channels   : 节点特征维度（默认9）
+        hidden_dim    : 隐层维度
+        k             : 每层动态k-NN的邻居数
+        num_classes   : 分类数
+        dropout       : dropout率
+        graph_feat_dim: 图级额外特征维度（n_hits + total_energy = 2）
     """
 
-    def __init__(self, in_channels: int = 5, hidden_dim: int = 64, k: int = 8, num_classes: int = 2,
-                 dropout: float = 0.3):
+    def __init__(self, in_channels: int = 9, hidden_dim: int = 64, k: int = 8, num_classes: int = 2,
+                 dropout: float = 0.3, graph_feat_dim: int = 2):
         super(DGCNNClassifier, self).__init__()
         self.k = k
 
@@ -59,8 +61,9 @@ class DGCNNClassifier(torch.nn.Module):
         )
 
         # ── 分类头（mean + max 拼接）──────────────────────
+        clf_in = hidden_dim * 2 + graph_feat_dim
         self.classifier = nn.Sequential(
-            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.Linear(clf_in, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, hidden_dim // 2),
@@ -69,11 +72,13 @@ class DGCNNClassifier(torch.nn.Module):
             nn.Linear(hidden_dim // 2, num_classes),
         )
 
-    def forward(self, x, edge_index, batch):
+    def forward(self, x, edge_index, batch, graph_feat=None):
         """
         Args:
             x           : 节点特征  [N_total, in_channels]
             edge_index  : 占位，DynamicEdgeConv内部动态建图，不使用 [N_total, 2]
+            batch       : [N_total]
+            graph_feat  : [batch_size, graph_feat_dim] 图级特征
         Returns:
             logits      : [batch_size, num_classes]
         """
@@ -89,6 +94,9 @@ class DGCNNClassifier(torch.nn.Module):
         x_mean = global_mean_pool(x_fused, batch) # [batch, hidden]
         x_max = global_max_pool(x_fused, batch)  # [batch, hidden]
         x_graph = torch.cat([x_mean, x_max], dim=1) # [batch, hidden*2]
+
+        if graph_feat is not None:
+            x_graph = torch.cat([x_graph, graph_feat], dim=1)  # [batch, hidden*2 + graph_feat_dim]
 
         return self.classifier(x_graph)
 
@@ -108,8 +116,9 @@ if __name__ == "__main__":
     loader = DataLoader(dataset, batch_size=8, shuffle=False)
     batch = next(iter(loader))
 
-    model = DGCNNClassifier(in_channels=6, hidden_dim=64, k=8)
-    logits = model(batch.x, batch.edge_index, batch.batch)
+    model = DGCNNClassifier(in_channels=9, hidden_dim=64, k=8, graph_feat_dim=2)
+    graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+    logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
 
     print(f"输入 x.shape:     {batch.x.shape}")
     print(f"输出 logits:      {logits.shape}")
@@ -118,10 +127,10 @@ if __name__ == "__main__":
 
 
 """
-输入 x.shape:     torch.Size([285, 6])
+输入 x.shape:     torch.Size([285, 9])
 输出 logits:      torch.Size([8, 2])
-预测类别:         tensor([1, 0, 1, 1, 1, 1, 1, 1])
-参数量:           53,474
+预测类别:         tensor([0, 0, 1, 1, 0, 1, 1, 1])
+参数量:           53,986
 """
 
 
