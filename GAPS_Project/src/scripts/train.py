@@ -165,6 +165,9 @@ def resume_train():
     # ── 3. 损失函数 / 优化器 / scheduler ───────────────
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
+    # 恢复scheduler时需要手动设置initial_lr
+    for group in optimizer.param_groups:
+        group['initial_lr'] = LEARNING_RATE
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA, last_epoch=RESUME_EPOCH)
 
     # ── 4. TensorBoard ─────────────────────────────────
