@@ -189,6 +189,9 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
         all_energies = tree_rec["Rec/hitseries_/hitseries_.energydep_"].array()
         all_pos = tree_rec["Rec/hitseries_/hitseries_.hit_position_"].array()
         all_times = tree_rec["Rec/hitseries_/hitseries_.hit_time_"].array()
+        all_volume_ids = tree_rec["Rec/hitseries_/hitseries_.volume_id_"].array()
+        all_event_quality = tree_rec["Rec/event_quality"].array()
+        all_rec_betas = tree_rec["Rec/primaryBeta_/primaryBeta_.first"].array()
         all_labels = tree_mc["Mc/primaryPdg_"].array()
         all_betas = tree_mc["Mc/CEventBase/primaryBetaGenerated_"].array()
 
@@ -196,8 +199,11 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
             energies = np.array(all_energies[idx], dtype=np.float32)
             pos_raw = all_pos[idx]
             times = np.array(all_times[idx], dtype=np.float32)
+            volume_id = np.array(all_volume_ids[idx], dtype=np.int64)
             label = int(all_labels[idx])
             beta = float(all_betas[idx])
+            rec_beta = float(all_rec_betas[idx][0]) if len(all_rec_betas[idx]) > 0 else 0.0
+            event_quality = int(all_event_quality[idx][0]) if len(all_event_quality[idx]) > 0 else 0
 
             positions = np.stack([
                 np.array(pos_raw["fX"], dtype=np.float32),
@@ -209,8 +215,11 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
                 "energy": energies,
                 "positions": positions,
                 "times": times,
+                "volume_id": volume_id,  # 新增：每hit探测器ID
                 "label": label,
-                "beta": beta,
+                "beta": beta,  # MC真值β
+                "rec_beta": rec_beta,  # 新增：重建β
+                "event_quality": event_quality,  # 新增：事件质量
                 "n_hits": len(energies),
             })
 
@@ -242,18 +251,19 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
             "max": round(float(max(betas)), 4),
             "mean": round(float(np.mean(betas)), 4),
         },
-        "feature_dims": 5,
+        "feature_dims": 9,
         "sample_event_0": {
-            "n_hits": sample["n_hits"],
-            "label": sample["label"],
-            "beta": round(sample["beta"], 4),
-            "energy_first5": [round(float(v), 3) for v in sample["energy"][:5]],
-            "positions_first3": sample["positions"][:3].tolist(),
-            "times_first5": [
-                None if np.isnan(v) else round(float(v), 3)
-                for v in sample["times"][:5]
-            ],
-        },
+          "n_hits":          sample["n_hits"],
+          "label":           sample["label"],
+          "beta":            round(sample["beta"], 4),
+          "rec_beta":        round(sample["rec_beta"], 4),
+          "event_quality":   sample["event_quality"],
+          "energy_first5":   [round(float(v), 3) for v in sample["energy"][:5]],
+          "positions_first3": sample["positions"][:3].tolist(),
+          "times_first5":    [None if np.isnan(v) else round(float(v), 3)
+                              for v in sample["times"][:5]],
+          "volume_id_first5": [int(v) for v in sample["volume_id"][:5]],
+      },
     }
 
     with open(summary_path, "w", encoding="utf-8") as out:
@@ -306,6 +316,30 @@ if __name__ == '__main__':
         root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
         output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
     )
+
+    # ── 验证：用test_sample转换并检查输出 ──
+    # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
+    # test_out = PROJECT_ROOT / 'dataset' / 'test_sample'
+    # convert_root_to_pickle(test_root, test_out)
+
+    # 读回pickle验证字段
+    # import pickle
+    #
+    # with open(test_out / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl', 'rb') as f:
+    #     data = pickle.load(f)
+    #
+    # e = data['events'][0]
+    # print(f"\n=== Event 0 验证 ===")
+    # print(f"n_hits        : {e['n_hits']}")
+    # print(f"label         : {e['label']}")
+    # print(f"beta (MC)     : {e['beta']:.4f}")
+    # print(f"rec_beta      : {e['rec_beta']:.4f}")
+    # print(f"event_quality : {e['event_quality']}")
+    # print(f"energy[:5]    : {e['energy'][:5]}")
+    # print(f"volume_id[:5] : {e['volume_id'][:5]}")
+    # print(f"times[:5]     : {e['times'][:5]}")
+    # print(f"positions[0]  : {e['positions'][0]}")
+    # print(f"\n总event数: {len(data['events'])}")
 
 """
 ============================= test session starts ==============================
@@ -423,4 +457,21 @@ beta范围: 0.1257 ~ 0.5915
 
   ---
   这个编号规则在高能物理界是通用标准，GEANT4、ROOT、各种模拟软件都遵循同一套规则。
+"""
+
+
+
+"""
+=== Event 0 验证 ===
+n_hits        : 30
+label         : -1000010020
+beta (MC)     : 0.2746
+rec_beta      : 0.0000
+event_quality : 0
+energy[:5]    : [ 3.084348   1.0651273 14.4204     1.005194   1.9934654]
+volume_id[:5] : [200200101 201150200 202150004 208020101 203150005]
+times[:5]     : [nan nan nan nan nan]
+positions[0]  : [  39.75286   -62.991978 -103.6231  ]
+
+总event数: 57
 """
