@@ -76,17 +76,17 @@ EVAL_MODELS = [
     # ('GIN',      PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth',          5, False),
     # ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5, False),
     # ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
-    ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
+    # ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
+    ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
 ]
 
 
-def get_model(name: str, in_channels: int = 6):
-    base_name = name.replace('_v2', '')
-    if base_name == 'GIN':
+def get_model(name: str, in_channels: int = 7):
+    if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
-    elif base_name == 'GravNet':
+    elif 'GravNet' in name:
         return GravNetClassifier(in_channels=in_channels, hidden_dim=64)
-    elif base_name == 'DGCNN':
+    elif 'DGCNN' in name:
         return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8)
     else:
         raise ValueError(f"Unknown model: {name}")
@@ -297,7 +297,7 @@ def analyze_threshold():
           f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
     print("-" * 70)
 
-    name_dgcnn = 'DGCNN_v2'
+    name_dgcnn = 'DGCNN_v3'
     labels_d = next(l for n, l, _ in results if n == name_dgcnn)
     probs_d = next(p for n, _, p in results if n == name_dgcnn)
 
@@ -430,8 +430,8 @@ def analyze_beta_window():
 
 
 if __name__ == '__main__':
-   # evaluate()               # 完整推理+评估（第一次运行）
+   evaluate()               # 完整推理+评估（第一次运行）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
-   analyze_beta_window()    # β速度窗口分析（无需重新推理）
+   # analyze_beta_window()    # β速度窗口分析（无需重新推理）
 
