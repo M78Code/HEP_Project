@@ -363,8 +363,88 @@ def analyze_threshold():
     print(f"Rejection Power曲线已保存: {out_dir / 'rejection_power_curve.png'}")
 
 
+def analyze_beta_window():
+    """
+    β速度窗口分析：
+    - 使用 DGCNN_v2_beta.npy（真实beta值）配合DGCNN的labels/probs
+    - 按β区间切分test集，分析各窗口内的Rejection Power
+    - 目标：复现 Wada 2019 的窄窗口条件（β∈[0.335,0.340]）
+    """
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+
+    # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
+    labels = np.load(out_dir / 'DGCNN_labels.npy')
+    probs = np.load(out_dir / 'DGCNN_probs.npy')
+    betas = np.load(out_dir / 'DGCNN_v2_betas.npy')
+
+    # 定义定义β窗口
+    windows = [
+        ('Full range', 0.20, 0.50),
+        ('β∈[0.28, 0.38]', 0.28, 0.38),
+        ('β∈[0.32, 0.36]', 0.32, 0.36),
+        # ('β∈[0.250, 0.255]', 0.250, 0.255),   # Wada 2019 Section 5.3（antiD vs antiD，仅参考）
+        ('β∈[0.335, 0.345]', 0.335, 0.345),  # Wada 2019 Section 5.2（antiD vs antiP）
+        ('β∈[0.30,0.35]', 0.30, 0.35),
+        ('β∈[0.35,0.40]', 0.35, 0.40),
+    ]
+
+    target_effs = (0.90, 0.95, 0.98, 0.99)
+
+    print(f'\n{'=' * 70}')
+    print('β窗口分析 — DGCNN模型，各窗口内Rejection Power @ 指定Signal Efficiency')
+    print(f"{'Window':>20} {'N_events':>10} {'antiP':>8} {'antiD':>8}", end="")
+    for e in target_effs:
+        print(f"  Rej@{e:.2f}", end="")
+    print()
+    print('-' * 80)
+
+    window_results = []
+    for wname, b_lo, b_hi in windows:
+        mask = (betas >= b_lo) & (betas < b_hi)
+        l, p = labels[mask], probs[mask]
+        n_total = mask.sum()
+        n_antiP = (l == 0).sum()
+        n_antiD = (l == 1).sum()
+
+        if n_antiP < 10 or n_antiD < 10:
+            print(f'{wname:>20} {n_total:>10} (样本太少，跳过)')
+            continue
+
+        fpr, tpr, _ = roc_curve(l, p)
+        auc = roc_auc_score(l, p)
+        fpr_safe = np.where(fpr == 0, 1e-10, fpr)
+
+        print(f"{wname:>20} {n_total:>10} {n_antiP:>8} {n_antiD:>8}", end="")
+        for target_eff in target_effs:
+            idx = np.argmin(np.abs(tpr - target_eff))
+            f = fpr[idx]
+            rej = 1.0 / f if f > 0 else float('inf')
+            rej_str = f'{rej:.1e}' if rej < 1e10 else '>1e10'
+            print(f"  {rej_str:>9}", end="")
+        print(f' AUC={auc:.4f}')
+        window_results.append((wname, l, p, fpr, tpr, fpr_safe))
+
+    # 绘图：各β窗口的Rejection Power曲线
+    plt.figure(figsize=(8, 6))
+    for wname, l, p, fpr, tpr, fpr_safe in window_results:
+        rej_power = 1.0 / fpr_safe
+        plt.semilogy(tpr, rej_power, label=wname)
+    plt.axvline(x=0.98, color='red', linestyle='--', linewidth=0.8, label='Signal Eff=0.98')
+    plt.xlabel('Signal Efficiency (antiD Recall)')
+    plt.ylabel('Rejection Power (1/FPR)')
+    plt.title('DGCNN — Rejection Power by β Window')
+    plt.legend(fontsize=9)
+    plt.grid(True, which='both', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    save_path = out_dir / 'beta_window_rejection.png'
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+    print(f"\nβ窗口Rejection曲线已保存: {save_path}")
+
+
 if __name__ == '__main__':
-   evaluate()        # 完整推理+评估（第一次运行）
-    # analyze_only()    # 只输出各效率下的Rejection表
-    # analyze_threshold()  # 阈值优化分析（无需重新推理）
+   # evaluate()               # 完整推理+评估（第一次运行）
+    # analyze_only()        # 只输出各效率下的Rejection表
+    # analyze_threshold()   # 阈值优化分析（无需重新推理）
+   analyze_beta_window()    # β速度窗口分析（无需重新推理）
 
