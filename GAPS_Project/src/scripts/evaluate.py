@@ -430,8 +430,8 @@ def analyze_beta_window():
 
 
 if __name__ == '__main__':
-   evaluate()               # 完整推理+评估（第一次运行）
+   # evaluate()               # 完整推理+评估（第一次运行）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
-   # analyze_beta_window()    # β速度窗口分析（无需重新推理）
+   analyze_beta_window()    # β速度窗口分析（无需重新推理）
 

@@ -2,6 +2,7 @@
 
 import numpy as np
 import torch
+from scipy.spatial import cKDTree
 from torch_geometric.data import Data
 from torch_geometric.nn import knn_graph
 
@@ -33,10 +34,12 @@ class GraphBuilder:
     """
     将单个event的hit信息转换成PyG的Data对象
     注：PyG（PyTorch Geometric），是基于PyTorch的图神经网络（GNN）库，专门用来处理Graph（图结构数据），而不是普通的Image（图像）、Sequence（序列）、Table（表格）
-
     Args:
-        k         : int    k近邻边数，每个节点连接，最近的8个节点
-        normalize : bool   是否对节点特征归一化（默认True）
+      k         : int    k近邻边数，每个节点连接最近的k个节点
+      normalize : bool   是否对节点特征归一化（默认True）
+      use_beta  : bool   节点特征是否包含beta（True→7维，False→6维）
+    节点特征：[fX, fY, fZ, energy, time, beta, dE/dx]，共7维
+    图级属性：beta（原始未归一化，用于β窗口分析）
     """
     def __init__(self, k: int = 8, normalize: bool = True, use_beta: bool = True):
         self.k = k
@@ -62,11 +65,21 @@ class GraphBuilder:
         # ── 3. 提取原始beta（图级属性，不参与归一化）────
         beta_val = float(event.get('beta', 0.0))
 
-        # —— 4. 构建节点特征矩阵 [N, 5] 或 [N, 6] ————————————————
+        # ── 4. 计算 dE/dx（每个hit能量 / k近邻平均距离）──
+        # Bethe-Bloch: dE/dx ∝ 1/β²，antiD β更低 → dE/dx更大，是关键判别量
+        if N > 1:
+            tree = cKDTree(positions)
+            k_query = min(self.k + 1, N)    # 防止N < k+1
+            dists, _ = tree.query(positions, k=k_query)
+            mean_dists = dists[:, 1:].mean(axis=1)  # 去掉自身（距离=0）
+            dEdx = (energies / (mean_dists + 1e-6)).astype(np.float32)
+        else:
+            dEdx = np.zeros(N, dtype=np.float32)
+
+        # ── 5. 构建节点特征矩阵 ───────────────────────
         if self.use_beta:
             """
-            特征：[fX, fY, fZ, energy, time, beta] beta是事件级标量，广播到每个节点
-            x.shape = [N, 6]
+            # [N, 7]：[fX, fY, fZ, energy, time, beta, dE/dx]
             """
             beta_col = np.full(N, beta_val, dtype=np.float32)
             x = np.stack([
@@ -75,12 +88,12 @@ class GraphBuilder:
                 positions[:, 2],    # fZ
                 energies,           # energy
                 times,              # time
-                beta_col            # beta (事件级速度，广播至每个节点)
+                beta_col,           # beta (事件级速度，广播至每个节点)
+                dEdx,               # dE/dx（每hit能量损失率，关键判别量）
             ], axis=1).astype(np.float32)
         else:
             """
-            特征：[fX, fY, fZ, energy, time]
-            x.shape = [N, 5]
+            # [N, 6]：[fX, fY, fZ, energy, time, dE/dx]
             """
             x = np.stack([
                 positions[:, 0],    # fX
@@ -88,12 +101,13 @@ class GraphBuilder:
                 positions[:, 2],    # fZ
                 energies,           # energy
                 times,              # time
+                dEdx,               # dE/dx
             ], axis=1).astype(np.float32)
 
         if self.normalize:
             x = self._normalize(x)
 
-        #  —— 5. 构建边（k近邻边，基于空间距离）—————————————
+        #  —— 6. 构建边（k近邻边，基于空间距离）—————————————
         pos_tensor = torch.tensor(positions, dtype=torch.float32)
         edge_index = knn_graph(pos_tensor, k=self.k, loop=False)
 

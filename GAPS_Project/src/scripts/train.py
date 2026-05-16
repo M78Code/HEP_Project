@@ -44,7 +44,7 @@ def get_model(name: str):
     elif name == 'GravNet':
         return GravNetClassifier(in_channels=6, hidden_dim=64)
     elif name == 'DGCNN':
-        return DGCNNClassifier(in_channels=6, hidden_dim=64, k=8)
+        return DGCNNClassifier(in_channels=7, hidden_dim=64, k=8)
     else:
         raise ValueError(f'Unknown model: {name}')
 
@@ -54,7 +54,7 @@ def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
     train_loader, val_loader, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE,
-                                                                         lazy=LAZY_LOAD)
+                                                                         lazy=LAZY_LOAD, use_beta=True)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
     print(f"test  batches: {len(test_loader)}")
