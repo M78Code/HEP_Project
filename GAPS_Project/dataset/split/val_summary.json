@@ -2,7 +2,6 @@
   "split": "val",
   "total_events": 642226,
   "label_counts": {
-    "desc": "-2212表示反Antiproton(反质子)，质子是proton = 2212; -1000010020表示Antideuteron(反重氘核), 重氘核是deuteron = 1000010020",
     "-2212": 270880,
     "-1000010020": 371346
   }
