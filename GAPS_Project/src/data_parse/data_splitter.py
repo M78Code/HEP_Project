@@ -146,5 +146,5 @@ def make_narrow_beta_split(beta_lo: float = 0.335, beta_hi: float = 0.340, train
 
 
 if __name__ == '__main__':
-    # make_split(train_ratio=0.7, val_ratio=0.15, seed=42)
-    make_narrow_beta_split(beta_lo=0.335, beta_hi=0.340)
+    make_split(train_ratio=0.7, val_ratio=0.15, seed=42)
+    # make_narrow_beta_split(beta_lo=0.335, beta_hi=0.340)

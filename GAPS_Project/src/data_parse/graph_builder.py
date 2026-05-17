@@ -124,8 +124,12 @@ class GraphBuilder:
         stopping_det = 1.0 if stopping_li >= 200 else 0.0
         stopping_layer_norm = float(stopping_li % 100) / 16.0
         stopping_feat = np.array([
-            stopping_pos[0], stopping_pos[1], stopping_pos[2],
-            stopping_layer_norm, stopping_det, stopping_ke,
+            stopping_pos[0] / 1000.0,  # 坐标cm → ~1
+            stopping_pos[1] / 1000.0,
+            stopping_pos[2] / 1000.0,
+            stopping_layer_norm,        # 已归一化 0~1
+            stopping_det,               # 0 or 1
+            stopping_ke / 1000.0,       # 能量MeV → ~1
         ], dtype=np.float32)  # (6,)
 
         """
@@ -179,8 +183,14 @@ class GraphBuilder:
         else:
             entry_x = entry_y = entry_z = tof_time_range = 0.0
 
-        return np.array([n_tof, tof_total_e, entry_x, entry_y, entry_z, tof_time_range],
-                        dtype=np.float32)  # (6,)
+        return np.array([
+            n_tof / 20.0,           # hit数，典型10~30，归一化到~1
+            tof_total_e / 100.0,    # 能量MeV，归一化
+            entry_x / 1000.0,       # 坐标cm → ~1
+            entry_y / 1000.0,
+            entry_z / 1000.0,
+            tof_time_range / 50.0,  # 时间ns，归一化
+        ], dtype=np.float32)  # (6,)
 
     @staticmethod
     def _layer_profile(mc_energy: np.ndarray, mc_volume_id: np.ndarray,

@@ -118,13 +118,13 @@ def train():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
                 graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 6),
-                batch.stopping_feat.view(-1, 6),
-            ], dim=1)  # (B, 46)
+                    batch.n_hits.view(-1, 1),
+                    batch.total_energy.view(-1, 1),
+                    batch.sili_profile.view(-1, 16),
+                    batch.tof_profile.view(-1, 16),
+                    batch.tof_feat.view(-1, 6),
+                    batch.stopping_feat.view(-1, 6),
+                ], dim=1)  # (B, 46)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
 
@@ -231,13 +231,13 @@ def resume_train():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
                 graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 6),
-                batch.stopping_feat.view(-1, 6),
-            ], dim=1)  # (B, 46)
+                    batch.n_hits.view(-1, 1),
+                    batch.total_energy.view(-1, 1),
+                    batch.sili_profile.view(-1, 16),
+                    batch.tof_profile.view(-1, 16),
+                    batch.tof_feat.view(-1, 6),
+                    batch.stopping_feat.view(-1, 6),
+                ], dim=1)  # (B, 46)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
 
@@ -325,13 +325,13 @@ def train_narrow_beta():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
                 graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 6),
-                batch.stopping_feat.view(-1, 6),
-            ], dim=1)  # (B, 46)
+                    batch.n_hits.view(-1, 1),
+                    batch.total_energy.view(-1, 1),
+                    batch.sili_profile.view(-1, 16),
+                    batch.tof_profile.view(-1, 16),
+                    batch.tof_feat.view(-1, 6),
+                    batch.stopping_feat.view(-1, 6),
+                ], dim=1)  # (B, 46)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
                 val_loss += loss.item() * batch.num_graphs
