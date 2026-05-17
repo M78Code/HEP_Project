@@ -115,6 +115,7 @@ class GraphBuilder:
         # TOF特征（从hitseries推导，6维）
         tof_features = self._tof_features(energies, volume_ids, positions,
                                           np.where(np.isnan(event['times']), np.nan, event['times']))
+        tof_features = np.nan_to_num(tof_features, nan=0.0, posinf=0.0, neginf=0.0)
 
         # MC stopping特征（从pickle新字段读取，6维）
         stopping_pos = event.get('stopping_pos', np.zeros(3, dtype=np.float32))
@@ -131,6 +132,7 @@ class GraphBuilder:
             stopping_det,               # 0 or 1
             stopping_ke / 1000.0,       # 能量MeV → ~1
         ], dtype=np.float32)  # (6,)
+        stopping_feat = np.nan_to_num(stopping_feat, nan=0.0, posinf=0.0, neginf=0.0)
 
         """
         PyG标准图对象：

@@ -404,19 +404,41 @@ def batch_check_branches():
                 print(f'  打开失败: {e}')
 
 
+def check_new_fields_nan():
+    """检查新增字段 stopping_pos / stopping_ke 是否含有 NaN"""
+    import math
+    for folder in ['antiD', 'antiP']:
+        pkl_dir = PROJECT_ROOT / 'dataset' / 'processed' / folder
+        pkl_files = sorted(pkl_dir.glob('*.pkl'))[:2]  # 每类只查前2个文件
+        nan_ke = nan_pos = total = 0
+        for pkl_file in pkl_files:
+            with open(pkl_file, 'rb') as f:
+                data = pickle.load(f)
+            for e in data['events']:
+                total += 1
+                ke = e.get('stopping_ke', 0.0)
+                pos = e.get('stopping_pos', np.zeros(3))
+                if math.isnan(ke) or math.isinf(ke):
+                    nan_ke += 1
+                if any(math.isnan(v) or math.isinf(v) for v in pos):
+                    nan_pos += 1
+        print(f'[{folder}] checked {total} events | '
+              f'NaN stopping_ke: {nan_ke} | NaN stopping_pos: {nan_pos}')
+
+
 if __name__ == '__main__':
-    # check_stopping_volume()
+    check_new_fields_nan()
     # batch_check_branches()
     # 反重氘核
-    batch_convert_root_files(
-        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
-        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
-    )
+    # batch_convert_root_files(
+    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
+    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
+    # )
     # 反质子
-    batch_convert_root_files(
-        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
-        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
-    )
+    # batch_convert_root_files(
+    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
+    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
+    # )
 
     # ── 验证：用test_sample转换并检查输出 ──
     # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
