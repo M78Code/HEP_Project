@@ -80,7 +80,7 @@ EVAL_MODELS = [
     # ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
-    ('GravNet',   PROJECT_ROOT / 'results/20260517-070152_GravNet/20260517-070152_GravNet_best.pth', 9, 2),
+    ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2)
 ]
 
 
