@@ -160,7 +160,7 @@ def train():
 
 
 def resume_train():
-    RESUME_FROM = PROJECT_ROOT / 'results/20260517-070152_GravNet/20260517-070152_GravNet_best.pth'
+    RESUME_FROM = PROJECT_ROOT / 'results/20260517-235638_GravNet/20260517-235638_GravNet_best.pth'
     RESUME_EPOCH = 50
     TOTAL_EPOCHS = 80
 
@@ -361,6 +361,6 @@ def train_narrow_beta():
 
 
 if __name__ == "__main__":
-    train()
-    # resume_train()
+    # train()
+    resume_train()
     # train_narrow_beta()
