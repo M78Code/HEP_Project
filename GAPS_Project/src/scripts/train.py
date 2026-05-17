@@ -241,5 +241,5 @@ def resume_train():
     print(f"\n训练完成，最优模型: {best_model_path}")
 
 if __name__ == "__main__":
-   train()
-   # resume_train()
+   # train()
+   resume_train()
