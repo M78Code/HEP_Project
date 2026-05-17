@@ -343,17 +343,60 @@ def batch_convert_root_files(root_dir: Path, output_dir: Path):
 
 
 
-if __name__ == '__main__':
-    # get_root_key()
-    # look_TreeMc_TreeRec_SimulationParameterTree()
-    # check_event()
-    # check_node_feature()
-    # convert_root_to_pickle(
-    #     root_path = PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root',
-    #     output_dir = PROJECT_ROOT / 'dataset' / 'processed'
-    # )
+def batch_check_branches():
+    """
+    对 tar_root/antiD/ 和 tar_root/antiP/ 下的所有 ROOT 文件，
+    各取第一个 event 打印关键字段，确认 Rec 重建字段是否有数据。
+    """
+    rec_branches = [
+        'Rec/primaryStoppingPosition_/primaryStoppingPosition_.first',
+        'Rec/SdFitPar/SdFitPar.first',
+        'Rec/SdFitChi2/SdFitChi2.first',
+        'Rec/Chi2/Chi2.first',
+        'Rec/primaryBetaError_/primaryBetaError_.first',
+        'Rec/primaryEnergyDepositions_/primaryEnergyDepositions_.second',
+    ]
+    mc_branches = [
+        'Mc/primaryStoppingKineticEnergy_',
+        'Mc/primaryStoppingPosition_',
+        'Mc/primaryStoppingVolume_',
+    ]
 
-    check_stopping_volume()
+    for folder in ['antiD', 'antiP']:
+        root_dir = PROJECT_ROOT / 'dataset' / 'tar_root' / folder
+        root_files = sorted(root_dir.glob('*.root'))
+        print(f'\n{"=" * 60}')
+        print(f'目录: {folder}  ({len(root_files)} 个文件)')
+        print('=' * 60)
+
+        for root_file in root_files:
+            print(f'\n--- {root_file.name} ---')
+            try:
+                with uproot.open(root_file) as f:
+                    tree_rec = f['TreeRec']
+                    tree_mc  = f['TreeMc']
+                    for b in rec_branches:
+                        try:
+                            arr = tree_rec[b].array()
+                            val = arr[0]
+                            empty = len(val) == 0 if hasattr(val, '__len__') else False
+                            tag = '空[]' if empty else str(val)
+                            print(f'  Rec {b.split("/")[-1]:45s}: {tag}')
+                        except Exception as e:
+                            print(f'  Rec {b.split("/")[-1]:45s}: ✗ {type(e).__name__}')
+                    for b in mc_branches:
+                        try:
+                            arr = tree_mc[b].array()
+                            print(f'  Mc  {b.split("/")[-1]:45s}: {arr[0]}')
+                        except Exception as e:
+                            print(f'  Mc  {b.split("/")[-1]:45s}: ✗ {type(e).__name__}')
+            except Exception as e:
+                print(f'  打开失败: {e}')
+
+
+if __name__ == '__main__':
+    # check_stopping_volume()
+    batch_check_branches()
     # 反重氘核
     # batch_convert_root_files(
     #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
