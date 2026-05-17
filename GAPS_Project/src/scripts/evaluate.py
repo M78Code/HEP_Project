@@ -301,7 +301,7 @@ def analyze_threshold():
           f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
     print("-" * 70)
 
-    name_dgcnn = 'DGCNN_v4'
+    name_dgcnn = 'GravNet'
     labels_d = next(l for n, l, _ in results if n == name_dgcnn)
     probs_d = next(p for n, _, p in results if n == name_dgcnn)
 
@@ -364,9 +364,9 @@ def analyze_beta_window():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
     # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
-    labels = np.load(out_dir / 'DGCNN_v4_labels.npy')
-    probs = np.load(out_dir / 'DGCNN_v4_probs.npy')
-    betas = np.load(out_dir / 'DGCNN_v4_betas.npy')
+    labels = np.load(out_dir / 'GravNet_labels.npy')
+    probs = np.load(out_dir / 'GravNet_probs.npy')
+    betas = np.load(out_dir / 'GravNet_betas.npy')
 
     # 定义定义β窗口
     windows = [
@@ -382,7 +382,7 @@ def analyze_beta_window():
     target_effs = (0.90, 0.95, 0.98, 0.99)
 
     print(f'\n{'=' * 70}')
-    print('β窗口分析 — DGCNN模型，各窗口内Rejection Power @ 指定Signal Efficiency')
+    print('β窗口分析 — GravNet模型，各窗口内Rejection Power @ 指定Signal Efficiency')
     print(f"{'Window':>20} {'N_events':>10} {'antiP':>8} {'antiD':>8}", end="")
     for e in target_effs:
         print(f"  Rej@{e:.2f}", end="")
@@ -423,7 +423,7 @@ def analyze_beta_window():
     plt.axvline(x=0.98, color='red', linestyle='--', linewidth=0.8, label='Signal Eff=0.98')
     plt.xlabel('Signal Efficiency (antiD Recall)')
     plt.ylabel('Rejection Power (1/FPR)')
-    plt.title('DGCNN — Rejection Power by β Window')
+    plt.title('GravNet — Rejection Power by β Window')
     plt.legend(fontsize=9)
     plt.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -434,8 +434,8 @@ def analyze_beta_window():
 
 
 if __name__ == '__main__':
-   evaluate()               # 完整推理+评估（第一次运行）
+   # evaluate()               # 完整推理+评估（第一次运行）
    # analyze_only()        # 只输出各效率下的Rejection表
-   # analyze_threshold()   # 阈值优化分析（无需重新推理）
-   # analyze_beta_window()    # β速度窗口分析（无需重新推理）
+   analyze_threshold()   # 阈值优化分析（无需重新推理）
+   analyze_beta_window()    # β速度窗口分析（无需重新推理）
 
