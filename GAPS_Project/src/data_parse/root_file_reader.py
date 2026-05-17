@@ -93,7 +93,7 @@ def check_event():
     tree_rec = f['TreeRec']
 
     f = uproot.open(
-        PROJECT_ROOT / 'dataset' / 'tar_root' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
+        PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
 
     # 1. 总event数
     print(f'\n总event数：{tree_mc.num_entries}')
@@ -166,6 +166,45 @@ def check_node_feature():
     print(f'energy: {energy[0]}')
     print(f'position: {position[0]}')
     print(f'time: {time[0]}')
+
+
+def check_stopping_volume():
+    with uproot.open(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD' / 'antiD_2tof_FTFP_BERT_1778545887.root') as f:
+        tree_rec = f['TreeRec']
+        tree_mc = f['TreeMc']
+
+        # 逐个尝试，确认哪些字段 uproot 能读
+        for branch in [
+            'Rec/primaryStoppingPosition_/primaryStoppingPosition_.first',
+            'Rec/primaryStoppingTime_/primaryStoppingTime_.first',
+            'Rec/primaryBetaError_/primaryBetaError_.first',
+            'Rec/SdFitPar/SdFitPar.first',
+            'Rec/SdFitChi2/SdFitChi2.first',
+            'Rec/SdFitNdof/SdFitNdof.first',
+            'Rec/Chi2/Chi2.first',
+            'Rec/Ndof/Ndof.first',
+            'Rec/primaryEnergyDepositions_/primaryEnergyDepositions_.second',
+        ]:
+            try:
+                arr = tree_rec[branch].array()
+                print(f'✓ {branch}')
+                print(f'  [0]: {arr[0]}')
+            except Exception as e:
+                print(f'✗ {branch}: {type(e).__name__}')
+
+        # MC字段单独试
+        for branch in [
+            'Mc/primaryStoppingKineticEnergy_',
+            'Mc/primaryStoppingPosition_',
+            'Mc/primaryStoppingVolume_',
+            'Mc/meanPosition_',
+        ]:
+            try:
+                arr = tree_mc[branch].array()
+                print(f'✓ {branch}')
+                print(f'  [0]: {arr[0]}')
+            except Exception as e:
+                print(f'✗ {branch}: {type(e).__name__}')
 
 
 # Step 2.0: ROOT文件 → pickle + summary.json
@@ -301,6 +340,9 @@ def batch_convert_root_files(root_dir: Path, output_dir: Path):
 
     print(f'全部转换完成')
 
+
+
+
 if __name__ == '__main__':
     # get_root_key()
     # look_TreeMc_TreeRec_SimulationParameterTree()
@@ -310,16 +352,18 @@ if __name__ == '__main__':
     #     root_path = PROJECT_ROOT / 'dataset' / 'tar_root' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root',
     #     output_dir = PROJECT_ROOT / 'dataset' / 'processed'
     # )
+
+    check_stopping_volume()
     # 反重氘核
-    batch_convert_root_files(
-        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
-        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
-    )
+    # batch_convert_root_files(
+    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
+    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
+    # )
     # 反质子
-    batch_convert_root_files(
-        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
-        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
-    )
+    # batch_convert_root_files(
+    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
+    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
+    # )
 
     # ── 验证：用test_sample转换并检查输出 ──
     # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
