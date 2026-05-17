@@ -14,7 +14,7 @@ def load_events_from_dir(pkl_dir: Path) -> list:
     for pkl_file in sorted(pkl_dir.glob('*.pkl')):
         with open(pkl_file, 'rb') as f:
             payload = pickle.load(f)
-        events.extend(payload['events']) # 把文件中的event列表合并成一个总列表
+        events.extend(payload['events'])  # 把文件中的event列表合并成一个总列表
         print(f"  加载: {pkl_file.name} → {len(payload['events'])} events")
     return events
 
@@ -100,6 +100,51 @@ def make_split(train_ratio: float = 0.7, val_ratio: float = 0.15, seed: int = 42
     save_split(test, split_dir / 'test.pkl', 'test')
     print(f'\n完成 → {split_dir}')
 
-if __name__ == '__main__':
-    make_split(train_ratio=0.7, val_ratio=0.15, seed=42)
 
+def make_narrow_beta_split(beta_lo: float = 0.335, beta_hi: float = 0.340, train_ratio: float = 0.7,
+                           val_ratio: float = 0.15, seed: int = 42):
+    """
+    只保留 beta∈[beta_lo, beta_hi] 窗口内的events，重新做 stratified split。
+    输出到 dataset/split_narrow_beta/
+    用于与 Wada 2019 直接对比。
+    """
+    processed_dir = PROJECT_ROOT / 'dataset' / 'processed'
+    split_dir = PROJECT_ROOT / 'dataset' / 'split_narrow_beta'
+    split_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f'β窗口过滤：[{beta_lo}, {beta_hi}]')
+
+    print('加载反重氘核（antiD）...')
+    antid_all = load_events_from_dir(processed_dir / 'antiD')
+    antid_events = [e for e in antid_all if beta_lo <= e['beta'] <= beta_hi]
+    print(f'  过滤后：{len(antid_events)} / {len(antid_all)} events')
+
+    print('\n加载反质子（antiP）...')
+    antip_all = load_events_from_dir(processed_dir / 'antiP')
+    antip_events = [e for e in antip_all if beta_lo <= e['beta'] <= beta_hi]
+    print(f'  过滤后：{len(antip_events)} / {len(antip_all)} events')
+
+    print(f'\n总计（窄窗口）：antiD={len(antid_events)}, antiP={len(antip_events)}')
+    print(f'类别比例：antiP:antiD = 1:{len(antid_events) / len(antip_events):.2f}')
+
+    antid_train, antid_val, antid_test = split_events(antid_events, train_ratio, val_ratio, seed)
+    antip_train, antip_val, antip_test = split_events(antip_events, train_ratio, val_ratio, seed)
+
+    random.seed(seed)
+    train = antid_train + antip_train;
+    random.shuffle(train)
+    val = antid_val + antip_val;
+    random.shuffle(val)
+    test = antid_test + antip_test;
+    random.shuffle(test)
+
+    print('\n保存split结果：')
+    save_split(train, split_dir / 'train.pkl', 'train')
+    save_split(val, split_dir / 'val.pkl', 'val')
+    save_split(test, split_dir / 'test.pkl', 'test')
+    print(f'\n完成 → {split_dir}')
+
+
+if __name__ == '__main__':
+    # make_split(train_ratio=0.7, val_ratio=0.15, seed=42)
+    make_narrow_beta_split(beta_lo=0.335, beta_hi=0.340)
