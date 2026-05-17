@@ -81,12 +81,13 @@ EVAL_MODELS = [
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
     # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
-    ('GravNet_narrow_beta',
-     PROJECT_ROOT / 'results/20260517-143528_GravNet_narrow_beta/20260517-143528_GravNet_narrow_beta_best.pth', 9, 2),
+    # 新模型（graph_feat_dim=34，含Bragg曲线特征）训练完后填入路径
+    # ('GravNet_v5', PROJECT_ROOT / 'results/TIMESTAMP_GravNet/TIMESTAMP_GravNet_best.pth', 9, 34),
+    # ('DGCNN_v5',   PROJECT_ROOT / 'results/TIMESTAMP_DGCNN/TIMESTAMP_DGCNN_best.pth',     9, 34),
 ]
 
 
-def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 2):
+def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 34):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'GravNet' in name:
@@ -104,7 +105,7 @@ def run_inference(model, loader, device):
     all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
-        graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+        graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
         logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)  # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())

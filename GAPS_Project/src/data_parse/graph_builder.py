@@ -108,6 +108,10 @@ class GraphBuilder:
         # 反质子=-2212 → 0，反重氘核=-1000010020 → 1
         y = torch.tensor([1 if label == No_ANTIDEUTERON else 0], dtype=torch.long)
 
+        mc_energy = event.get('mc_energy', np.array([], dtype=np.float32))
+        mc_volume_id = event.get('mc_volume_id', np.array([], dtype=np.int64))
+        sili_profile, tof_profile = self._layer_profile(mc_energy, mc_volume_id)
+
         """
         PyG标准图对象：
             包含：
@@ -126,7 +130,30 @@ class GraphBuilder:
             beta=torch.tensor([beta_val], dtype=torch.float32),
             n_hits=torch.tensor([n_hits], dtype=torch.float32),
             total_energy=torch.tensor([total_energy], dtype=torch.float32),
+            sili_profile=torch.tensor(sili_profile, dtype=torch.float32),  # (16,)
+            tof_profile=torch.tensor(tof_profile, dtype=torch.float32),  # (16,)
         )
+
+    @staticmethod
+    def _layer_profile(mc_energy: np.ndarray, mc_volume_id: np.ndarray,
+                       n_layers: int = 16):
+        """
+        按探测器层号聚合MC能量沉积，返回 Si(Li) 和 TOF 各16维能量剖面。
+        layer_idx = volume_id // 1000000
+        Si(Li): layer_idx >= 200,  layer = layer_idx % 100
+        TOF   : layer_idx <  200,  layer = layer_idx % 100
+        """
+        sili = np.zeros(n_layers, dtype=np.float32)
+        tof = np.zeros(n_layers, dtype=np.float32)
+        for e, vid in zip(mc_energy, mc_volume_id):
+            li = int(vid) // 1000000
+            ln = li % 100
+            if 0 <= ln < n_layers:
+                if li >= 200:
+                    sili[ln] += e
+                else:
+                    tof[ln] += e
+        return sili, tof
 
     def _normalize(self, x):
         """各特征减均值除标准差，std=0时跳过"""

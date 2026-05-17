@@ -44,9 +44,9 @@ def get_model(name: str):
     if name == 'GIN':
         return GINClassifier(in_channels=IN_CHANNEL, hidden_dim=64)
     elif name == 'GravNet':
-        return GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=64, graph_feat_dim=2)
+        return GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=64, graph_feat_dim=34)
     elif name == 'DGCNN':
-        return DGCNNClassifier(in_channels=IN_CHANNEL, hidden_dim=64, k=8, graph_feat_dim=2)
+        return DGCNNClassifier(in_channels=IN_CHANNEL, hidden_dim=64, k=8, graph_feat_dim=34)
     else:
         raise ValueError(f'Unknown model: {name}')
 
@@ -89,7 +89,7 @@ def train():
         for batch in train_loader:
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
             logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
             loss = criterion(logits, batch.y.squeeze())
             loss.backward()
@@ -110,7 +110,7 @@ def train():
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
-                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
 
@@ -188,7 +188,7 @@ def resume_train():
         for batch in train_loader:
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
             logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
             loss = criterion(logits, batch.y.squeeze())
             loss.backward()
@@ -209,7 +209,7 @@ def resume_train():
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
-                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
 
@@ -271,7 +271,7 @@ def train_narrow_beta():
         for batch in train_loader:
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+            graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
             logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
             loss = criterion(logits, batch.y.squeeze())
             loss.backward()
@@ -289,7 +289,7 @@ def train_narrow_beta():
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(DEVICE)
-                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
+                graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
                 logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
                 loss = criterion(logits, batch.y.squeeze())
                 val_loss += loss.item() * batch.num_graphs
@@ -319,6 +319,6 @@ def train_narrow_beta():
 
 
 if __name__ == "__main__":
-    #train()
+    train()
     # resume_train()
-    train_narrow_beta()
+    # train_narrow_beta()

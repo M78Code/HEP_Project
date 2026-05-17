@@ -89,8 +89,35 @@ def check_beta():
     print(f"antiP beta: {antiP_betas.mean():.4f} ± {antiP_betas.std():.4f}  (n={len(antiP_betas)})")
     print(f"antiD beta: {antiD_betas.mean():.4f} ± {antiD_betas.std():.4f}  (n={len(antiD_betas)})")
 
+def rec_primary_energy_depositions():
+    import uproot
+    import numpy as np
+
+    with uproot.open(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD' / 'antiD_2tof_FTFP_BERT_1778545887.root') as f:
+        tree_rec = f['TreeRec']
+        tree_mc = f['TreeMc']
+
+        pri_edep = tree_rec['Rec/primaryEnergyDepositions_/primaryEnergyDepositions_.first'].array()
+        mc_edep = tree_mc['Mc/totalEnergyDeposition_'].array()
+        mc_vid = tree_mc['Mc/volumeId_'].array()
+
+        print('primaryEnergyDepositions_[0]:', pri_edep[0])
+        print('Mc/totalEnergyDeposition_[0]:', mc_edep[0])
+        print('Mc/volumeId_[0]:', mc_vid[0])
+        print('长度对比:', len(mc_edep[0]), len(mc_vid[0]))
+
+
 
 if __name__ == '__main__':
     # clustering_demo()
     # cuda_knn_ok()
-    check_beta()
+    rec_primary_energy_depositions()
+
+
+
+"""
+primaryEnergyDepositions_[0]: []
+Mc/totalEnergyDeposition_[0]: [11.4, 12.8, 16, 3.09, 5.78, 2.73, ..., 3.31, 3.15, 2.32, 2.29, 0.0729, 0.0188]
+Mc/volumeId_[0]: [100052000, 100003000, 110003000, ..., 105552000, 201150306, 201210005]
+长度对比: 29 29
+"""

@@ -192,6 +192,8 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
         all_volume_ids = tree_rec["Rec/hitseries_/hitseries_.volume_id_"].array()
         all_event_quality = tree_rec["Rec/event_quality"].array()
         all_rec_betas = tree_rec["Rec/primaryBeta_/primaryBeta_.first"].array()
+        all_mc_energies = tree_mc["Mc/totalEnergyDeposition_"].array()
+        all_mc_vids = tree_mc["Mc/volumeId_"].array()
         all_labels = tree_mc["Mc/primaryPdg_"].array()
         all_betas = tree_mc["Mc/CEventBase/primaryBetaGenerated_"].array()
 
@@ -221,6 +223,8 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
                 "rec_beta": rec_beta,  # 新增：重建β
                 "event_quality": event_quality,  # 新增：事件质量
                 "n_hits": len(energies),
+                "mc_energy": np.array(all_mc_energies[idx], dtype=np.float32),
+                "mc_volume_id": np.array(all_mc_vids[idx], dtype=np.int64),
             })
 
     # ── 保存pickle ─────────────────────────────────────
