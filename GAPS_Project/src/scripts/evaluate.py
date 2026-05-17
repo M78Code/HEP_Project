@@ -81,9 +81,7 @@ EVAL_MODELS = [
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
     # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
-    # 新模型（graph_feat_dim=34，含Bragg曲线特征）训练完后填入路径
-    # ('GravNet_v5', PROJECT_ROOT / 'results/TIMESTAMP_GravNet/TIMESTAMP_GravNet_best.pth', 9, 34),
-    # ('DGCNN_v5',   PROJECT_ROOT / 'results/TIMESTAMP_DGCNN/TIMESTAMP_DGCNN_best.pth',     9, 34),
+    ('GravNet_v2', PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth', 9, 46),
 ]
 
 
@@ -477,8 +475,8 @@ def evaluate_narrow_beta():
 
 
 if __name__ == '__main__':
-    # evaluate()  # 完整推理+评估（第一次运行）
+    evaluate()  # 完整推理+评估（第一次运行）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
     # analyze_beta_window()    # β速度窗口分析（无需重新推理）
-    evaluate_narrow_beta()
+    # evaluate_narrow_beta()
