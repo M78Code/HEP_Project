@@ -406,17 +406,17 @@ def batch_check_branches():
 
 if __name__ == '__main__':
     # check_stopping_volume()
-    batch_check_branches()
+    # batch_check_branches()
     # 反重氘核
-    # batch_convert_root_files(
-    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
-    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
-    # )
+    batch_convert_root_files(
+        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiD'),
+        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiD'),
+    )
     # 反质子
-    # batch_convert_root_files(
-    #     root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
-    #     output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
-    # )
+    batch_convert_root_files(
+        root_dir=Path(PROJECT_ROOT / 'dataset' / 'tar_root' / 'antiP'),
+        output_dir=Path(PROJECT_ROOT / 'dataset' / 'processed' / 'antiP'),
+    )
 
     # ── 验证：用test_sample转换并检查输出 ──
     # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
