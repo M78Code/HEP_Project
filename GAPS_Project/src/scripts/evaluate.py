@@ -79,8 +79,10 @@ EVAL_MODELS = [
     # ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
     # ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
-    ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
-    ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2)
+    # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
+    # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
+    ('GravNet_narrow_beta',
+     PROJECT_ROOT / 'results/20260517-143528_GravNet_narrow_beta/20260517-143528_GravNet_narrow_beta_best.pth', 9, 2),
 ]
 
 
@@ -88,7 +90,7 @@ def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 2):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'GravNet' in name:
-        return GravNetClassifier(in_channels=in_channels, hidden_dim=64)
+        return GravNetClassifier(in_channels=in_channels, hidden_dim=64, graph_feat_dim=graph_feat_dim)
     elif 'DGCNN' in name:
         return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8, graph_feat_dim=graph_feat_dim)
     else:
@@ -103,7 +105,7 @@ def run_inference(model, loader, device):
     for batch in loader:
         batch = batch.to(device=device)
         graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
-        logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat) # [batch, 2] 原始分数
+        logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)  # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())
         all_probs.append(probs.cpu().numpy())
@@ -115,13 +117,13 @@ def run_inference(model, loader, device):
 
 def print_metrics(name, labels, probs):
     """计算评价指标"""
-    preds = (probs >= 0.5).astype(int) # 如果antiD概率 >= 50%, 就判断它是antiD, 否则为antiP
-    acc = accuracy_score(labels, preds) # 总体正确率
-    prec = precision_score(labels, preds, zero_division=0) # 你说是antiD的里面，到底有多少是真的，即纯度（Purity）
-    rec = recall_score(labels, preds, zero_division=0) # 真正的antiD，你找回来了多少，即信号效率（Signal Efficiency）
-    f1 = f1_score(labels, preds, zero_division=0) # 综合Precision + Recall，平衡指标
-    auc = roc_auc_score(labels, probs) # 模型整体分类能力
-    cm = confusion_matrix(labels, preds) # 混淆矩阵（Confusion Matrix）
+    preds = (probs >= 0.5).astype(int)  # 如果antiD概率 >= 50%, 就判断它是antiD, 否则为antiP
+    acc = accuracy_score(labels, preds)  # 总体正确率
+    prec = precision_score(labels, preds, zero_division=0)  # 你说是antiD的里面，到底有多少是真的，即纯度（Purity）
+    rec = recall_score(labels, preds, zero_division=0)  # 真正的antiD，你找回来了多少，即信号效率（Signal Efficiency）
+    f1 = f1_score(labels, preds, zero_division=0)  # 综合Precision + Recall，平衡指标
+    auc = roc_auc_score(labels, probs)  # 模型整体分类能力
+    cm = confusion_matrix(labels, preds)  # 混淆矩阵（Confusion Matrix）
     tn, fp, fn, tp = cm.ravel()
 
     print(f"\n{'=' * 50}")
@@ -180,7 +182,7 @@ def plot_rejection_curve(results, save_path):
 
 def print_rejection_at_efficiency(results, signal_efficiencies=(0.50, 0.80, 0.90, 0.95, 0.98, 0.99)):
     """输出指定信号效率下各模型的背景抑制率"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print('各信号效率下的背景抑制率 （Background Rejection = 1/FPR）')
     print(f"{'Signal Eff':>12}", end="")
     for name, _, _ in results:
@@ -248,6 +250,7 @@ def analyze_only():
 
     print_rejection_at_efficiency(results)
 
+
 def analyze_threshold():
     """阈值优化分析，从已保存的npy文件读取，无需重新推理"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
@@ -301,7 +304,7 @@ def analyze_threshold():
           f"{'F1':>8} {'Rejection(TN/N_antiP)':>22} {'Rej_Power(1/FPR)':>18}")
     print("-" * 70)
 
-    name_dgcnn = 'GravNet'
+    name_dgcnn = 'GravNet_narrow_beta'
     labels_d = next(l for n, l, _ in results if n == name_dgcnn)
     probs_d = next(p for n, _, p in results if n == name_dgcnn)
 
@@ -433,9 +436,41 @@ def analyze_beta_window():
     print(f"\nβ窗口Rejection曲线已保存: {save_path}")
 
 
-if __name__ == '__main__':
-   # evaluate()               # 完整推理+评估（第一次运行）
-   # analyze_only()        # 只输出各效率下的Rejection表
-   analyze_threshold()   # 阈值优化分析（无需重新推理）
-   analyze_beta_window()    # β速度窗口分析（无需重新推理）
+def evaluate_narrow_beta():
+    # 数据加载（只用test集）
+    split_dir = PROJECT_ROOT / 'dataset' / 'split_narrow_beta'
+    print('加载test数据集')
+    _, _, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
+    print(f'test batches: {len(test_loader)}')
 
+    # 输出目录
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    results = []
+    for name, weight_path, in_ch, gf_dim in EVAL_MODELS:
+        print(f'\n加载模型 {name}: {weight_path}')
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim).to(DEVICE)
+        model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
+
+        labels, probs, betas = run_inference(model, test_loader, DEVICE)
+        print_metrics(name, labels, probs)
+        results.append((name, labels, probs))
+
+        # 保存推理结果，供后续单独分析
+        np.save(out_dir / f"{name}_labels.npy", labels)
+        np.save(out_dir / f"{name}_probs.npy", probs)
+        np.save(out_dir / f"{name}_betas.npy", betas)
+
+    # 绘图
+    plot_roc_curves(results, out_dir / "roc_curves.png")
+    plot_rejection_curve(results, out_dir / "rejection_curve.png")
+    print(f"\n所有结果保存至: {out_dir}")
+
+
+if __name__ == '__main__':
+    # evaluate()  # 完整推理+评估（第一次运行）
+    # analyze_only()        # 只输出各效率下的Rejection表
+    # analyze_threshold()   # 阈值优化分析（无需重新推理）
+    # analyze_beta_window()    # β速度窗口分析（无需重新推理）
+    evaluate_narrow_beta()
