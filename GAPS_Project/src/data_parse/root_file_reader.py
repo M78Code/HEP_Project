@@ -404,6 +404,32 @@ def batch_check_branches():
                 print(f'  打开失败: {e}')
 
 
+def check_graph_nan():
+    """检查 graph_builder 输出的 Data 对象是否含 NaN"""
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT.parent))
+    from GAPS_Project.src.data_parse.graph_builder import GraphBuilder
+    builder = GraphBuilder(k=8, normalize=True)
+
+    for folder in ['antiD', 'antiP']:
+        pkl_dir = PROJECT_ROOT / 'dataset' / 'processed' / folder
+        pkl_files = sorted(pkl_dir.glob('*.pkl'))[:1]  # 只查第1个文件
+        nan_x = nan_tof = nan_stop = nan_sili = total = 0
+        for pkl_file in pkl_files:
+            with open(pkl_file, 'rb') as f:
+                data = pickle.load(f)
+            for e in data['events']:
+                total += 1
+                g = builder.build_from_dict(e)
+                if g.x.isnan().any():               nan_x    += 1
+                if g.tof_feat.isnan().any():         nan_tof  += 1
+                if g.stopping_feat.isnan().any():    nan_stop += 1
+                if g.sili_profile.isnan().any():     nan_sili += 1
+        print(f'[{folder}] {total} events | '
+              f'NaN x: {nan_x} | NaN tof_feat: {nan_tof} | '
+              f'NaN stopping_feat: {nan_stop} | NaN sili_profile: {nan_sili}')
+
+
 def check_new_fields_nan():
     """检查新增字段 stopping_pos / stopping_ke 是否含有 NaN"""
     import math
@@ -427,7 +453,7 @@ def check_new_fields_nan():
 
 
 if __name__ == '__main__':
-    check_new_fields_nan()
+    check_graph_nan()
     # batch_check_branches()
     # 反重氘核
     # batch_convert_root_files(
