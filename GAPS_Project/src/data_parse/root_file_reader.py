@@ -235,6 +235,9 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
         all_mc_vids = tree_mc["Mc/volumeId_"].array()
         all_labels = tree_mc["Mc/primaryPdg_"].array()
         all_betas = tree_mc["Mc/CEventBase/primaryBetaGenerated_"].array()
+        all_stopping_ke  = tree_mc["Mc/primaryStoppingKineticEnergy_"].array()
+        all_stopping_pos = tree_mc["Mc/primaryStoppingPosition_"].array()
+        all_stopping_vol = tree_mc["Mc/primaryStoppingVolume_"].array()
 
         for idx in range(len(all_labels)):
             energies = np.array(all_energies[idx], dtype=np.float32)
@@ -264,6 +267,13 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
                 "n_hits": len(energies),
                 "mc_energy": np.array(all_mc_energies[idx], dtype=np.float32),
                 "mc_volume_id": np.array(all_mc_vids[idx], dtype=np.int64),
+                "stopping_ke":  float(all_stopping_ke[idx]),
+                "stopping_pos": np.array([
+                    float(all_stopping_pos[idx]["fX"]),
+                    float(all_stopping_pos[idx]["fY"]),
+                    float(all_stopping_pos[idx]["fZ"]),
+                ], dtype=np.float32),
+                "stopping_vol": int(all_stopping_vol[idx]),
             })
 
     # ── 保存pickle ─────────────────────────────────────

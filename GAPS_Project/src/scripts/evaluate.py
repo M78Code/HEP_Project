@@ -87,7 +87,7 @@ EVAL_MODELS = [
 ]
 
 
-def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 34):
+def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'GravNet' in name:
@@ -105,7 +105,14 @@ def run_inference(model, loader, device):
     all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
-        graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1), batch.sili_profile.view(-1, 16), batch.tof_profile.view(-1, 16)], dim=1)
+        graph_feat = torch.cat([
+            batch.n_hits.view(-1, 1),
+            batch.total_energy.view(-1, 1),
+            batch.sili_profile.view(-1, 16),
+            batch.tof_profile.view(-1, 16),
+            batch.tof_feat.view(-1, 6),
+            batch.stopping_feat.view(-1, 6),
+        ], dim=1)  # (B, 46)
         logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)  # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())

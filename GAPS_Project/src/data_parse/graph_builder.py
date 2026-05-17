@@ -112,6 +112,22 @@ class GraphBuilder:
         mc_volume_id = event.get('mc_volume_id', np.array([], dtype=np.int64))
         sili_profile, tof_profile = self._layer_profile(mc_energy, mc_volume_id)
 
+        # TOF特征（从hitseries推导，6维）
+        tof_features = self._tof_features(energies, volume_ids, positions,
+                                          np.where(np.isnan(event['times']), np.nan, event['times']))
+
+        # MC stopping特征（从pickle新字段读取，6维）
+        stopping_pos = event.get('stopping_pos', np.zeros(3, dtype=np.float32))
+        stopping_vol = int(event.get('stopping_vol', 0))
+        stopping_ke  = float(event.get('stopping_ke', 0.0))
+        stopping_li  = stopping_vol // 1000000
+        stopping_det = 1.0 if stopping_li >= 200 else 0.0
+        stopping_layer_norm = float(stopping_li % 100) / 16.0
+        stopping_feat = np.array([
+            stopping_pos[0], stopping_pos[1], stopping_pos[2],
+            stopping_layer_norm, stopping_det, stopping_ke,
+        ], dtype=np.float32)  # (6,)
+
         """
         PyG标准图对象：
             包含：
@@ -130,9 +146,41 @@ class GraphBuilder:
             beta=torch.tensor([beta_val], dtype=torch.float32),
             n_hits=torch.tensor([n_hits], dtype=torch.float32),
             total_energy=torch.tensor([total_energy], dtype=torch.float32),
-            sili_profile=torch.tensor(sili_profile, dtype=torch.float32),  # (16,)
-            tof_profile=torch.tensor(tof_profile, dtype=torch.float32),  # (16,)
+            sili_profile=torch.tensor(sili_profile, dtype=torch.float32),    # (16,)
+            tof_profile=torch.tensor(tof_profile, dtype=torch.float32),     # (16,)
+            tof_feat=torch.tensor(tof_features, dtype=torch.float32),       # (6,)
+            stopping_feat=torch.tensor(stopping_feat, dtype=torch.float32), # (6,)
         )
+
+    @staticmethod
+    def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
+                      positions: np.ndarray, times: np.ndarray) -> np.ndarray:
+        """从hitseries计算TOF相关特征，返回6维向量"""
+        layer_idx = (volume_ids // 1000000).astype(np.int64)
+        is_tof = layer_idx < 200
+
+        tof_energies  = energies[is_tof]
+        tof_positions = positions[is_tof]
+        tof_times     = times[is_tof]
+
+        n_tof       = float(is_tof.sum())
+        tof_total_e = float(tof_energies.sum()) if n_tof > 0 else 0.0
+
+        valid_mask  = ~np.isnan(tof_times)
+        valid_times = tof_times[valid_mask]
+        valid_pos   = tof_positions[valid_mask]
+
+        if len(valid_times) > 0:
+            first_idx      = int(np.argmin(valid_times))
+            entry_x        = float(valid_pos[first_idx, 0])
+            entry_y        = float(valid_pos[first_idx, 1])
+            entry_z        = float(valid_pos[first_idx, 2])
+            tof_time_range = float(valid_times.max() - valid_times.min())
+        else:
+            entry_x = entry_y = entry_z = tof_time_range = 0.0
+
+        return np.array([n_tof, tof_total_e, entry_x, entry_y, entry_z, tof_time_range],
+                        dtype=np.float32)  # (6,)
 
     @staticmethod
     def _layer_profile(mc_energy: np.ndarray, mc_volume_id: np.ndarray,
