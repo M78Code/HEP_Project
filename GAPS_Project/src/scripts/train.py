@@ -27,7 +27,7 @@ else:
 print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ─────────────────────────────────────────────
-MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'
+MODEL_NAME = 'GravNet'  # 'GIN' | 'GravNet' | 'DGCNN'
 EPOCHS = 50
 BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
@@ -146,7 +146,7 @@ def train():
 
 
 def resume_train():
-    RESUME_FROM = PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth'
+    RESUME_FROM = PROJECT_ROOT / 'results/20260517-070152_GravNet/20260517-070152_GravNet_best.pth'
     RESUME_EPOCH = 50
     TOTAL_EPOCHS = 80
 
