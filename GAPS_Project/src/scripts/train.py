@@ -454,7 +454,7 @@ def train_ablation():
 
 def train_dnn_baseline():
     """DNN基线：仅使用46维graph_feat，无GNN图结构，与GravNet_v2对比"""
-    split_dir = PROJECT_ROOT / "data" / "split"
+    split_dir = PROJECT_ROOT / "dataset" / "split"
     print('加载数据集...')
     train_loader, val_loader, _ = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
@@ -548,4 +548,5 @@ if __name__ == "__main__":
     # train()
     # resume_train()
     # train_narrow_beta()
-    train_ablation()
+    # train_ablation()
+   train_dnn_baseline()

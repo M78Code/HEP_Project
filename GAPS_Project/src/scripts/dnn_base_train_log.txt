@@ -1,0 +1,64 @@
+使用设备：cuda:0
+加载数据集...
+
+模型: DNNBaseline（无图结构，仅graph_feat 46维）
+参数量: 31,554
+Epoch   1/50 | train_loss: 0.1653  train_acc: 0.7854 | val_loss: 0.1430  val_acc: 0.8234 | lr: 0.000300
+  → best model saved (val_loss=0.1430)
+Epoch   2/50 | train_loss: 0.1434  train_acc: 0.8211 | val_loss: 0.1393  val_acc: 0.8299 | lr: 0.000300
+  → best model saved (val_loss=0.1393)
+Epoch   3/50 | train_loss: 0.1395  train_acc: 0.8266 | val_loss: 0.1358  val_acc: 0.8317 | lr: 0.000300
+  → best model saved (val_loss=0.1358)
+Epoch   4/50 | train_loss: 0.1379  train_acc: 0.8288 | val_loss: 0.1310  val_acc: 0.8398 | lr: 0.000300
+  → best model saved (val_loss=0.1310)
+Epoch   5/50 | train_loss: 0.1369  train_acc: 0.8301 | val_loss: 0.1331  val_acc: 0.8359 | lr: 0.000300
+Epoch   6/50 | train_loss: 0.1361  train_acc: 0.8315 | val_loss: 0.1331  val_acc: 0.8356 | lr: 0.000300
+Epoch   7/50 | train_loss: 0.1355  train_acc: 0.8321 | val_loss: 0.1373  val_acc: 0.8296 | lr: 0.000300
+Epoch   8/50 | train_loss: 0.1350  train_acc: 0.8330 | val_loss: 0.1334  val_acc: 0.8351 | lr: 0.000300
+Epoch   9/50 | train_loss: 0.1346  train_acc: 0.8335 | val_loss: 0.1308  val_acc: 0.8402 | lr: 0.000300
+  → best model saved (val_loss=0.1308)
+Epoch  10/50 | train_loss: 0.1343  train_acc: 0.8339 | val_loss: 0.1332  val_acc: 0.8364 | lr: 0.000300
+Epoch  11/50 | train_loss: 0.1339  train_acc: 0.8345 | val_loss: 0.1352  val_acc: 0.8327 | lr: 0.000300
+Epoch  12/50 | train_loss: 0.1337  train_acc: 0.8346 | val_loss: 0.1312  val_acc: 0.8413 | lr: 0.000300
+Epoch  13/50 | train_loss: 0.1334  train_acc: 0.8352 | val_loss: 0.1349  val_acc: 0.8336 | lr: 0.000300
+Epoch  14/50 | train_loss: 0.1332  train_acc: 0.8356 | val_loss: 0.1327  val_acc: 0.8377 | lr: 0.000300
+Epoch  15/50 | train_loss: 0.1330  train_acc: 0.8357 | val_loss: 0.1286  val_acc: 0.8440 | lr: 0.000150
+  → best model saved (val_loss=0.1286)
+Epoch  16/50 | train_loss: 0.1317  train_acc: 0.8377 | val_loss: 0.1295  val_acc: 0.8418 | lr: 0.000150
+Epoch  17/50 | train_loss: 0.1314  train_acc: 0.8380 | val_loss: 0.1350  val_acc: 0.8329 | lr: 0.000150
+Epoch  18/50 | train_loss: 0.1312  train_acc: 0.8383 | val_loss: 0.1337  val_acc: 0.8352 | lr: 0.000150
+Epoch  19/50 | train_loss: 0.1311  train_acc: 0.8384 | val_loss: 0.1311  val_acc: 0.8396 | lr: 0.000150
+Epoch  20/50 | train_loss: 0.1310  train_acc: 0.8383 | val_loss: 0.1400  val_acc: 0.8237 | lr: 0.000150
+Epoch  21/50 | train_loss: 0.1309  train_acc: 0.8388 | val_loss: 0.1359  val_acc: 0.8293 | lr: 0.000150
+Epoch  22/50 | train_loss: 0.1309  train_acc: 0.8386 | val_loss: 0.1331  val_acc: 0.8380 | lr: 0.000150
+Epoch  23/50 | train_loss: 0.1309  train_acc: 0.8388 | val_loss: 0.1376  val_acc: 0.8273 | lr: 0.000150
+Epoch  24/50 | train_loss: 0.1307  train_acc: 0.8388 | val_loss: 0.1363  val_acc: 0.8301 | lr: 0.000150
+Epoch  25/50 | train_loss: 0.1307  train_acc: 0.8389 | val_loss: 0.1333  val_acc: 0.8352 | lr: 0.000150
+Epoch  26/50 | train_loss: 0.1305  train_acc: 0.8393 | val_loss: 0.1326  val_acc: 0.8368 | lr: 0.000150
+Epoch  27/50 | train_loss: 0.1306  train_acc: 0.8391 | val_loss: 0.1355  val_acc: 0.8307 | lr: 0.000150
+Epoch  28/50 | train_loss: 0.1306  train_acc: 0.8392 | val_loss: 0.1362  val_acc: 0.8306 | lr: 0.000150
+Epoch  29/50 | train_loss: 0.1305  train_acc: 0.8392 | val_loss: 0.1353  val_acc: 0.8318 | lr: 0.000150
+Epoch  30/50 | train_loss: 0.1304  train_acc: 0.8394 | val_loss: 0.1353  val_acc: 0.8330 | lr: 0.000075
+Epoch  31/50 | train_loss: 0.1299  train_acc: 0.8401 | val_loss: 0.1365  val_acc: 0.8302 | lr: 0.000075
+Epoch  32/50 | train_loss: 0.1297  train_acc: 0.8401 | val_loss: 0.1364  val_acc: 0.8289 | lr: 0.000075
+Epoch  33/50 | train_loss: 0.1297  train_acc: 0.8404 | val_loss: 0.1363  val_acc: 0.8292 | lr: 0.000075
+Epoch  34/50 | train_loss: 0.1298  train_acc: 0.8402 | val_loss: 0.1351  val_acc: 0.8321 | lr: 0.000075
+Epoch  35/50 | train_loss: 0.1295  train_acc: 0.8406 | val_loss: 0.1332  val_acc: 0.8347 | lr: 0.000075
+Epoch  36/50 | train_loss: 0.1295  train_acc: 0.8406 | val_loss: 0.1360  val_acc: 0.8323 | lr: 0.000075
+Epoch  37/50 | train_loss: 0.1295  train_acc: 0.8405 | val_loss: 0.1363  val_acc: 0.8304 | lr: 0.000075
+Epoch  38/50 | train_loss: 0.1295  train_acc: 0.8404 | val_loss: 0.1353  val_acc: 0.8317 | lr: 0.000075
+Epoch  39/50 | train_loss: 0.1295  train_acc: 0.8405 | val_loss: 0.1345  val_acc: 0.8324 | lr: 0.000075
+Epoch  40/50 | train_loss: 0.1294  train_acc: 0.8405 | val_loss: 0.1350  val_acc: 0.8318 | lr: 0.000075
+Epoch  41/50 | train_loss: 0.1296  train_acc: 0.8405 | val_loss: 0.1354  val_acc: 0.8322 | lr: 0.000075
+Epoch  42/50 | train_loss: 0.1294  train_acc: 0.8406 | val_loss: 0.1340  val_acc: 0.8338 | lr: 0.000075
+Epoch  43/50 | train_loss: 0.1295  train_acc: 0.8406 | val_loss: 0.1310  val_acc: 0.8383 | lr: 0.000075
+Epoch  44/50 | train_loss: 0.1294  train_acc: 0.8406 | val_loss: 0.1319  val_acc: 0.8375 | lr: 0.000075
+Epoch  45/50 | train_loss: 0.1293  train_acc: 0.8409 | val_loss: 0.1331  val_acc: 0.8339 | lr: 0.000037
+Epoch  46/50 | train_loss: 0.1291  train_acc: 0.8411 | val_loss: 0.1379  val_acc: 0.8250 | lr: 0.000037
+Epoch  47/50 | train_loss: 0.1291  train_acc: 0.8412 | val_loss: 0.1360  val_acc: 0.8307 | lr: 0.000037
+Epoch  48/50 | train_loss: 0.1290  train_acc: 0.8415 | val_loss: 0.1347  val_acc: 0.8317 | lr: 0.000037
+Epoch  49/50 | train_loss: 0.1290  train_acc: 0.8414 | val_loss: 0.1326  val_acc: 0.8357 | lr: 0.000037
+Epoch  50/50 | train_loss: 0.1290  train_acc: 0.8412 | val_loss: 0.1333  val_acc: 0.8341 | lr: 0.000037
+
+训练完成，最优模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260518-153003_DNNBaseline/20260518-153003_DNNBaseline_best.pth
+
