@@ -83,15 +83,16 @@ EVAL_MODELS = [
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
     # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
-    ('GravNet_v2', PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth', 9, 46),
+    ('GravNet_v2', PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth', 9, 46, 4),
+    ('GravNet_6blocks', PROJECT_ROOT / 'results/20260518-190823_GravNet_6blocks/20260518-190823_GravNet_6blocks_best.pth', 9, 46, 6),
 ]
 
 
-def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46):
+def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46, num_blocks: int = 4):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=64)
     elif 'GravNet' in name:
-        return GravNetClassifier(in_channels=in_channels, hidden_dim=64, graph_feat_dim=graph_feat_dim)
+        return GravNetClassifier(in_channels=in_channels, hidden_dim=64, graph_feat_dim=graph_feat_dim, num_blocks=num_blocks)
     elif 'DGCNN' in name:
         return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8, graph_feat_dim=graph_feat_dim)
     else:
@@ -235,9 +236,9 @@ def evaluate():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch, gf_dim in EVAL_MODELS:
+    for name, weight_path, in_ch, gf_dim, n_blocks in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim).to(DEVICE)
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
@@ -252,6 +253,7 @@ def evaluate():
     # 绘图
     plot_roc_curves(results, out_dir / "roc_curves.png")
     plot_rejection_curve(results, out_dir / "rejection_curve.png")
+    print_rejection_at_efficiency(results)
     print(f"\n所有结果保存至: {out_dir}")
 
 
@@ -259,7 +261,7 @@ def analyze_only():
     """跳过推理，直接从已保存的npy文件读取结果"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     results = []
-    for name, _, _in_ch, _gf in EVAL_MODELS:
+    for name, _, _in_ch, _gf, _nb in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -274,7 +276,7 @@ def analyze_threshold():
 
     # 加载已保存的推理结果
     results = []
-    for name, _, _in_ch, _gf in EVAL_MODELS:
+    for name, _, _in_ch, _gf, _nb in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -465,9 +467,9 @@ def evaluate_narrow_beta():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch, gf_dim in EVAL_MODELS:
+    for name, weight_path, in_ch, gf_dim, n_blocks in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim).to(DEVICE)
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
@@ -559,9 +561,10 @@ def evaluate_dnn_baseline():
 
 
 if __name__ == '__main__':
-    # evaluate()  # 完整推理+评估（第一次运行）
+    evaluate()            # 完整推理+评估（GravNet_v2 vs GravNet_6blocks）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
     # analyze_beta_window()    # β速度窗口分析（无需重新推理）
     # evaluate_narrow_beta()
-    evaluate_ablation()
+    # evaluate_ablation()
+    # evaluate_dnn_baseline()
