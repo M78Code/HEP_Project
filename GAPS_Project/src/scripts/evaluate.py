@@ -485,7 +485,7 @@ def evaluate_narrow_beta():
 def evaluate_ablation():
     """消融实验评估：加载GravNet_ablation模型（graph_feat_dim=40，无stopping特征）"""
     # ⚠️ 训练完成后把路径填进来
-    ABLATION_MODEL_PATH = PROJECT_ROOT / 'results/PLACEHOLDER/PLACEHOLDER_best.pth'
+    ABLATION_MODEL_PATH = PROJECT_ROOT / 'results/20260518-112552_GravNet_ablation/20260518-112552_GravNet_ablation_best.pth'
 
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载test数据集')
