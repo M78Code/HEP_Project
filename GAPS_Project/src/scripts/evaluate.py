@@ -373,9 +373,9 @@ def analyze_beta_window():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
     # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
-    labels = np.load(out_dir / 'GravNet_labels.npy')
-    probs = np.load(out_dir / 'GravNet_probs.npy')
-    betas = np.load(out_dir / 'GravNet_betas.npy')
+    labels = np.load(out_dir / 'GravNet_v2_labels.npy')
+    probs = np.load(out_dir / 'GravNet_v2_probs.npy')
+    betas = np.load(out_dir / 'GravNet_v2_betas.npy')
 
     # 定义定义β窗口
     windows = [
@@ -475,8 +475,8 @@ def evaluate_narrow_beta():
 
 
 if __name__ == '__main__':
-    evaluate()  # 完整推理+评估（第一次运行）
+    # evaluate()  # 完整推理+评估（第一次运行）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
-    # analyze_beta_window()    # β速度窗口分析（无需重新推理）
+    analyze_beta_window()    # β速度窗口分析（无需重新推理）
     # evaluate_narrow_beta()
