@@ -38,9 +38,9 @@ class GravNetClassifier(nn.Module):
     """
 
     def __init__(self, in_channels: int = 9, hidden_dim: int = 64, space_dimensions: int = 4,
-                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3, graph_feat_dim: int = 2):
+                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3, graph_feat_dim: int = 2, num_blocks: int = 4):
         super(GravNetClassifier, self).__init__()
-        self.num_blocks = 4
+        self.num_blocks = num_blocks
 
         # ── 4个GravNet block ──────────────────────────────
         self.pre_linears = nn.ModuleList()
