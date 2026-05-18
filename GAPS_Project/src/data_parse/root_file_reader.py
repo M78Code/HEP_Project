@@ -457,11 +457,9 @@ def diagnose_detector():
 
     print("加载 test.pkl（前5000个事例）...")
     with open(split_dir / 'test.pkl', 'rb') as f:
-        events = pickle.load(f)
-
-    # 只取前5000个做统计，够了
-    all_events = list(events.values()) if isinstance(events, dict) else events
-    sample = all_events[:5000]
+        payload = pickle.load(f)
+    events = payload['events']  # 直接取events列表
+    sample = events[:5000]
 
     all_vol_ids = []
     for ev in sample:
