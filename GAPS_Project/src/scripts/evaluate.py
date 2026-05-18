@@ -97,20 +97,29 @@ def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46):
 
 
 @torch.no_grad()
-def run_inference(model, loader, device):
+def run_inference(model, loader, device, with_stopping=True):
     """返回（all_labels, all_probs, all_betas）numpy arrays"""
     model.eval()
     all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
-        graph_feat = torch.cat([
-            batch.n_hits.view(-1, 1),
-            batch.total_energy.view(-1, 1),
-            batch.sili_profile.view(-1, 16),
-            batch.tof_profile.view(-1, 16),
-            batch.tof_feat.view(-1, 6),
-            batch.stopping_feat.view(-1, 6),
-        ], dim=1)  # (B, 46)
+        if with_stopping:
+            graph_feat = torch.cat([
+                batch.n_hits.view(-1, 1),
+                batch.total_energy.view(-1, 1),
+                batch.sili_profile.view(-1, 16),
+                batch.tof_profile.view(-1, 16),
+                batch.tof_feat.view(-1, 6),
+                batch.stopping_feat.view(-1, 6),
+            ], dim=1)  # (B, 46)
+        else:
+            graph_feat = torch.cat([
+                batch.n_hits.view(-1, 1),
+                batch.total_energy.view(-1, 1),
+                batch.sili_profile.view(-1, 16),
+                batch.tof_profile.view(-1, 16),
+                batch.tof_feat.view(-1, 6),
+            ], dim=1)  # (B, 40)
         logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)  # [batch, 2] 原始分数
         probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
         all_labels.append(batch.y.squeeze().cpu().numpy())
@@ -473,10 +482,45 @@ def evaluate_narrow_beta():
     plot_rejection_curve(results, out_dir / "rejection_curve.png")
     print(f"\n所有结果保存至: {out_dir}")
 
+def evaluate_ablation():
+    """消融实验评估：加载GravNet_ablation模型（graph_feat_dim=40，无stopping特征）"""
+    # ⚠️ 训练完成后把路径填进来
+    ABLATION_MODEL_PATH = PROJECT_ROOT / 'results/PLACEHOLDER/PLACEHOLDER_best.pth'
+
+    split_dir = PROJECT_ROOT / 'dataset' / 'split'
+    print('加载test数据集')
+    _, _, test_loader = make_data_loaders_from_split(
+        split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
+
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    model = GravNetClassifier(in_channels=9, hidden_dim=64, graph_feat_dim=40).to(DEVICE)
+    model.load_state_dict(torch.load(ABLATION_MODEL_PATH, map_location=DEVICE))
+    print(f'已加载消融模型: {ABLATION_MODEL_PATH}')
+
+    labels, probs, betas = run_inference(model, test_loader, DEVICE, with_stopping=False)
+    print_metrics('GravNet_ablation', labels, probs)
+
+    np.save(out_dir / 'GravNet_ablation_labels.npy', labels)
+    np.save(out_dir / 'GravNet_ablation_probs.npy', probs)
+    np.save(out_dir / 'GravNet_ablation_betas.npy', betas)
+
+    # 与GravNet_v2对比
+    labels_v2 = np.load(out_dir / 'GravNet_v2_labels.npy')
+    probs_v2 = np.load(out_dir / 'GravNet_v2_probs.npy')
+    results = [
+        ('GravNet_v2（有stopping）', labels_v2, probs_v2),
+        ('GravNet_ablation（无stopping）', labels, probs),
+    ]
+    print_rejection_at_efficiency(results)
+    plot_rejection_curve(results, out_dir / 'ablation_rejection_curve.png')
+
 
 if __name__ == '__main__':
     # evaluate()  # 完整推理+评估（第一次运行）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
-    analyze_beta_window()    # β速度窗口分析（无需重新推理）
+    # analyze_beta_window()    # β速度窗口分析（无需重新推理）
     # evaluate_narrow_beta()
+    evaluate_ablation()
