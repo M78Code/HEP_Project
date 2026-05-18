@@ -460,7 +460,8 @@ def diagnose_detector():
         events = pickle.load(f)
 
     # 只取前5000个做统计，够了
-    sample = events[:5000]
+    all_events = list(events.values()) if isinstance(events, dict) else events
+    sample = all_events[:5000]
 
     all_vol_ids = []
     for ev in sample:
