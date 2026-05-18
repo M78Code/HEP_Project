@@ -7,6 +7,8 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_s
                              confusion_matrix, precision_recall_curve)
 import matplotlib
 
+from GAPS_Project.src.models.dnn_baseline import DNNBaseline
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import platform
@@ -515,6 +517,45 @@ def evaluate_ablation():
     ]
     print_rejection_at_efficiency(results)
     plot_rejection_curve(results, out_dir / 'ablation_rejection_curve.png')
+
+
+def evaluate_dnn_baseline():
+    """DNN基线评估，训练完后填入路径"""
+    # ⚠️ 训练完成后填入路径
+    DNN_MODEL_PATH = PROJECT_ROOT / 'results/20260518-153003_DNNBaseline/20260518-153003_DNNBaseline_best.pth'
+
+    split_dir = PROJECT_ROOT / 'dataset' / 'split'
+    print('加载test数据集')
+    _, _, test_loader = make_data_loaders_from_split(
+        split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
+
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    model = DNNBaseline(graph_feat_dim=46, hidden_dim=128).to(DEVICE)
+    model.load_state_dict(torch.load(DNN_MODEL_PATH, map_location=DEVICE))
+    print(f'已加载DNN基线模型: {DNN_MODEL_PATH}')
+
+    labels, probs, betas = run_inference(model, test_loader, DEVICE, with_stopping=True)
+    print_metrics('DNNBaseline', labels, probs)
+
+    np.save(out_dir / 'DNNBaseline_labels.npy', labels)
+    np.save(out_dir / 'DNNBaseline_probs.npy', probs)
+    np.save(out_dir / 'DNNBaseline_betas.npy', betas)
+
+    # 三模型对比
+    labels_v2 = np.load(out_dir / 'GravNet_v2_labels.npy')
+    probs_v2 = np.load(out_dir / 'GravNet_v2_probs.npy')
+    labels_abl = np.load(out_dir / 'GravNet_ablation_labels.npy')
+    probs_abl = np.load(out_dir / 'GravNet_ablation_probs.npy')
+
+    results = [
+        ('GravNet_v2（图+stopping）', labels_v2, probs_v2),
+        ('DNNBaseline（无图+stopping）', labels, probs),
+        ('GravNet_ablation（图+无stopping）', labels_abl, probs_abl),
+    ]
+    print_rejection_at_efficiency(results)
+    plot_rejection_curve(results, out_dir / 'three_way_comparison.png')
 
 
 if __name__ == '__main__':
