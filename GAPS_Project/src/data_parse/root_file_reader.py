@@ -452,8 +452,59 @@ def check_new_fields_nan():
               f'NaN stopping_ke: {nan_ke} | NaN stopping_pos: {nan_pos}')
 
 
+def diagnose_detector():
+    split_dir = PROJECT_ROOT / 'dataset' / 'split'
+
+    print("加载 test.pkl（前5000个事例）...")
+    with open(split_dir / 'test.pkl', 'rb') as f:
+        events = pickle.load(f)
+
+    # 只取前5000个做统计，够了
+    sample = events[:5000]
+
+    all_vol_ids = []
+    for ev in sample:
+        vids = ev.get('volume_id', np.array([]))
+        all_vol_ids.extend(vids.tolist())
+
+    all_vol_ids = np.array(all_vol_ids, dtype=np.int64)
+
+    # volume_id解码规则：layer_idx = volume_id // 1000000
+    layer_idx = all_vol_ids // 1000000
+
+    # Si(Li): layer_idx >= 200
+    # TOF:    layer_idx < 200
+    is_sili = layer_idx >= 200
+    is_tof = layer_idx < 200
+
+    unique_sili = np.unique(all_vol_ids[is_sili])
+    unique_tof = np.unique(all_vol_ids[is_tof])
+
+    print(f"\n===== 探测器通道统计（前5000个事例）=====")
+    print(f"总hit数:          {len(all_vol_ids)}")
+    print(f"Si(Li) hit数:     {is_sili.sum()}")
+    print(f"TOF   hit数:      {is_tof.sum()}")
+    print(f"\nSi(Li) 唯一通道数: {len(unique_sili)}")
+    print(f"TOF   唯一通道数: {len(unique_tof)}")
+
+    print(f"\n--- Si(Li) layer_idx 分布 ---")
+    sili_layers = (unique_sili // 1000000) % 100
+    print(f"  层号范围: {sili_layers.min()} ~ {sili_layers.max()}")
+    print(f"  层数:     {len(np.unique(sili_layers))}")
+
+    print(f"\n--- TOF layer_idx 分布 ---")
+    tof_layers = (unique_tof // 1000000) % 100
+    print(f"  层号范围: {tof_layers.min()} ~ {tof_layers.max()}")
+    print(f"  层数:     {len(np.unique(tof_layers))}")
+
+    print(f"\n===== 与中上2021对比 =====")
+    print(f"中上(旧GAPS): Si(Li) 1440通道, TOF ≤200通道")
+    print(f"本数据:       Si(Li) {len(unique_sili)}通道, TOF {len(unique_tof)}通道")
+
+
 if __name__ == '__main__':
-    check_graph_nan()
+    diagnose_detector()
+    # check_graph_nan()
     # batch_check_branches()
     # 反重氘核
     # batch_convert_root_files(
