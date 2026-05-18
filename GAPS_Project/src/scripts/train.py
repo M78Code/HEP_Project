@@ -543,14 +543,15 @@ def train_dnn_baseline():
     writer.close()
     print(f"\n训练完成，最优模型: {best_model_path}")
 
-def train_deeper_gravnet(num_blocks: int = 6):
-    """测试更深GravNet，num_blocks可选6或8"""
+def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
+    """测试不同深度/宽度GravNet，num_blocks可选4/6/8，hidden_dim可选64/128"""
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
     train_loader, val_loader, _ = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
 
-    model = GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=64, graph_feat_dim=46, num_blocks=num_blocks).to(DEVICE)
-    print(f"\n模型: GravNet_{num_blocks}blocks")
+    exp_name = f"GravNet_{num_blocks}blocks_h{hidden_dim}"
+    model = GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=hidden_dim, graph_feat_dim=46, num_blocks=num_blocks).to(DEVICE)
+    print(f"\n模型: {exp_name}")
     print(f"参数量: {sum(p.numel() for p in model.parameters()):,}")
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
@@ -558,12 +559,12 @@ def train_deeper_gravnet(num_blocks: int = 6):
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_dir = PROJECT_ROOT / "results" / f"{timestamp}_GravNet_{num_blocks}blocks"
+    log_dir = PROJECT_ROOT / "results" / f"{timestamp}_{exp_name}"
     log_dir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(log_dir))
 
     best_val_loss = float('inf')
-    best_model_path = log_dir / f'{timestamp}_GravNet_{num_blocks}blocks_best.pth'
+    best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -632,6 +633,22 @@ def train_deeper_gravnet(num_blocks: int = 6):
 
     writer.close()
     print(f"\n训练完成，最优模型: {best_model_path}")
+    return best_model_path
+
+
+def train_all_combinations():
+    """顺序训练所有待对比的深度/宽度组合"""
+    combos = [
+        (4, 128),   # 宽版v2：更宽但同深度
+        (6, 128),   # 宽版6块
+        (8, 64),    # 更深8块
+    ]
+    for num_blocks, hidden_dim in combos:
+        print(f"\n{'=' * 60}")
+        print(f"开始训练: num_blocks={num_blocks}, hidden_dim={hidden_dim}")
+        print(f"{'=' * 60}")
+        best_path = train_deeper_gravnet(num_blocks=num_blocks, hidden_dim=hidden_dim)
+        print(f"✓ 完成: {best_path}\n")
 
 
 if __name__ == "__main__":
@@ -639,5 +656,6 @@ if __name__ == "__main__":
     # resume_train()
     # train_narrow_beta()
     # train_ablation()
-   # train_dnn_baseline()
-   train_deeper_gravnet(num_blocks=6)
+    # train_dnn_baseline()
+    # train_deeper_gravnet(num_blocks=6)
+    train_all_combinations()
