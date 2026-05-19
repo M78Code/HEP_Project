@@ -83,18 +83,20 @@ EVAL_MODELS = [
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
     # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
-    ('GravNet_v2', PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth', 9, 46, 4),
-    ('GravNet_6blocks', PROJECT_ROOT / 'results/20260518-190823_GravNet_6blocks/20260518-190823_GravNet_6blocks_best.pth', 9, 46, 6),
+    ('GravNet_v2',         PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth',         9, 46, 4, 64),
+    ('GravNet_6blocks',    PROJECT_ROOT / 'results/20260518-190823_GravNet_6blocks/20260518-190823_GravNet_6blocks_best.pth',        9, 46, 6, 64),
+    ('GravNet_4blocks_h128', PROJECT_ROOT / 'results/20260518-232109_GravNet_4blocks_h128/20260518-232109_GravNet_4blocks_h128_best.pth', 9, 46, 4, 128),
+    ('GravNet_6blocks_h128', PROJECT_ROOT / 'results/20260519-043428_GravNet_6blocks_h128/20260519-043428_GravNet_6blocks_h128_best.pth', 9, 46, 6, 128),
 ]
 
 
-def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46, num_blocks: int = 4):
+def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46, num_blocks: int = 4, hidden_dim: int = 64):
     if 'GIN' in name:
-        return GINClassifier(in_channels=in_channels, hidden_dim=64)
+        return GINClassifier(in_channels=in_channels, hidden_dim=hidden_dim)
     elif 'GravNet' in name:
-        return GravNetClassifier(in_channels=in_channels, hidden_dim=64, graph_feat_dim=graph_feat_dim, num_blocks=num_blocks)
+        return GravNetClassifier(in_channels=in_channels, hidden_dim=hidden_dim, graph_feat_dim=graph_feat_dim, num_blocks=num_blocks)
     elif 'DGCNN' in name:
-        return DGCNNClassifier(in_channels=in_channels, hidden_dim=64, k=8, graph_feat_dim=graph_feat_dim)
+        return DGCNNClassifier(in_channels=in_channels, hidden_dim=hidden_dim, k=8, graph_feat_dim=graph_feat_dim)
     else:
         raise ValueError(f"Unknown model: {name}")
 
@@ -236,9 +238,9 @@ def evaluate():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch, gf_dim, n_blocks in EVAL_MODELS:
+    for name, weight_path, in_ch, gf_dim, n_blocks, h_dim in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks).to(DEVICE)
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks, hidden_dim=h_dim).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
@@ -261,7 +263,7 @@ def analyze_only():
     """跳过推理，直接从已保存的npy文件读取结果"""
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     results = []
-    for name, _, _in_ch, _gf, _nb in EVAL_MODELS:
+    for name, _, _in_ch, _gf, _nb, _hd in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -276,7 +278,7 @@ def analyze_threshold():
 
     # 加载已保存的推理结果
     results = []
-    for name, _, _in_ch, _gf, _nb in EVAL_MODELS:
+    for name, _, _in_ch, _gf, _nb, _hd in EVAL_MODELS:
         labels = np.load(out_dir / f"{name}_labels.npy")
         probs = np.load(out_dir / f"{name}_probs.npy")
         results.append((name, labels, probs))
@@ -467,9 +469,9 @@ def evaluate_narrow_beta():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    for name, weight_path, in_ch, gf_dim, n_blocks in EVAL_MODELS:
+    for name, weight_path, in_ch, gf_dim, n_blocks, h_dim in EVAL_MODELS:
         print(f'\n加载模型 {name}: {weight_path}')
-        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks).to(DEVICE)
+        model = get_model(name, in_channels=in_ch, graph_feat_dim=gf_dim, num_blocks=n_blocks, hidden_dim=h_dim).to(DEVICE)
         model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
 
         labels, probs, betas = run_inference(model, test_loader, DEVICE)
