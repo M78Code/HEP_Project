@@ -387,10 +387,10 @@ def analyze_beta_window():
     """
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
-    # 加载DGCNN推理结果 + DGCNN_v2的真实beta值（同一test集，顺序一致）
-    labels = np.load(out_dir / 'GravNet_v2_labels.npy')
-    probs = np.load(out_dir / 'GravNet_v2_probs.npy')
-    betas = np.load(out_dir / 'GravNet_v2_betas.npy')
+    # 加载最优模型推理结果
+    labels = np.load(out_dir / 'GravNet_6blocks_h128_labels.npy')
+    probs = np.load(out_dir / 'GravNet_6blocks_h128_probs.npy')
+    betas = np.load(out_dir / 'GravNet_6blocks_h128_betas.npy')
 
     # 定义定义β窗口
     windows = [
@@ -447,7 +447,7 @@ def analyze_beta_window():
     plt.axvline(x=0.98, color='red', linestyle='--', linewidth=0.8, label='Signal Eff=0.98')
     plt.xlabel('Signal Efficiency (antiD Recall)')
     plt.ylabel('Rejection Power (1/FPR)')
-    plt.title('GravNet — Rejection Power by β Window')
+    plt.title('GravNet_6blocks_h128 — Rejection Power by β Window')
     plt.legend(fontsize=9)
     plt.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -563,10 +563,10 @@ def evaluate_dnn_baseline():
 
 
 if __name__ == '__main__':
-    evaluate()            # 完整推理+评估（GravNet_v2 vs GravNet_6blocks）
+    # evaluate()            # 完整推理+评估
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
-    # analyze_beta_window()    # β速度窗口分析（无需重新推理）
+    analyze_beta_window()   # β速度窗口分析（GravNet_6blocks_h128，无需重新推理）
     # evaluate_narrow_beta()
     # evaluate_ablation()
     # evaluate_dnn_baseline()
