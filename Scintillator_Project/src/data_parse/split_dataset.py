@@ -1,36 +1,35 @@
 """
-位置ごとの層化分割を用いて、
-データセットを train / val / test に分割する
-割合：70% / 15% / 15%
+数据分割，按位置分层，将数据集分割为train/val/test
+比例：70% / 15% 15%
 """
 import json
 import random
 from pathlib import Path
 
-# 乱数シードを固定して、毎回同じ分割結果を再現できるようにする
-random.seed(42)#
-#train / val / test の分割も毎回一致する
+# 固定随机种子，保证每次分割结果一致
+random.seed(42)# 作用一句话：让随机结果“可复现”每次打乱的结果 完全一样
+#train / val / test 的划分 每次都一致
 
-# パス設定
+# 路径
 input_dir = Path('../../dataset/processed/processed_ch0_and_ch1_to_json')
 output_dir = Path('../../dataset/split')
 output_dir.mkdir(parents=True, exist_ok=True)
 
-# 分割割合
+# 分割比例
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
 TEST_RATIO = 0.15
 
-# すべてのJSONファイルを読み込む
+# 读取所有JSON文件
 json_files = sorted(input_dir.glob('*.json'), key=lambda x: int(x.stem.split('_')[1]))
 
 train_events = []
 val_events = []
 test_events = []
 
-print(f'位置ごとの層化分割を開始...\n')
+print(f'开始按位置分层分割...\n')
 print('='*70)
-print(f"{'ファイル':<20} {'位置(cm)':<10} {'総数':<8} {'Train':<8} {'Val':<8} {'Test':<8}")
+print(f"{'文件':<20} {'位置(cm)':<10} {'总数':<8} {'Train':<8} {'Val':<8} {'Test':<8}")
 print("="*70)
 
 for json_file in json_files:
@@ -42,20 +41,20 @@ for json_file in json_files:
     events = data['events']
     n = len(events)
 
-    # ランダムシャッフル（固定シード）
+    # 随机打乱（固定种子）
     random.shuffle(events)
 
-    # 分割位置を計算
+    # 计算分割点
     n_train = int(n * TRAIN_RATIO)
     n_val = int(n * VAL_RATIO)
-    n_test = n - n_val - n_train # 残りはすべてtestへ
+    n_test = n - n_val - n_train # 剩余全归test
 
-    # データ分割
+    # 分割
     split_train = events[:n_train]
     split_val = events[n_train: n_train+n_val]
     split_test = events[n_train+n_val:]
 
-    # 各eventにposition_labelを追加（位置ごとに層化されたデータセット）
+    # 为每个event加上position_label（按“位置”分层的数据集）
     for e in split_train:
         e['position_label'] = position
     for e in split_val:
@@ -71,14 +70,14 @@ for json_file in json_files:
 
 print("="*70)
 total = len(train_events) + len(val_events) + len(test_events)
-print(f"{'合計':<20} {'':<10} {total:<8} {len(train_events):<8} {len(val_events):<8} {len(test_events):<8}")
+print(f"{'合计':<20} {'':<10} {total:<8} {len(train_events):<8} {len(val_events):<8} {len(test_events):<8}")
 
-# 結合後のデータを再度シャッフル eg: シャッフル前 → [10cm, 10cm, 10cm, 20cm, 20cm]，シャッフル後 → [20cm, 10cm, 20cm, 10cm, 10cm]
+# 打乱合并后的数据 eg: 打乱前是[10cm, 10cm, 10cm, 20cm, 20cm]，打乱后是[20cm, 10cm, 20cm, 10cm, 10cm]
 random.shuffle(train_events)
 random.shuffle(val_events)
 random.shuffle(test_events)
 
-# JSON形式で保存
+# 保存为JSON
 splits = {
     'train': train_events,
     'val': val_events,
@@ -94,11 +93,11 @@ for split_name, events in splits.items():
     output_file = output_dir / f'{split_name}.json'
     with open(output_file, 'w') as f:
         json.dump(output, f, indent=2)
-    print(f"\n✅ {split_name}.json を保存しました（{len(events)} events）→ {output_file}")
+    print(f"\n✅ {split_name}.json 已保存（{len(events)} events）→ {output_file}")
 
 print("\n" + "="*70)
-print("✅ データ分割が完了しました！")
-print(f"出力ディレクトリ：{output_dir}")
+print("✅ 数据分割完成！")
+print(f"输出目录：{output_dir}")
 
 
 """
