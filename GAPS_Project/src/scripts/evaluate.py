@@ -83,6 +83,7 @@ EVAL_MODELS = [
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
     # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
     # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
+    ('DGCNN_full',         PROJECT_ROOT / 'results/20260521-125721_DGCNN/20260521-125721_DGCNN_best.pth',                           9, 46, 4, 64),
     ('GravNet_v2',         PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth',         9, 46, 4, 64),
     ('GravNet_6blocks',    PROJECT_ROOT / 'results/20260518-190823_GravNet_6blocks/20260518-190823_GravNet_6blocks_best.pth',        9, 46, 6, 64),
     ('GravNet_4blocks_h128', PROJECT_ROOT / 'results/20260518-232109_GravNet_4blocks_h128/20260518-232109_GravNet_4blocks_h128_best.pth', 9, 46, 4, 128),
@@ -563,10 +564,10 @@ def evaluate_dnn_baseline():
 
 
 if __name__ == '__main__':
-    # evaluate()            # 完整推理+评估
+    evaluate()              # 完整推理+评估（DGCNN_full含む全5モデル）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
     # analyze_beta_window()   # β速度窗口分析（GravNet_6blocks_h128，无需重新推理）
     # evaluate_narrow_beta()
     # evaluate_ablation()
-    evaluate_dnn_baseline()
+    # evaluate_dnn_baseline()
