@@ -192,7 +192,7 @@ def plot_rejection_curve(results, save_path):
 
     plt.xlabel('Signal Efficiency (antiD recall)')
     plt.ylabel('Background Rejection (1 / FPR)')
-    plt.title('Rejection Curve - antiD Signal vs antiP Background')
+    # plt.title('Rejection Curve - antiD Signal vs antiP Background')
     plt.legend()
     plt.xlim(0.5, 1.0)
     plt.ylim(1, 2e4)
@@ -568,11 +568,30 @@ def evaluate_dnn_baseline():
     plot_rejection_curve(results, out_dir / 'three_way_comparison.png')
 
 
+def plot_three_way():
+    """直接从已保存的npy文件生成three_way_comparison.png，无需重新推理"""
+    out_dir = PROJECT_ROOT / 'results' / 'evaluation'
+    labels_v2  = np.load(out_dir / 'GravNet_v2_labels.npy')
+    probs_v2   = np.load(out_dir / 'GravNet_v2_probs.npy')
+    labels_dnn = np.load(out_dir / 'DNNBaseline_labels.npy')
+    probs_dnn  = np.load(out_dir / 'DNNBaseline_probs.npy')
+    labels_abl = np.load(out_dir / 'GravNet_ablation_labels.npy')
+    probs_abl  = np.load(out_dir / 'GravNet_ablation_probs.npy')
+    results = [
+        ('GravNet_v2 (Graph+Stopping)',         labels_v2,  probs_v2),
+        ('DNNBaseline (No Graph+Stopping)',      labels_dnn, probs_dnn),
+        ('GravNet_ablation (Graph+No Stopping)', labels_abl, probs_abl),
+    ]
+    plot_rejection_curve(results, out_dir / 'three_way_comparison.png')
+    print_rejection_at_efficiency(results)
+
+
 if __name__ == '__main__':
     # evaluate()              # 完整推理+评估（DGCNN_full含む全5モデル）
-    # analyze_only()        # 只输出各效率下的Rejection表
-    # analyze_threshold()   # 阈值优化分析（无需重新推理）
+    # analyze_only()          # 只输出各效率下的Rejection表
+    # analyze_threshold()     # 阈值优化分析（无需重新推理）
     # analyze_beta_window()   # β速度窗口分析（GravNet_6blocks_h128，无需重新推理）
     # evaluate_narrow_beta()
     # evaluate_ablation()
-    evaluate_dnn_baseline()
+    # evaluate_dnn_baseline() # 完整推理（慢，只在服务器上跑）
+    plot_three_way()           # 直接从npy生成图（快）
