@@ -107,11 +107,38 @@ def rec_primary_energy_depositions():
         print('长度对比:', len(mc_edep[0]), len(mc_vid[0]))
 
 
+def check_range():
+    import pickle
+    import numpy as np
+
+    train_pkl_path = PROJECT_ROOT / 'dataset' / 'split' / 'train.pkl'
+    with open(train_pkl_path, 'rb') as f:
+        payload = pickle.load(f)
+
+    data = payload['events']
+    print(f'総事例数: {len(data)}')
+    print(f'フィールド一覧: {list(data[0].keys())}')
+
+    x_all, y_all = [], []
+    for ev in data[:2000]:
+        vids = np.array(ev['volume_id'])
+        pos  = np.array(ev['positions'])
+        mask = (vids // 1000000) >= 200
+        if mask.any():
+            x_all.extend(pos[mask, 0].tolist())
+            y_all.extend(pos[mask, 1].tolist())
+
+    print(f'X: {min(x_all):.1f} ~ {max(x_all):.1f}')
+    print(f'Y: {min(y_all):.1f} ~ {max(y_all):.1f}')
+
+
+
 
 if __name__ == '__main__':
     # clustering_demo()
     # cuda_knn_ok()
-    rec_primary_energy_depositions()
+    check_range()
+    # rec_primary_energy_depositions()
 
 
 
