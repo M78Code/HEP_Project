@@ -17,15 +17,17 @@ BATCH_SIZE = 200       # Nakagami A.2
 EPOCHS     = 100
 LR         = 4e-5      # Nakagami A.2: 0.00004
 PATIENCE   = 10        # early stopping
+NUM_WORKERS = 8
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
 SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
+
 
 def train():
   print(f'使用设备：{DEVICE}')
   train_set = HybridDataset(DATA_DIR / 'train.pkl')
   val_set   = HybridDataset(DATA_DIR / 'val.pkl')
-  train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=4, pin_memory=True)
-  val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
+  train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
+  val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
   model     = CNNDNNHybrid(tof_dim=11).to(DEVICE)
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
