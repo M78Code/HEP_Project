@@ -9,7 +9,7 @@ import GAPS_Project
 
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
-from GAPS_Project.src.data_parse.hybrid_dataset import HybridDataset
+from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -24,8 +24,8 @@ SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
 
 def train():
   print(f'使用设备：{DEVICE}')
-  train_set = HybridDataset(DATA_DIR / 'train.pkl')
-  val_set   = HybridDataset(DATA_DIR / 'val.pkl')
+  train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid.npz')
+  val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid.npz')
   train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
   val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
