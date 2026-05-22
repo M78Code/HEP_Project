@@ -196,10 +196,7 @@ def plot_rejection_curve(results, save_path):
     plt.legend()
     plt.xlim(0.5, 1.0)
     plt.ylim(1, 2e4)
-    plt.grid(True, which='both', linestyle='--', alpha=0.5)
-    import matplotlib.ticker as ticker
-    plt.gca().yaxis.set_major_locator(ticker.LogLocator(base=10, numticks=15))
-    plt.gca().yaxis.set_major_formatter(ticker.LogFormatterMathtext())
+    plt.grid(True, which='major', linestyle='--', alpha=0.5)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
