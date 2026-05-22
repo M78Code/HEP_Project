@@ -1,7 +1,9 @@
 from pathlib import Path
+import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 import GAPS_Project
 
@@ -35,9 +37,11 @@ def train():
   patience_counter = 0
 
   for epoch in range(1, EPOCHS + 1):
+      epoch_start = time.time()
       model.train()
       t_loss = t_acc = 0.0
-      for voxel, tof, label in train_loader:
+      train_bar = tqdm(train_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [train]', leave=False)
+      for voxel, tof, label in train_bar:
           voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
           optimizer.zero_grad()
           out  = model(voxel, tof)
@@ -46,11 +50,12 @@ def train():
           optimizer.step()
           t_loss += loss.item()
           t_acc  += ((out > 0).long() == label.long()).float().mean().item()
+          train_bar.set_postfix(loss=f'{loss.item():.4f}')
 
       model.eval()
       v_loss = v_acc = 0.0
       with torch.no_grad():
-          for voxel, tof, label in val_loader:
+          for voxel, tof, label in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
               voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
               out    = model(voxel, tof)
               v_loss += criterion(out, label).item()
@@ -59,10 +64,12 @@ def train():
       t_loss /= len(train_loader); t_acc /= len(train_loader)
       v_loss /= len(val_loader);   v_acc /= len(val_loader)
       scheduler.step()
+      elapsed = time.time() - epoch_start
 
       print(f'Epoch {epoch:3d}/{EPOCHS} | '
             f'train_loss: {t_loss:.4f}  train_acc: {t_acc:.4f} | '
-            f'val_loss: {v_loss:.4f}  val_acc: {v_acc:.4f}')
+            f'val_loss: {v_loss:.4f}  val_acc: {v_acc:.4f} | '
+            f'{elapsed:.0f}s')
 
       if v_loss < best_val_loss:
           best_val_loss = v_loss
