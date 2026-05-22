@@ -194,6 +194,7 @@ def plot_rejection_curve(results, save_path):
     plt.ylabel('Background Rejection (1 / FPR)')
     plt.title('Rejection Curve - antiD Signal vs antiP Background')
     plt.legend()
+    plt.xlim(0.5, 1.0)
     plt.ylim(1, 2e4)
     plt.grid(True, which='both', linestyle='--', alpha=0.5)
     import matplotlib.ticker as ticker
