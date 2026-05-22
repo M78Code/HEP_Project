@@ -195,6 +195,10 @@ def plot_rejection_curve(results, save_path):
     plt.title('Rejection Curve - antiD Signal vs antiP Background')
     plt.legend()
     plt.grid(True, which='both', linestyle='--', alpha=0.5)
+    # 显式指定每个数量级的刻度
+    import matplotlib.ticker as ticker
+    plt.gca().yaxis.set_major_locator(ticker.LogLocator(base=10, numticks=15))
+    plt.gca().yaxis.set_major_formatter(ticker.LogFormatterMathtext())
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
