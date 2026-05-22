@@ -564,10 +564,10 @@ def evaluate_dnn_baseline():
 
 
 if __name__ == '__main__':
-    evaluate()              # 完整推理+评估（DGCNN_full含む全5モデル）
+    # evaluate()              # 完整推理+评估（DGCNN_full含む全5モデル）
     # analyze_only()        # 只输出各效率下的Rejection表
     # analyze_threshold()   # 阈值优化分析（无需重新推理）
     # analyze_beta_window()   # β速度窗口分析（GravNet_6blocks_h128，无需重新推理）
     # evaluate_narrow_beta()
     # evaluate_ablation()
-    # evaluate_dnn_baseline()
+    evaluate_dnn_baseline()
