@@ -197,6 +197,13 @@ def plot_rejection_curve(results, save_path):
     plt.xlim(0.5, 1.0)
     plt.ylim(1, 2e4)
     plt.grid(True, which='major', linestyle='--', alpha=0.5)
+    import matplotlib.ticker as ticker
+    def _log_fmt(x, _):
+        if x == 1:   return '1'
+        if x == 10:  return '10'
+        exp = int(round(np.log10(x)))
+        return f'$10^{{{exp}}}$'
+    plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(_log_fmt))
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
