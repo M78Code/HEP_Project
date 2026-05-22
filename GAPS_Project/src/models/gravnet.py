@@ -8,7 +8,7 @@ GNN 更适合不规则探测器几何的原因。
 
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GravNetConv, global_mean_pool
+from torch_geometric.nn import GravNetConv, global_mean_pool, global_max_pool
 
 
 class GravNetClassifier(nn.Module):
@@ -66,7 +66,15 @@ class GravNetClassifier(nn.Module):
         # ── 分类头 ─────────────────────────────────────────
         # concat 4个block输出 + 原始特征的线性映射
         self.skip_linear = nn.Linear(in_channels, hidden_dim)
-        concat_dim = hidden_dim * self.num_blocks + hidden_dim + graph_feat_dim
+        node_feat_dim = hidden_dim * self.num_blocks + hidden_dim
+
+        # mean+max pool 后压缩到 128 维，防止高维 GNN 特征淹没全局物理特征
+        self.pool_compress = nn.Sequential(
+            nn.Linear(node_feat_dim * 2, 128),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+        )
+        concat_dim = 128 + graph_feat_dim  # 128(GNN压缩) + 46(物理特征) = 174
 
         self.classifier = nn.Sequential(
             nn.Linear(concat_dim, hidden_dim),
@@ -100,11 +108,17 @@ class GravNetClassifier(nn.Module):
         # 拼接所有block输出 + skip
         x_cat = torch.cat(block_outputs + [x_skip], dim=1)
 
-        # 节点级 → 图级
-        x_graph = global_mean_pool(x_cat, batch)
+        # 节点级 → 图级（mean + max 拼接，保留布拉格峰极值）
+        x_mean = global_mean_pool(x_cat, batch)
+        x_max  = global_max_pool(x_cat, batch)
+        x_pool = torch.cat([x_mean, x_max], dim=1)
+
+        # 压缩到 128 维，平衡 GNN 特征与全局物理特征的比例
+        x_compressed = self.pool_compress(x_pool)
+
         if graph_feat is not None:
-            x_graph = torch.cat([x_graph, graph_feat], dim=1)
-        return self.classifier(x_graph)
+            x_compressed = torch.cat([x_compressed, graph_feat], dim=1)
+        return self.classifier(x_compressed)
 
 
 # ── 快速测试 ────────────────────────────────────────────
