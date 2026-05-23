@@ -1,5 +1,6 @@
 # Step 4: 训练脚本
 
+import time
 import torch
 import torch.nn as nn
 from pathlib import Path
@@ -7,6 +8,7 @@ from datetime import datetime
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 import GAPS_Project
 
 from GAPS_Project.src.data_parse.data_loader import make_data_loaders_from_split
@@ -567,9 +569,11 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
     best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
 
     for epoch in range(1, EPOCHS + 1):
+        epoch_start = time.time()
         model.train()
         total_loss, total_correct, total_samples = 0.0, 0, 0
-        for batch in train_loader:
+        train_bar = tqdm(train_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [train]', leave=False)
+        for batch in train_bar:
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
             graph_feat = torch.cat([
@@ -588,6 +592,7 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
             preds = logits.argmax(dim=1)
             total_correct += (preds == batch.y.squeeze()).sum().item()
             total_samples += batch.num_graphs
+            train_bar.set_postfix(loss=f'{loss.item():.4f}')
 
         train_loss = total_loss / total_samples
         train_acc = total_correct / total_samples
@@ -595,7 +600,7 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
         model.eval()
         val_loss, val_correct, val_samples = 0.0, 0, 0
         with torch.no_grad():
-            for batch in val_loader:
+            for batch in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
                 batch = batch.to(DEVICE)
                 graph_feat = torch.cat([
                     batch.n_hits.view(-1, 1),
@@ -615,11 +620,12 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
         val_loss /= val_samples
         val_acc = val_correct / val_samples
         scheduler.step()
+        elapsed = time.time() - epoch_start
 
         print(f"Epoch {epoch:3d}/{EPOCHS} | "
               f"train_loss: {train_loss:.4f}  train_acc: {train_acc:.4f} | "
               f"val_loss: {val_loss:.4f}  val_acc: {val_acc:.4f} | "
-              f"lr: {scheduler.get_last_lr()[0]:.6f}")
+              f"lr: {scheduler.get_last_lr()[0]:.6f} | {elapsed:.0f}s")
 
         writer.add_scalar("Loss/train", train_loss, epoch)
         writer.add_scalar("Loss/val", val_loss, epoch)
@@ -652,10 +658,10 @@ def train_all_combinations():
 
 
 if __name__ == "__main__":
-    train()   # DGCNN × graph_feat_dim=46（含stopping特征）
+    # train()   # DGCNN × graph_feat_dim=46（含stopping特征）
     # resume_train()
     # train_narrow_beta()
     # train_ablation()
     # train_dnn_baseline()
-    # train_deeper_gravnet(num_blocks=6)
+    train_deeper_gravnet(num_blocks=6, hidden_dim=128)   # GravNet_v3: mean+max pool + 压缩层
     # train_all_combinations()
