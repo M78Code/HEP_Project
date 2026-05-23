@@ -30,6 +30,7 @@ def train():
   val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
   model     = CNNDNNHybrid(tof_dim=11).to(DEVICE)
+  model     = torch.compile(model)
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
   criterion = nn.BCEWithLogitsLoss()
