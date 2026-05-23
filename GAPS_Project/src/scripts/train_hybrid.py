@@ -34,7 +34,6 @@ def train():
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
   criterion = nn.BCEWithLogitsLoss()
-  scaler    = torch.amp.GradScaler('cuda')   # 混合精度
 
   print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
   best_val_loss = float('inf')
@@ -48,12 +47,10 @@ def train():
       for voxel, tof, label in train_bar:
           voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
           optimizer.zero_grad()
-          with torch.amp.autocast('cuda'):
-              out  = model(voxel, tof)
-              loss = criterion(out, label)
-          scaler.scale(loss).backward()
-          scaler.step(optimizer)
-          scaler.update()
+          out  = model(voxel, tof)
+          loss = criterion(out, label)
+          loss.backward()
+          optimizer.step()
           t_loss += loss.item()
           t_acc  += ((out > 0).long() == label.long()).float().mean().item()
           train_bar.set_postfix(loss=f'{loss.item():.4f}')
@@ -63,9 +60,8 @@ def train():
       with torch.no_grad():
           for voxel, tof, label in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
               voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
-              with torch.amp.autocast('cuda'):
-                  out    = model(voxel, tof)
-                  v_loss += criterion(out, label).item()
+              out    = model(voxel, tof)
+              v_loss += criterion(out, label).item()
               v_acc  += ((out > 0).long() == label.long()).float().mean().item()
 
       t_loss /= len(train_loader); t_acc /= len(train_loader)
