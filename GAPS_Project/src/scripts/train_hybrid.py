@@ -47,8 +47,9 @@ def train():
       for voxel, tof, label in train_bar:
           voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
           optimizer.zero_grad()
-          out  = model(voxel, tof)
-          loss = criterion(out, label)
+          with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+              out  = model(voxel, tof)
+              loss = criterion(out, label)
           loss.backward()
           optimizer.step()
           t_loss += loss.item()
@@ -60,8 +61,9 @@ def train():
       with torch.no_grad():
           for voxel, tof, label in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
               voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
-              out    = model(voxel, tof)
-              v_loss += criterion(out, label).item()
+              with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                  out    = model(voxel, tof)
+                  v_loss += criterion(out, label).item()
               v_acc  += ((out > 0).long() == label.long()).float().mean().item()
 
       t_loss /= len(train_loader); t_acc /= len(train_loader)
