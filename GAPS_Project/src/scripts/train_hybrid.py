@@ -12,6 +12,7 @@ PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
+torch.set_float32_matmul_precision('high')
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 200       # Nakagami A.2
 EPOCHS     = 100
