@@ -40,7 +40,7 @@ FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
 LAZY_LOAD = False  # 服务器设False，Mac设True
 
-IN_CHANNEL = 9
+IN_CHANNEL = 8  # beta已从节点特征移除（事件级标量，不提供节点间区分信息）
 
 
 def get_model(name: str, num_blocks: int = 4):

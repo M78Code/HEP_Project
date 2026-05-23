@@ -7,10 +7,11 @@ from torch_geometric.data import Data
 from torch_geometric.nn import knn_graph
 
 """
-  节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
+  节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
     det_type  : 0=TOF(1XX), 1=Si(Li)(2XX)
     layer_norm: (volume_id // 1000000) % 100 / 16.0
   图级属性：beta, n_hits, total_energy
+  注：beta是事件级标量，同一event内所有节点相同，已移至graph_feat
 """
 
 """
@@ -38,7 +39,7 @@ class GraphBuilder:
     Args:
       k         : int    k近邻边数，每个节点连接最近的k个节点
       normalize : bool   是否对节点特征归一化（默认True）
-    节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
+    节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
     图级属性：beta, n_hits, total_energy
     """
     def __init__(self, k: int = 8, normalize: bool = True):
@@ -83,15 +84,15 @@ class GraphBuilder:
         det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
         layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
 
-        # ── 6. 构建节点特征矩阵（9维）───────────────
-        beta_col = np.full(N, beta_val, dtype=np.float32)
+        # ── 6. 构建节点特征矩阵（8维）───────────────
+        # beta是事件级标量，同一event内所有节点相同，不提供节点间区分信息
+        # beta信息已通过graph_feat在pooling后传入分类器
         x = np.stack([
             positions[:, 0],  # fX
             positions[:, 1],  # fY
             positions[:, 2],  # fZ
             energies,  # energy
             times,  # time
-            beta_col,  # beta
             dEdx,  # dE/dx
             det_type,  # 探测器类型
             layer_norm,  # 层号归一化

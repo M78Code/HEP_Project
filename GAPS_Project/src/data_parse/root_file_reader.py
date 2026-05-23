@@ -5,7 +5,8 @@ import pickle
 import uproot
 import numpy as np
 import GAPS_Project
-
+from GAPS_Project.src.data_parse.graph_builder import GraphBuilder
+from GAPS_Project.src.ml_demo import check_beta
 
 # 项目根目录（GAPS_Project/），所有路径基于此
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
@@ -502,7 +503,8 @@ def diagnose_detector():
 
 
 if __name__ == '__main__':
-    diagnose_detector()
+    # check_beta()
+    # diagnose_detector()
     # check_graph_nan()
     # batch_check_branches()
     # 反重氘核
@@ -518,16 +520,29 @@ if __name__ == '__main__':
 
     # ── 验证：用test_sample转换并检查输出 ──
     # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
-    # test_out = PROJECT_ROOT / 'dataset' / 'test_sample'
+    test_out = PROJECT_ROOT / 'dataset' / 'test_sample'
     # convert_root_to_pickle(test_root, test_out)
 
     # 读回pickle验证字段
-    # import pickle
-    #
-    # with open(test_out / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl', 'rb') as f:
-    #     data = pickle.load(f)
-    #
-    # e = data['events'][0]
+    import pickle
+
+    with open(test_out / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl', 'rb') as f:
+        data = pickle.load(f)
+
+    e = data['events'][0]
+    builder_no_norm = GraphBuilder(k=8, normalize=False)
+    graph_raw = builder_no_norm.build_from_dict(e)
+    print("归一化前 beta列:", graph_raw.x[:, 5])
+    print("唯一值:", graph_raw.x[:, 5].unique())
+
+    builder = GraphBuilder(k=8, normalize=True)
+    graph = builder.build_from_dict(e)
+
+    print("节点特征 x 的shape:", graph.x.shape)
+    print("\nbeta列（第5维）的值:")
+    print(graph.x[:, 5])
+    print("\n全部为0?", (graph.x[:, 5] == 0).all().item())
+
     # print(f"\n=== Event 0 验证 ===")
     # print(f"n_hits        : {e['n_hits']}")
     # print(f"label         : {e['label']}")
@@ -673,4 +688,23 @@ times[:5]     : [nan nan nan nan nan]
 positions[0]  : [  39.75286   -62.991978 -103.6231  ]
 
 总event数: 57
+"""
+
+
+
+
+"""
+归一化前 beta列: tensor([0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746,
+        0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746,
+        0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746, 0.2746,
+        0.2746, 0.2746, 0.2746])
+唯一值: tensor([0.2746])
+节点特征 x 的shape: torch.Size([30, 9])
+
+beta列（第5维）的值:
+tensor([-1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1.,
+        -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1., -1.,
+        -1., -1.])
+
+全部为0? False
 """
