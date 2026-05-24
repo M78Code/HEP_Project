@@ -460,7 +460,7 @@ def diagnose_detector():
     with open(split_dir / 'test.pkl', 'rb') as f:
         payload = pickle.load(f)
     events = payload['events']  # 直接取events列表
-    sample = events[:5000]
+    sample = events[:10]
 
     all_vol_ids = []
     for ev in sample:
@@ -504,7 +504,7 @@ def diagnose_detector():
 
 if __name__ == '__main__':
     # check_beta()
-    # diagnose_detector()
+    diagnose_detector()
     # check_graph_nan()
     # batch_check_branches()
     # 反重氘核
@@ -520,28 +520,28 @@ if __name__ == '__main__':
 
     # ── 验证：用test_sample转换并检查输出 ──
     # test_root = PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root'
-    test_out = PROJECT_ROOT / 'dataset' / 'test_sample'
+    # test_out = PROJECT_ROOT / 'dataset' / 'test_sample'
     # convert_root_to_pickle(test_root, test_out)
 
     # 读回pickle验证字段
-    import pickle
-
-    with open(test_out / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl', 'rb') as f:
-        data = pickle.load(f)
-
-    e = data['events'][0]
-    builder_no_norm = GraphBuilder(k=8, normalize=False)
-    graph_raw = builder_no_norm.build_from_dict(e)
-    print("归一化前 beta列:", graph_raw.x[:, 5])
-    print("唯一值:", graph_raw.x[:, 5].unique())
-
-    builder = GraphBuilder(k=8, normalize=True)
-    graph = builder.build_from_dict(e)
-
-    print("节点特征 x 的shape:", graph.x.shape)
-    print("\nbeta列（第5维）的值:")
-    print(graph.x[:, 5])
-    print("\n全部为0?", (graph.x[:, 5] == 0).all().item())
+    # import pickle
+    #
+    # with open(test_out / 'anti_deuteron_gaps_FTFP_BERT_1778138909.pkl', 'rb') as f:
+    #     data = pickle.load(f)
+    #
+    # e = data['events'][0]
+    # builder_no_norm = GraphBuilder(k=8, normalize=False)
+    # graph_raw = builder_no_norm.build_from_dict(e)
+    # print("归一化前 beta列:", graph_raw.x[:, 5])
+    # print("唯一值:", graph_raw.x[:, 5].unique())
+    #
+    # builder = GraphBuilder(k=8, normalize=True)
+    # graph = builder.build_from_dict(e)
+    #
+    # print("节点特征 x 的shape:", graph.x.shape)
+    # print("\nbeta列（第5维）的值:")
+    # print(graph.x[:, 5])
+    # print("\n全部为0?", (graph.x[:, 5] == 0).all().item())
 
     # print(f"\n=== Event 0 验证 ===")
     # print(f"n_hits        : {e['n_hits']}")
