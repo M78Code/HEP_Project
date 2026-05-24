@@ -84,15 +84,15 @@ class GraphBuilder:
         det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
         layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
 
-        # ── 6. 构建节点特征矩阵（8维）───────────────
-        # beta是事件级标量，同一event内所有节点相同，不提供节点间区分信息
-        # beta信息已通过graph_feat在pooling后传入分类器
+        # ── 6. 构建节点特征矩阵（9维）───────────────
+        beta_col = np.full(N, beta_val, dtype=np.float32)
         x = np.stack([
             positions[:, 0],  # fX
             positions[:, 1],  # fY
             positions[:, 2],  # fZ
             energies,  # energy
             times,  # time
+            beta_col,  # beta（事件级标量，恢复训练需保持9维）
             dEdx,  # dE/dx
             det_type,  # 探测器类型
             layer_norm,  # 层号归一化
