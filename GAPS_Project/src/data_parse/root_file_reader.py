@@ -501,8 +501,31 @@ def diagnose_detector():
     print(f"本数据:       Si(Li) {len(unique_sili)}通道, TOF {len(unique_tof)}通道")
 
 
+def rec_beta():
+    """rec_beta 在空数组时 fallback 成 0.0。需要先确认训练数据中 rec_beta 是否大部分有值"""
+    import pickle
+
+    with open(PROJECT_ROOT / 'dataset/split/test.pkl', 'rb') as f:
+        data = pickle.load(f)
+
+    events = data['events']
+    rec_betas = [e.get('rec_beta', 0.0) for e in events[:1000]]
+    mc_betas = [e.get('beta', 0.0) for e in events[:1000]]
+
+    zero_count = sum(1 for b in rec_betas if b == 0.0)
+    print(f"前1000个event中 rec_beta=0 的数量: {zero_count}")
+    print(f"rec_beta 范围: {min(rec_betas):.4f} ~ {max(rec_betas):.4f}")
+    print(f"mc_beta  范围: {min(mc_betas):.4f} ~ {max(mc_betas):.4f}")
+
+    # 同时检查是否有 Rec stopping 信息
+    has_rec_stopping = 'rec_stopping_pos' in events[0]
+    print(f"\npkl 中是否有 rec_stopping: {has_rec_stopping}")
+    print(f"pkl event keys: {list(events[0].keys())}")
+
+
 if __name__ == '__main__':
-    diagnose_detector()
+    rec_beta()
+    # diagnose_detector()
     # check_graph_nan()
     # batch_check_branches()
     # 反重氘核
