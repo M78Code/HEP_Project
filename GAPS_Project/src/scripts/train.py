@@ -652,10 +652,10 @@ def train_all_combinations():
 
 
 if __name__ == "__main__":
-    train()   # DGCNN × graph_feat_dim=45（含stopping特征）
+    # train()   # DGCNN × graph_feat_dim=45（含stopping特征）
     # resume_train()
     # train_narrow_beta()
     # train_ablation()
     # train_dnn_baseline()
-    # train_deeper_gravnet(num_blocks=6)
+    train_deeper_gravnet(num_blocks=6, hidden_dim=128)
     # train_all_combinations()
