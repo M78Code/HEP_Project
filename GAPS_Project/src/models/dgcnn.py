@@ -116,7 +116,7 @@ if __name__ == "__main__":
     loader = DataLoader(dataset, batch_size=8, shuffle=False)
     batch = next(iter(loader))
 
-    model = DGCNNClassifier(in_channels=9, hidden_dim=64, k=8, graph_feat_dim=2)
+    model = DGCNNClassifier(in_channels=8, hidden_dim=64, k=8, graph_feat_dim=2)
     graph_feat = torch.cat([batch.n_hits.view(-1, 1), batch.total_energy.view(-1, 1)], dim=1)
     logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
 

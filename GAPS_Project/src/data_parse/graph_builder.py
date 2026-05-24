@@ -7,10 +7,10 @@ from torch_geometric.data import Data
 from torch_geometric.nn import knn_graph
 
 """
-  节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
+  节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
     det_type  : 0=TOF(1XX), 1=Si(Li)(2XX)
     layer_norm: (volume_id // 1000000) % 100 / 16.0
-  图级属性：beta, n_hits, total_energy
+  图级特征（45维）：n_hits(1) + total_energy(1) + sili_profile(16) + tof_profile(16) + tof_feat(11)
 """
 
 """
@@ -38,8 +38,8 @@ class GraphBuilder:
     Args:
       k         : int    k近邻边数，每个节点连接最近的k个节点
       normalize : bool   是否对节点特征归一化（默认True）
-    节点特征（9维）：[fX, fY, fZ, energy, time, beta, dE/dx, det_type, layer_norm]
-    图级属性：beta, n_hits, total_energy
+    节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
+    图级特征（45维）：n_hits(1) + total_energy(1) + sili_profile(16) + tof_profile(16) + tof_feat(11)
     """
     def __init__(self, k: int = 8, normalize: bool = True):
         self.k = k
@@ -63,7 +63,6 @@ class GraphBuilder:
         times = np.where(np.isnan(times), 0.0, times)
 
         # ── 3. 图级标量 ────────────────────────────
-        beta_val = float(event.get('beta', 0.0))
         n_hits = float(N)
         total_energy = float(energies.sum())
 
@@ -83,15 +82,13 @@ class GraphBuilder:
         det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
         layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
 
-        # ── 6. 构建节点特征矩阵（9维）───────────────
-        beta_col = np.full(N, beta_val, dtype=np.float32)
+        # ── 6. 构建节点特征矩阵（8维，纯Rec特征）───────────────
         x = np.stack([
             positions[:, 0],  # fX
             positions[:, 1],  # fY
             positions[:, 2],  # fZ
             energies,  # energy
             times,  # time
-            beta_col,  # beta
             dEdx,  # dE/dx
             det_type,  # 探测器类型
             layer_norm,  # 层号归一化
@@ -108,31 +105,13 @@ class GraphBuilder:
         # 反质子=-2212 → 0，反重氘核=-1000010020 → 1
         y = torch.tensor([1 if label == No_ANTIDEUTERON else 0], dtype=torch.long)
 
-        mc_energy = event.get('mc_energy', np.array([], dtype=np.float32))
-        mc_volume_id = event.get('mc_volume_id', np.array([], dtype=np.int64))
-        sili_profile, tof_profile = self._layer_profile(mc_energy, mc_volume_id)
+        # 使用Rec hitseries计算layer profile
+        sili_profile, tof_profile = self._layer_profile(energies, volume_ids)
 
-        # TOF特征（从hitseries推导，6维）
+        # TOF特征（inner/outer分离，11维）
         tof_features = self._tof_features(energies, volume_ids, positions,
                                           np.where(np.isnan(event['times']), np.nan, event['times']))
         tof_features = np.nan_to_num(tof_features, nan=0.0, posinf=0.0, neginf=0.0)
-
-        # MC stopping特征（从pickle新字段读取，6维）
-        stopping_pos = event.get('stopping_pos', np.zeros(3, dtype=np.float32))
-        stopping_vol = int(event.get('stopping_vol', 0))
-        stopping_ke  = float(event.get('stopping_ke', 0.0))
-        stopping_li  = stopping_vol // 1000000
-        stopping_det = 1.0 if stopping_li >= 200 else 0.0
-        stopping_layer_norm = float(stopping_li % 100) / 16.0
-        stopping_feat = np.array([
-            stopping_pos[0] / 1000.0,  # 坐标cm → ~1
-            stopping_pos[1] / 1000.0,
-            stopping_pos[2] / 1000.0,
-            stopping_layer_norm,        # 已归一化 0~1
-            stopping_det,               # 0 or 1
-            stopping_ke / 1000.0,       # 能量MeV → ~1
-        ], dtype=np.float32)  # (6,)
-        stopping_feat = np.nan_to_num(stopping_feat, nan=0.0, posinf=0.0, neginf=0.0)
 
         """
         PyG标准图对象：
@@ -143,69 +122,111 @@ class GraphBuilder:
             y（标签）
             num_nodes（节点数量）
         """
+        # mc_beta仅用于评估时β窗口分析，不参与训练
+        mc_beta = float(event.get('beta', 0.0))
+
         return Data(
             x=torch.tensor(x, dtype=torch.float32),
             edge_index=edge_index,
             pos=pos_tensor,
             y=y,
             num_nodes=N,
-            beta=torch.tensor([beta_val], dtype=torch.float32),
             n_hits=torch.tensor([n_hits], dtype=torch.float32),
             total_energy=torch.tensor([total_energy], dtype=torch.float32),
             sili_profile=torch.tensor(sili_profile, dtype=torch.float32),    # (16,)
             tof_profile=torch.tensor(tof_profile, dtype=torch.float32),     # (16,)
-            tof_feat=torch.tensor(tof_features, dtype=torch.float32),       # (6,)
-            stopping_feat=torch.tensor(stopping_feat, dtype=torch.float32), # (6,)
+            tof_feat=torch.tensor(tof_features, dtype=torch.float32),       # (11,)
+            mc_beta=torch.tensor([mc_beta], dtype=torch.float32),           # 仅元数据
         )
+
+    # TOF layer分组（基于volume_id空间分布分析）
+    OUTER_TOF_LAYERS = {100, 102, 103, 104, 105}
+    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}
 
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
                       positions: np.ndarray, times: np.ndarray) -> np.ndarray:
-        """从hitseries计算TOF相关特征，返回6维向量"""
+        """
+        从hitseries计算inner/outer TOF特征，返回11维向量。
+        参考先行研究(Nakagami 2021)的TOF特征构造。
+        [0]  outer_energy      外层TOF总能量
+        [1]  inner_energy      内层TOF总能量
+        [2]  outer_n_hits      外层TOF hit数
+        [3]  inner_n_hits      内层TOF hit数
+        [4]  time_of_flight    飞行时间 = inner最早时间 - outer最早时间
+        [5]  outer_entry_x     外层最早hit的x坐标
+        [6]  outer_entry_y     外层最早hit的y坐标
+        [7]  outer_entry_z     外层最早hit的z坐标
+        [8]  inner_entry_x     内层最早hit的x坐标
+        [9]  inner_entry_y     内层最早hit的y坐标
+        [10] inner_entry_z     内层最早hit的z坐标
+        """
         layer_idx = (volume_ids // 1000000).astype(np.int64)
-        is_tof = layer_idx < 200
 
-        tof_energies  = energies[is_tof]
-        tof_positions = positions[is_tof]
-        tof_times     = times[is_tof]
+        is_outer = np.isin(layer_idx, list(GraphBuilder.OUTER_TOF_LAYERS))
+        is_inner = np.isin(layer_idx, list(GraphBuilder.INNER_TOF_LAYERS))
 
-        n_tof       = float(is_tof.sum())
-        tof_total_e = float(tof_energies.sum()) if n_tof > 0 else 0.0
+        # ── 能量和hit数 ──
+        outer_energy = float(energies[is_outer].sum()) if is_outer.any() else 0.0
+        inner_energy = float(energies[is_inner].sum()) if is_inner.any() else 0.0
+        outer_n_hits = float(is_outer.sum())
+        inner_n_hits = float(is_inner.sum())
 
-        valid_mask  = ~np.isnan(tof_times)
-        valid_times = tof_times[valid_mask]
-        valid_pos   = tof_positions[valid_mask]
+        # ── outer最早hit ──
+        outer_first_t = 0.0
+        outer_entry = np.zeros(3, dtype=np.float32)
+        if is_outer.any():
+            o_times = times[is_outer]
+            o_pos = positions[is_outer]
+            o_valid = ~np.isnan(o_times)
+            if o_valid.any():
+                o_first = int(np.argmin(o_times[o_valid]))
+                outer_first_t = float(o_times[o_valid][o_first])
+                outer_entry = o_pos[o_valid][o_first]
 
-        if len(valid_times) > 0:
-            first_idx      = int(np.argmin(valid_times))
-            entry_x        = float(valid_pos[first_idx, 0])
-            entry_y        = float(valid_pos[first_idx, 1])
-            entry_z        = float(valid_pos[first_idx, 2])
-            tof_time_range = float(valid_times.max() - valid_times.min())
-        else:
-            entry_x = entry_y = entry_z = tof_time_range = 0.0
+        # ── inner最早hit ──
+        inner_first_t = 0.0
+        inner_entry = np.zeros(3, dtype=np.float32)
+        if is_inner.any():
+            i_times = times[is_inner]
+            i_pos = positions[is_inner]
+            i_valid = ~np.isnan(i_times)
+            if i_valid.any():
+                i_first = int(np.argmin(i_times[i_valid]))
+                inner_first_t = float(i_times[i_valid][i_first])
+                inner_entry = i_pos[i_valid][i_first]
+
+        # ── 飞行时间（inner - outer） ──
+        has_outer_t = is_outer.any() and (~np.isnan(times[is_outer])).any()
+        has_inner_t = is_inner.any() and (~np.isnan(times[is_inner])).any()
+        tof = (inner_first_t - outer_first_t) if (has_outer_t and has_inner_t) else 0.0
 
         return np.array([
-            n_tof / 20.0,           # hit数，典型10~30，归一化到~1
-            tof_total_e / 100.0,    # 能量MeV，归一化
-            entry_x / 1000.0,       # 坐标cm → ~1
-            entry_y / 1000.0,
-            entry_z / 1000.0,
-            tof_time_range / 50.0,  # 时间ns，归一化
-        ], dtype=np.float32)  # (6,)
+            outer_energy / 100.0,       # 能量MeV，归一化
+            inner_energy / 100.0,
+            outer_n_hits / 20.0,        # hit数，归一化
+            inner_n_hits / 20.0,
+            tof / 50.0,                 # 飞行时间ns，归一化
+            outer_entry[0] / 1000.0,    # 坐标mm → ~1
+            outer_entry[1] / 1000.0,
+            outer_entry[2] / 1000.0,
+            inner_entry[0] / 1000.0,
+            inner_entry[1] / 1000.0,
+            inner_entry[2] / 1000.0,
+        ], dtype=np.float32)  # (11,)
 
     @staticmethod
-    def _layer_profile(mc_energy: np.ndarray, mc_volume_id: np.ndarray,
+    def _layer_profile(energy: np.ndarray, volume_id: np.ndarray,
                        n_layers: int = 16):
         """
-        按探测器层号聚合MC能量沉积，返回 Si(Li) 和 TOF 各16维能量剖面。
+        按探测器层号聚合能量沉积，返回 Si(Li) 和 TOF 各16维能量剖面。
         layer_idx = volume_id // 1000000
         Si(Li): layer_idx >= 200,  layer = layer_idx % 100
         TOF   : layer_idx <  200,  layer = layer_idx % 100
         """
         sili = np.zeros(n_layers, dtype=np.float32)
         tof = np.zeros(n_layers, dtype=np.float32)
-        for e, vid in zip(mc_energy, mc_volume_id):
+        for e, vid in zip(energy, volume_id):
             li = int(vid) // 1000000
             ln = li % 100
             if 0 <= ln < n_layers:

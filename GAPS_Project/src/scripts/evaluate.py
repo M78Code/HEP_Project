@@ -91,7 +91,7 @@ EVAL_MODELS = [
 ]
 
 
-def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46, num_blocks: int = 4, hidden_dim: int = 64):
+def get_model(name: str, in_channels: int = 8, graph_feat_dim: int = 45, num_blocks: int = 4, hidden_dim: int = 64):
     if 'GIN' in name:
         return GINClassifier(in_channels=in_channels, hidden_dim=hidden_dim)
     elif 'GravNet' in name:
@@ -103,37 +103,29 @@ def get_model(name: str, in_channels: int = 9, graph_feat_dim: int = 46, num_blo
 
 
 @torch.no_grad()
-def run_inference(model, loader, device, with_stopping=True):
+def run_inference(model, loader, device):
     """返回（all_labels, all_probs, all_betas）numpy arrays"""
     model.eval()
     all_labels, all_probs, all_betas = [], [], []
     for batch in loader:
         batch = batch.to(device=device)
-        if with_stopping:
-            graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 6),
-                batch.stopping_feat.view(-1, 6),
-            ], dim=1)  # (B, 46)
-        else:
-            graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 6),
-            ], dim=1)  # (B, 40)
-        logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)  # [batch, 2] 原始分数
-        probs = torch.softmax(logits, dim=1)[:, 1]  # 类别1（antiD）的概率
+        graph_feat = torch.cat([
+            batch.n_hits.view(-1, 1),
+            batch.total_energy.view(-1, 1),
+            batch.sili_profile.view(-1, 16),
+            batch.tof_profile.view(-1, 16),
+            batch.tof_feat.view(-1, 11),
+        ], dim=1)  # (B, 45)
+        logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+        probs = torch.softmax(logits, dim=1)[:, 1]
         all_labels.append(batch.y.squeeze().cpu().numpy())
         all_probs.append(probs.cpu().numpy())
-        all_betas.append(batch.beta.squeeze().cpu().numpy())
-    return (np.concatenate(all_labels),
-            np.concatenate(all_probs),
-            np.concatenate(all_betas))
+        if hasattr(batch, 'mc_beta'):
+            all_betas.append(batch.mc_beta.squeeze().cpu().numpy())
+    labels = np.concatenate(all_labels)
+    probs_arr = np.concatenate(all_probs)
+    betas = np.concatenate(all_betas) if all_betas else np.zeros(len(labels))
+    return labels, probs_arr, betas
 
 
 def print_metrics(name, labels, probs):
@@ -499,7 +491,7 @@ def evaluate_narrow_beta():
     print(f"\n所有结果保存至: {out_dir}")
 
 def evaluate_ablation():
-    """消融实验评估：加载GravNet_ablation模型（graph_feat_dim=40，无stopping特征）"""
+    """消融实验评估"""
     # ⚠️ 训练完成后把路径填进来
     ABLATION_MODEL_PATH = PROJECT_ROOT / 'results/20260518-112552_GravNet_ablation/20260518-112552_GravNet_ablation_best.pth'
 
@@ -511,11 +503,11 @@ def evaluate_ablation():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    model = GravNetClassifier(in_channels=9, hidden_dim=64, graph_feat_dim=40).to(DEVICE)
+    model = GravNetClassifier(in_channels=8, hidden_dim=64, graph_feat_dim=45).to(DEVICE)
     model.load_state_dict(torch.load(ABLATION_MODEL_PATH, map_location=DEVICE))
     print(f'已加载消融模型: {ABLATION_MODEL_PATH}')
 
-    labels, probs, betas = run_inference(model, test_loader, DEVICE, with_stopping=False)
+    labels, probs, betas = run_inference(model, test_loader, DEVICE)
     print_metrics('GravNet_ablation', labels, probs)
 
     np.save(out_dir / 'GravNet_ablation_labels.npy', labels)
@@ -546,11 +538,11 @@ def evaluate_dnn_baseline():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    model = DNNBaseline(graph_feat_dim=46, hidden_dim=128).to(DEVICE)
+    model = DNNBaseline(graph_feat_dim=45, hidden_dim=128).to(DEVICE)
     model.load_state_dict(torch.load(DNN_MODEL_PATH, map_location=DEVICE))
     print(f'已加载DNN基线模型: {DNN_MODEL_PATH}')
 
-    labels, probs, betas = run_inference(model, test_loader, DEVICE, with_stopping=True)
+    labels, probs, betas = run_inference(model, test_loader, DEVICE)
     print_metrics('DNNBaseline', labels, probs)
 
     np.save(out_dir / 'DNNBaseline_labels.npy', labels)

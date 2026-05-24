@@ -423,11 +423,10 @@ def check_graph_nan():
                 g = builder.build_from_dict(e)
                 if g.x.isnan().any():               nan_x    += 1
                 if g.tof_feat.isnan().any():         nan_tof  += 1
-                if g.stopping_feat.isnan().any():    nan_stop += 1
                 if g.sili_profile.isnan().any():     nan_sili += 1
         print(f'[{folder}] {total} events | '
               f'NaN x: {nan_x} | NaN tof_feat: {nan_tof} | '
-              f'NaN stopping_feat: {nan_stop} | NaN sili_profile: {nan_sili}')
+              f'NaN sili_profile: {nan_sili}')
 
 
 def check_new_fields_nan():
