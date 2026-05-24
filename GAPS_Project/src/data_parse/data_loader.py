@@ -59,9 +59,9 @@ def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle
     val_dataset = GapsDataset([split_dir / 'val.pkl'], lazy=lazy)
     test_dataset = GapsDataset([split_dir / 'test.pkl'], lazy=lazy)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train, num_workers=8, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_loader, val_loader, test_loader
 

@@ -163,8 +163,8 @@ def train():
 
 
 def resume_train():
-    RESUME_FROM = PROJECT_ROOT / 'results/20260517-235638_GravNet/20260517-235638_GravNet_best.pth'
-    RESUME_EPOCH = 50
+    RESUME_FROM = PROJECT_ROOT / 'results/20260523-095914_GravNet_6blocks_h128/20260523-095914_GravNet_6blocks_h128_best.pth'
+    RESUME_EPOCH = 46
     TOTAL_EPOCHS = 80
 
     # ── 1. 数据加载 ────────────────────────────────────
@@ -174,7 +174,7 @@ def resume_train():
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
 
     # ── 2. 模型 + 加载权重 ─────────────────────────────
-    model = get_model(MODEL_NAME).to(DEVICE)
+    model = GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=128, graph_feat_dim=46, num_blocks=6).to(DEVICE)
     model.load_state_dict(torch.load(RESUME_FROM, map_location=DEVICE))
     print(f"已加载权重: {RESUME_FROM}")
     print(f"从 Epoch {RESUME_EPOCH + 1} 继续训练至 Epoch {TOTAL_EPOCHS}")
@@ -663,5 +663,6 @@ if __name__ == "__main__":
     # train_narrow_beta()
     # train_ablation()
     # train_dnn_baseline()
-    train_deeper_gravnet(num_blocks=6, hidden_dim=128)   # GravNet_v3: mean+max pool + 压缩层
+    # train_deeper_gravnet(num_blocks=6, hidden_dim=128)   # GravNet_v3: mean+max pool + 压缩层
+    resume_train()  # 从epoch 46恢复GravNet_v3训练
     # train_all_combinations()
