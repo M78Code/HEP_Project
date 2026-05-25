@@ -13,11 +13,11 @@ from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 512       # 4090 24GB VRAM 足够（原200太保守）
+BATCH_SIZE = 256       # 4090 24GB，3D CNN 512ch 较重
 EPOCHS     = 100
-LR         = 1e-4      # batch 增大2.5x，LR 同比上调
+LR         = 1e-4      # batch 增大，LR 同比上调
 PATIENCE   = 10        # early stopping
-NUM_WORKERS = 16       # i9-13900KS 32线程，用一半
+NUM_WORKERS = 24       # i9-13900KS 32线程
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
 SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
 
