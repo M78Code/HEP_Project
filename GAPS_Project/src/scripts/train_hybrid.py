@@ -13,11 +13,11 @@ from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 200       # Nakagami A.2
+BATCH_SIZE = 512       # 4090 24GB VRAM 足够（原200太保守）
 EPOCHS     = 100
-LR         = 4e-5      # Nakagami A.2: 0.00004
+LR         = 1e-4      # batch 增大2.5x，LR 同比上调
 PATIENCE   = 10        # early stopping
-NUM_WORKERS = 8
+NUM_WORKERS = 16       # i9-13900KS 32线程，用一半
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
 SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
 
@@ -26,10 +26,11 @@ def train():
   print(f'使用设备：{DEVICE}')
   train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid.npz')
   val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid.npz')
-  train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
-  val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
+  train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
+  val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
 
   model     = CNNDNNHybrid(tof_dim=11).to(DEVICE)
+  model     = torch.compile(model)  # PyTorch 2.x 编译加速
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
   criterion = nn.BCEWithLogitsLoss()
