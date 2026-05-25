@@ -74,20 +74,19 @@ BATCH_SIZE = 256
 LAZY_LOAD = False
 
 # 要评估的模型列表：(模型名, 权重路径, in_channels)
-EVAL_MODELS = [
-    # ('GIN',      PROJECT_ROOT / 'results/20260513-140442_GIN/20260513-140442_GIN_best.pth',          5, False),
-    # ('GravNet',  PROJECT_ROOT / 'results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth',  5, False),
-    # ('DGCNN',    PROJECT_ROOT / 'results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth',      5, False),
-    # ('DGCNN_v2', PROJECT_ROOT / 'results/20260515-151601_DGCNN/20260515-151601_DGCNN_best.pth',      6),
-    # ('DGCNN_v3', PROJECT_ROOT / 'results/20260516-124011_DGCNN/20260516-124011_DGCNN_best.pth', 7),
-    # ('DGCNN_v4', PROJECT_ROOT / 'results/20260516-173445_DGCNN/20260516-173445_DGCNN_best.pth', 9, 2),
-    # ('DGCNN_v4', PROJECT_ROOT / 'results/20260517-001452_DGCNN_resume/20260517-001452_DGCNN_resume_best.pth', 9, 2),
-    # ('GravNet',  PROJECT_ROOT / 'results/20260517-114624_GravNet_resume/20260517-114624_GravNet_resume_best.pth', 9, 2),
+# ── 旧 MC-assisted 模型（in_channels=9, graph_feat_dim=46）──
+EVAL_MODELS_OLD = [
     ('DGCNN_full',         PROJECT_ROOT / 'results/20260521-125721_DGCNN/20260521-125721_DGCNN_best.pth',                           9, 46, 4, 64),
     ('GravNet_v2',         PROJECT_ROOT / 'results/20260518-055856_GravNet_resume/20260518-055856_GravNet_resume_best.pth',         9, 46, 4, 64),
     ('GravNet_6blocks',    PROJECT_ROOT / 'results/20260518-190823_GravNet_6blocks/20260518-190823_GravNet_6blocks_best.pth',        9, 46, 6, 64),
     ('GravNet_4blocks_h128', PROJECT_ROOT / 'results/20260518-232109_GravNet_4blocks_h128/20260518-232109_GravNet_4blocks_h128_best.pth', 9, 46, 4, 128),
     ('GravNet_6blocks_h128', PROJECT_ROOT / 'results/20260519-043428_GravNet_6blocks_h128/20260519-043428_GravNet_6blocks_h128_best.pth', 9, 46, 6, 128),
+]
+
+# ── 新 Rec-only 模型（in_channels=8, graph_feat_dim=45）──
+EVAL_MODELS = [
+    ('DGCNN_rec',              PROJECT_ROOT / 'results/20260525-013820_DGCNN/20260525-013820_DGCNN_best.pth',                                    8, 45, 4, 64),
+    ('GravNet_6b_h128_rec',    PROJECT_ROOT / 'results/20260525-063936_GravNet_6blocks_h128/20260525-063936_GravNet_6blocks_h128_best.pth',      8, 45, 6, 128),
 ]
 
 
@@ -390,9 +389,9 @@ def analyze_beta_window():
     out_dir = PROJECT_ROOT / 'results' / 'evaluation'
 
     # 加载最优模型推理结果
-    labels = np.load(out_dir / 'GravNet_6blocks_h128_labels.npy')
-    probs = np.load(out_dir / 'GravNet_6blocks_h128_probs.npy')
-    betas = np.load(out_dir / 'GravNet_6blocks_h128_betas.npy')
+    labels = np.load(out_dir / 'GravNet_6b_h128_rec_labels.npy')
+    probs = np.load(out_dir / 'GravNet_6b_h128_rec_probs.npy')
+    betas = np.load(out_dir / 'GravNet_6b_h128_rec_betas.npy')
 
     # 定义定义β窗口
     windows = [
@@ -449,7 +448,7 @@ def analyze_beta_window():
     plt.axvline(x=0.98, color='red', linestyle='--', linewidth=0.8, label='Signal Eff=0.98')
     plt.xlabel('Signal Efficiency (antiD Recall)')
     plt.ylabel('Rejection Power (1/FPR)')
-    plt.title('GravNet_6blocks_h128 — Rejection Power by β Window')
+    plt.title('GravNet_6b_h128_rec — Rejection Power by β Window')
     plt.legend(fontsize=9)
     plt.grid(True, which='both', linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -583,11 +582,11 @@ def plot_three_way():
 
 
 if __name__ == '__main__':
-    # evaluate()              # 完整推理+评估（DGCNN_full含む全5モデル）
+    evaluate()                 # Rec-only 模型完整推理+评估
     # analyze_only()          # 只输出各效率下的Rejection表
     # analyze_threshold()     # 阈值优化分析（无需重新推理）
-    # analyze_beta_window()   # β速度窗口分析（GravNet_6blocks_h128，无需重新推理）
+    # analyze_beta_window()   # β速度窗口分析（GravNet_6b_h128_rec，推理后运行）
     # evaluate_narrow_beta()
     # evaluate_ablation()
-    # evaluate_dnn_baseline() # 完整推理（慢，只在服务器上跑）
-    plot_three_way()           # 直接从npy生成图（快）
+    # evaluate_dnn_baseline()
+    # plot_three_way()
