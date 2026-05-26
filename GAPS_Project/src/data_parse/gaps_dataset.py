@@ -1,11 +1,12 @@
 # Step 2.2: PyG数据集类
-
+import torch
 import uproot
 import pickle
 from pathlib import Path
 from torch_geometric.data import Dataset, Data
 import GAPS_Project
 from GAPS_Project.src.data_parse.graph_builder import GraphBuilder
+from GAPS_Project.src.data_parse.voxelizer import build_sili_voxel
 
 # 项目根目录
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
@@ -42,8 +43,12 @@ class GapsDataset(Dataset):
             # 只存原始dict，get()时再转换
             self._raw_events = raw_events
         else:
-            # 全部预转换为PyG Data对象
-            self._data_list = [self.builder.build_from_dict(e) for e in raw_events]
+            # 全部预转换为PyG Data对象（含voxel）
+            self._data_list = []
+            for e in raw_events:
+                data = self.builder.build_from_dict(e)
+                data.voxel = torch.tensor(build_sili_voxel(e), dtype=torch.float32)
+                self._data_list.append(data)
 
     # def _load_all(self, pkl_files: list) -> list:
     #     data_list = []
@@ -63,7 +68,10 @@ class GapsDataset(Dataset):
 
     def get(self, idx: int) -> Data:
         if self.lazy:
-            return self.builder.build_from_dict(self._raw_events[idx])
+            event = self._raw_events[idx]
+            data = self.builder.build_from_dict(event)
+            data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32) # (10,20,20)
+            return data
         return self._data_list[idx]
 
     # ── 便捷属性 ───────────────────────────────────────
