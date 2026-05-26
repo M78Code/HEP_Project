@@ -27,7 +27,7 @@ def preprocess_split(pkl_path: Path, out_path: Path):
     N = len(events)
     print(f'  事例数: {N:,}')
 
-    voxels = np.zeros((N, 10, 20, 20), dtype=np.float32)
+    voxels = np.zeros((N, 10, 12, 12), dtype=np.float32)
     tofs   = np.zeros((N, 11),         dtype=np.float32)
     labels = np.zeros(N,               dtype=np.int64)
     betas  = np.zeros(N,               dtype=np.float32)

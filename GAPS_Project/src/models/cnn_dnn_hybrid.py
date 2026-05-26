@@ -3,9 +3,9 @@ import torch.nn as nn
 
 """
  形状追踪（A.2）：
-  - Input voxel: [B, 1, 10, 20, 20]  (layers × x × y)
-  - conv_init (Conv3d, padding=1): [B, 512, 10, 20, 20]
-  - res1 × 3 (shape不变): [B, 512, 10, 20, 20]
+  - Input voxel: [B, 1, 10, 12, 12]  (layers × x × y)
+  - conv_init (Conv3d, padding=1): [B, 512, 10, 12, 12]
+  - res1 × 3 (shape不变): [B, 512, 10, 12, 12]
   - pool (MaxPool3d(2)): [B, 512, 5, 10, 10]
   - res2 × 3: [B, 512, 5, 10, 10]
   - gap (AdaptiveAvgPool3d(1)): [B, 512, 1, 1, 1]
@@ -37,11 +37,11 @@ class CNNDNNHybrid(nn.Module):
     def __init__(self, tof_dim=11, dropout=0.3):
         super(CNNDNNHybrid, self).__init__()
 
-        # CNN branch: [B, 1, 10, 20, 20]  (layers × x × y)
+        # CNN branch: [B, 1, 10, 12, 12]  (layers × x × y)
         self.conv_init = nn.Sequential(
             nn.BatchNorm3d(1),
             nn.ReLU(),
-            nn.Conv3d(1, 512, kernel_size=3, padding=1),    # [B,512,10,20,20]
+            nn.Conv3d(1, 512, kernel_size=3, padding=1),    # [B,512,10,12,12]
         )
         self.res1 = nn.Sequential(
             PreActResBlock3D(512, 64, dropout=dropout),
@@ -95,7 +95,7 @@ class CNNDNNHybrid(nn.Module):
 if __name__ == '__main__':
 
     B = 4
-    voxel = torch.randn(B, 1, 10, 20, 20)   # layers × x × y
+    voxel = torch.randn(B, 1, 10, 12, 12)   # layers × x × y
     tof = torch.randn(B, 11)
     label = torch.randint(0, 2, (B,)).float()
 

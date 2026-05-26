@@ -1,6 +1,6 @@
 import numpy as np
 
-GRID_Z, GRID_X, GRID_Y = 10, 20, 20   # layers × x × y（中上と同じ軸順）
+GRID_Z, GRID_X, GRID_Y = 10, 12, 12   # layers × x × y（中上と同じ軸順）
 X_MIN, X_MAX = -700.0, 700.0
 Y_MIN, Y_MAX = -700.0, 700.0
 
