@@ -5,7 +5,7 @@ X_MIN, X_MAX = -700.0, 700.0
 Y_MIN, Y_MAX = -700.0, 700.0
 
 def build_sili_voxel(event):
-  """Si(Li)ヒット → 3Dボクセルグリッド (10,20,20) = layers×x×y"""
+  """Si(Li)ヒット → 3Dボクセルグリッド (10,12,12) = layers×x×y"""
   vids      = np.array(event['volume_id'])
   energies  = np.array(event['energy'])
   positions = np.array(event['positions'])
@@ -137,8 +137,12 @@ if __name__ == '__main__':
 
 
 """
-voxel shape: (10, 20, 20)
+voxel shape: (10, 12, 12)
 voxel dtype: float32
+voxel max:   5.3258
+nonzero bins: 49
 tof shape:   (11,)
-tof: [outer_e, inner_e, outer_n, inner_n, tof, outer_xyz(3), inner_xyz(3)]
+tof values:  [ 0.5386  0.      0.6     0.      0.     -0.1064 -0.1689 -0.1206  0.
+  0.      0.    ]
+has nan/inf: False
 """

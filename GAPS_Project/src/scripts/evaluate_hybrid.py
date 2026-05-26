@@ -4,44 +4,37 @@ from pathlib import Path
 from sklearn.metrics import (accuracy_score, precision_score, recall_score,
                              f1_score, roc_auc_score, roc_curve, confusion_matrix)
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 import GAPS_Project
-from GAPS_Project.src.data_parse.hybrid_dataset import HybridDataset
+from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 200
+BATCH_SIZE = 512
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
 MODEL_PATH = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
 OUT_DIR    = PROJECT_ROOT / 'results' / 'evaluation'
 
 
 @torch.no_grad()
-def run_inference(model, loader, dataset, device):
-    """返回 (labels, probs, betas) numpy arrays"""
+def run_inference(model, loader, device):
+    """返回 (labels, probs) numpy arrays"""
     model.eval()
-    all_labels, all_probs, all_betas = [], [], []
-    idx = 0
-    for voxel, tof, label in loader:
+    all_labels, all_probs = [], []
+    for voxel, tof, label in tqdm(loader, desc='CNN+DNN eval'):
         voxel, tof = voxel.to(device), tof.to(device)
         logits = model(voxel, tof)
         probs  = torch.sigmoid(logits).cpu().numpy()
         all_labels.append(label.numpy())
         all_probs.append(probs)
-        # beta 从原始 event dict 读取
-        batch_size = label.shape[0]
-        betas = [float(dataset.data[i].get('beta', 0.0)) for i in range(idx, idx + batch_size)]
-        all_betas.append(np.array(betas, dtype=np.float32))
-        idx += batch_size
-    return (np.concatenate(all_labels),
-            np.concatenate(all_probs),
-            np.concatenate(all_betas))
+    return np.concatenate(all_labels), np.concatenate(all_probs)
 
 
 def print_metrics(name, labels, probs):
@@ -110,29 +103,51 @@ def plot_rejection_curve(results, save_path):
 
 
 def evaluate():
+    """CNN+DNN baseline 评估（从预处理npz加载）"""
     print(f'使用设备：{DEVICE}')
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    test_set    = HybridDataset(DATA_DIR / 'test.pkl')
+    # ── 加载测试数据 ──
+    # 评估12×12模型时改为 test_hybrid.npz
+    # 评估20×20模型时改为 test_hybrid_20x20.npz
+    test_npz = DATA_DIR / 'test_hybrid.npz'
+    test_set    = HybridDatasetFast(test_npz)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
-                             num_workers=4, pin_memory=True)
+                             num_workers=8, pin_memory=True)
     print(f'test events: {len(test_set)}')
 
+    # ── 加载模型（处理 torch.compile 权重前缀）──
     model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+    state = torch.load(MODEL_PATH, map_location=DEVICE)
+    clean_state = {k.replace('_orig_mod.', ''): v for k, v in state.items()}
+    model.load_state_dict(clean_state)
     print(f'已加载模型: {MODEL_PATH}')
 
-    labels, probs, betas = run_inference(model, test_loader, test_set, DEVICE)
-    print_metrics('CNN+DNN (Nakagami A.2)', labels, probs)
+    # ── 推理 ──
+    labels, probs = run_inference(model, test_loader, DEVICE)
+    betas = np.load(test_npz)['betas']
 
-    np.save(OUT_DIR / 'CNNDNNHybrid_labels.npy', labels)
-    np.save(OUT_DIR / 'CNNDNNHybrid_probs.npy',  probs)
-    np.save(OUT_DIR / 'CNNDNNHybrid_betas.npy',  betas)
+    # ── 评价指标 ──
+    tag = 'CNN_DNN_12x12'   # 评估20×20时改为 CNN_DNN_20x20
+    print_metrics(tag, labels, probs)
+
+    np.save(OUT_DIR / f'{tag}_labels.npy', labels)
+    np.save(OUT_DIR / f'{tag}_probs.npy',  probs)
+    np.save(OUT_DIR / f'{tag}_betas.npy',  betas)
     print(f'推理结果已保存至: {OUT_DIR}')
 
-    results = [('CNN+DNN (Nakagami A.2)', labels, probs)]
+    # ── 与 GNN 对比 ──
+    results = [(tag, labels, probs)]
+    for name in ['GravNet_6b_h128_rec', 'DGCNN_rec']:
+        lbl_path = OUT_DIR / f'{name}_labels.npy'
+        prb_path = OUT_DIR / f'{name}_probs.npy'
+        if lbl_path.exists():
+            lbl = np.load(lbl_path)
+            prb = np.load(prb_path)
+            results.append((name, lbl, prb))
+
     print_rejection_at_efficiency(results)
-    plot_rejection_curve(results, OUT_DIR / 'hybrid_rejection_curve.png')
+    plot_rejection_curve(results, OUT_DIR / f'rejection_{tag}_vs_gnn.png')
 
 
 if __name__ == '__main__':
