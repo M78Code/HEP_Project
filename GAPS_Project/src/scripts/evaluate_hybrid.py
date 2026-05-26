@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from tqdm import tqdm
 
 import GAPS_Project
 from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
@@ -25,17 +26,24 @@ OUT_DIR    = PROJECT_ROOT / 'results' / 'evaluation'
 
 @torch.no_grad()
 def run_inference(model, loader, device):
+<<<<<<< HEAD
     """返回 (labels, probs) numpy arrays"""
+=======
+    """返回 (labels, probs, betas) numpy arrays"""
+>>>>>>> 7c04ba3 (.)
     model.eval()
     all_labels, all_probs = [], []
     for voxel, tof, label in tqdm(loader, desc='CNN+DNN eval'):
         voxel, tof = voxel.to(device), tof.to(device)
         logits = model(voxel, tof)
-        probs  = torch.sigmoid(logits).cpu().numpy()
+        probs = torch.sigmoid(logits).cpu().numpy()
         all_labels.append(label.numpy())
         all_probs.append(probs)
     return np.concatenate(all_labels), np.concatenate(all_probs)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7c04ba3 (.)
 
 def print_metrics(name, labels, probs):
     preds = (probs >= 0.5).astype(int)
@@ -107,6 +115,7 @@ def evaluate():
     print(f'使用设备：{DEVICE}')
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
+<<<<<<< HEAD
     # ── 加载测试数据 ──
     # 评估12×12模型时改为 test_hybrid.npz
     # 评估20×20模型时改为 test_hybrid_20x20.npz
@@ -114,6 +123,11 @@ def evaluate():
     test_set    = HybridDatasetFast(test_npz)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
                              num_workers=8, pin_memory=True)
+=======
+    test_set    = HybridDatasetFast(DATA_DIR / 'test_hybrid_20x20.npz')
+    test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
+                             num_workers=12, pin_memory=True)
+>>>>>>> 7c04ba3 (.)
     print(f'test events: {len(test_set)}')
 
     # ── 加载模型（处理 torch.compile 权重前缀）──
@@ -123,6 +137,7 @@ def evaluate():
     model.load_state_dict(clean_state)
     print(f'已加载模型: {MODEL_PATH}')
 
+<<<<<<< HEAD
     # ── 推理 ──
     labels, probs = run_inference(model, test_loader, DEVICE)
     betas = np.load(test_npz)['betas']
@@ -148,6 +163,24 @@ def evaluate():
 
     print_rejection_at_efficiency(results)
     plot_rejection_curve(results, OUT_DIR / f'rejection_{tag}_vs_gnn.png')
+=======
+    labels, probs = run_inference(model, test_loader, DEVICE)
+    betas = np.load(DATA_DIR / 'test_hybrid_20x20.npz')['betas']
+    print_metrics('CNN+DNN_20x20', labels, probs)
+
+    np.save(OUT_DIR / 'CNN_DNN_20x20_labels.npy', labels)
+    np.save(OUT_DIR / 'CNN_DNN_20x20_probs.npy',  probs)
+    np.save(OUT_DIR / 'CNN_DNN_20x20_betas.npy',  betas)
+    print(f'推理结果已保存至: {OUT_DIR}')
+
+    results = [('CNN_DNN_20x20', labels, probs)]
+    for name in ['GravNet_6b_h128_rec', 'DGCNN_rec']:
+        lbl = np.load(OUT_DIR / f'{name}_labels.npy')
+        prb = np.load(OUT_DIR / f'{name}_probs.npy')
+        results.append((name, lbl, prb))
+    print_rejection_at_efficiency(results)
+    plot_rejection_curve(results, OUT_DIR / 'rejection_cnn_dnn_20x20_vs_gnn.png')
+>>>>>>> 7c04ba3 (.)
 
 
 if __name__ == '__main__':
