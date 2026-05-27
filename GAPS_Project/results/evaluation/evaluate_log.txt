@@ -1,0 +1,101 @@
+(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python evaluate.py
+使用设备：cuda:0
+加载test数据集...
+test batches: 2509
+
+加载模型 GIN: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260513-140442_GIN/20260513-140442_GIN_best.pth
+
+==================================================
+模型: GIN
+  Accuracy : 0.6928
+  Precision: 0.7376  (antiD识别精确率)
+  Recall   : 0.7277  (antiD信号效率)
+  F1 Score : 0.7326
+  ROC AUC  : 0.7579
+  混淆矩阵: TN=174743  FP=96138  FN=101136  TP=270211
+  背景抑制率(Rejection): 0.6451  (270881个antiP中正确拒绝174743个)
+
+加载模型 GravNet: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260513-214452_GravNet/20260513-214452_GravNet_best.pth
+
+==================================================
+模型: GravNet
+  Accuracy : 0.8160
+  Precision: 0.8535  (antiD识别精确率)
+  Recall   : 0.8231  (antiD信号效率)
+  F1 Score : 0.8380
+  ROC AUC  : 0.9008
+  混淆矩阵: TN=218424  FP=52457  FN=65700  TP=305647
+  背景抑制率(Rejection): 0.8063  (270881个antiP中正确拒绝218424个)
+
+加载模型 DGCNN: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260514-104133_DGCNN/20260514-104133_DGCNN_best.pth
+
+==================================================
+模型: DGCNN
+  Accuracy : 0.8206
+  Precision: 0.8520  (antiD识别精确率)
+  Recall   : 0.8347  (antiD信号效率)
+  F1 Score : 0.8433
+  ROC AUC  : 0.9049
+  混淆矩阵: TN=217026  FP=53855  FN=61367  TP=309980
+  背景抑制率(Rejection): 0.8012  (270881个antiP中正确拒绝217026个)
+
+ROC曲线已保存：/home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/roc_curves.png
+Rejection曲线已保存: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/rejection_curve.png
+
+所有结果保存至: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation
+
+
+三模型 test 集最终结果
+
+  ┌───────────────────┬────────┬─────────┬────────┐
+  │       指标        │  GIN   │ GravNet │ DGCNN  │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ Accuracy          │ 69.28% │ 81.60%  │ 82.06% │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ Precision         │ 73.76% │ 85.35%  │ 85.20% │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ Recall (信号效率) │ 72.77% │ 82.31%  │ 83.47% │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ F1 Score          │ 73.26% │ 83.80%  │ 84.33% │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ ROC AUC           │ 0.7579 │ 0.9008  │ 0.9049 │
+  ├───────────────────┼────────┼─────────┼────────┤
+  │ 背景抑制率        │ 64.51% │ 80.63%  │ 80.12% │
+  └───────────────────┴────────┴─────────┴────────┘
+
+  ---
+  结论
+
+  - DGCNN 综合最优：Accuracy、Recall、F1、AUC 全面领先
+  - GravNet 背景抑制率略高（80.63% vs 80.12%），但差距很小（约 1400 个样本）
+  - AUC 0.9049：分类能力强，ROC 曲线下面积接近 0.91
+
+
+
+ 图像分析
+
+  ROC 曲线
+  - GravNet 和 DGCNN 几乎重合，远优于 GIN
+  - 低 FPR 区域（左下角）DGCNN 略高于 GravNet，实际使用中更重要的正是这个区域
+
+  Rejection Curve
+  - 三条曲线形态符合预期，GIN 明显低于另外两者
+  - 关键区域（Signal Efficiency ≈ 0.98）：GravNet 和 DGCNN 在高信号效率端的背景抑制率大约在 10~100 量级
+  - 论文目标 Rejection Power ≥ 10^5 对应的是极低信号效率（左侧极端区域），当前模型在 Signal Efficiency ≈ 0.98
+  时背景抑制约为 10^1~10^2
+
+  ---
+  与目标的差距分析
+
+  论文目标是同时满足：
+  - Signal Efficiency ≥ 98%
+  - Rejection Power ≥ 10^5
+
+  从 Rejection Curve 看，在 98% 信号效率处，当前模型的背景抑制约为 10~50，距离 10^5 差距很大。这说明：
+
+  1. 模型本身性能是合理的（AUC 0.90+），问题可能在于数据量或特征
+  2. 10^5 的目标极高，通常需要多级筛选或更多物理特征输入
+  3. 这个目标值得在论文里讨论：当前 GNN 的能力边界在哪里，与传统方法相比如何
+
+  建议下一步在 evaluate.py
+  里加一个读取特定信号效率下背景抑制率的数值输出，精确量化差距，用于论文写作。需要的话我来写这个补充代码。
