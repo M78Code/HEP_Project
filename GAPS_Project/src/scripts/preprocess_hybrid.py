@@ -27,7 +27,7 @@ def preprocess_split(pkl_path: Path, out_path: Path):
     N = len(events)
     print(f'  事例数: {N:,}')
 
-    voxels = np.zeros((N, 10, 12, 12), dtype=np.float32)
+    voxels = np.zeros((N, 10, 20, 20), dtype=np.float32)
     tofs   = np.zeros((N, 11),         dtype=np.float32)
     labels = np.zeros(N,               dtype=np.int64)
     betas  = np.zeros(N,               dtype=np.float32)
@@ -48,6 +48,6 @@ if __name__ == '__main__':
     for split in ['train', 'val', 'test']:
         preprocess_split(
             pkl_path = SPLIT_DIR / f'{split}.pkl',
-            out_path = SPLIT_DIR / f'{split}_hybrid',   # 自动加 .npz 后缀
+            out_path = SPLIT_DIR / f'{split}_hybrid_20x20',   # 自动加 .npz 后缀
         )
     print('\n全部预处理完成。')

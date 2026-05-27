@@ -19,13 +19,13 @@ LR         = 1e-4      # batch 增大，LR 同比上调
 PATIENCE   = 10        # early stopping
 NUM_WORKERS = 24       # i9-13900KS 32线程
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
-SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
+SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_20x20_best.pth'
 
 
 def train():
   print(f'使用设备：{DEVICE}')
-  train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid.npz')
-  val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid.npz')
+  train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid_20x20.npz')
+  val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid_20x20.npz')
   train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
   val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
 
