@@ -40,8 +40,14 @@ class GapsDataset(Dataset):
             raw_events.extend(payload['events'])
 
         if self.lazy:
-            # 只存原始dict，get()时再转换
+            # 只存原始dict，get()时再转换；预计算voxel缓存到numpy数组
             self._raw_events = raw_events
+            import numpy as np
+            print(f'  预计算 {len(raw_events):,} 个 voxel 缓存...')
+            self._voxel_cache = np.stack(
+                [build_sili_voxel(e) for e in raw_events], axis=0
+            )  # (N, 10, 20, 20) float32
+            print(f'  voxel缓存完成，占用 {self._voxel_cache.nbytes / 1024**3:.1f} GB')
         else:
             # 全部预转换为PyG Data对象（含voxel）
             self._data_list = []
@@ -70,7 +76,7 @@ class GapsDataset(Dataset):
         if self.lazy:
             event = self._raw_events[idx]
             data = self.builder.build_from_dict(event)
-            data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32) # (10,20,20)
+            data.voxel = torch.from_numpy(self._voxel_cache[idx]).clone()  # (10,20,20)
             return data
         return self._data_list[idx]
 

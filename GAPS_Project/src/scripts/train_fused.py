@@ -27,13 +27,13 @@ print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ──
 EPOCHS = 80
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
 STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
-NUM_WORKERS = 24
+NUM_WORKERS = 24  # pin_memory已去掉，24 workers应无fd问题
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
