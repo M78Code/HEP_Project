@@ -32,7 +32,7 @@ LEARNING_RATE = 3e-4
 STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
-LAZY_LOAD = False
+LAZY_LOAD = True
 NUM_WORKERS = 24
 
 def train():
