@@ -17,7 +17,7 @@ BATCH_SIZE = 256       # 4090 24GB，3D CNN 512ch 较重
 EPOCHS     = 100
 LR         = 1e-4      # batch 增大，LR 同比上调
 PATIENCE   = 10        # early stopping
-NUM_WORKERS = 16       # i9-13900KS 32线程
+NUM_WORKERS = 24       # i9-13900KS 32线程
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
 SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_20x20_best.pth'
 

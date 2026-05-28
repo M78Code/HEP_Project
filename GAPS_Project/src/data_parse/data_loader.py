@@ -64,11 +64,11 @@ def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle
 
     pw = persistent_workers and num_workers > 0
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train,
-                              num_workers=num_workers, pin_memory=True, persistent_workers=pw)
+                              num_workers=num_workers, persistent_workers=pw)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
-                            num_workers=num_workers, pin_memory=True, persistent_workers=pw)
+                            num_workers=num_workers, persistent_workers=pw)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False,
-                             num_workers=num_workers, pin_memory=True, persistent_workers=pw)
+                             num_workers=num_workers, persistent_workers=pw)
 
     return train_loader, val_loader, test_loader
 
