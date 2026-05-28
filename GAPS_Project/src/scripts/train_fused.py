@@ -33,7 +33,7 @@ STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
-NUM_WORKERS = 24  # pin_memory已去掉，24 workers应无fd问题
+NUM_WORKERS = 24
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
@@ -55,6 +55,7 @@ def train():
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
+    scaler = torch.amp.GradScaler('cuda')  # AMP 混合精度
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = PROJECT_ROOT / 'results' / f"{timestamp}_FusedGravNet"
@@ -84,11 +85,14 @@ def train():
 
             voxel = torch.log1p(batch.voxel.view(-1, 1, 10, 20, 20))  # log1p 标准化
 
-            logits = model(batch.x, batch.edge_index, batch.batch,
-                           graph_feat=graph_feat, voxel=voxel)
-            loss = criterion(logits, batch.y.squeeze())
-            loss.backward()
-            optimizer.step()
+            with torch.amp.autocast('cuda'):
+                logits = model(batch.x, batch.edge_index, batch.batch,
+                               graph_feat=graph_feat, voxel=voxel)
+                loss = criterion(logits, batch.y.squeeze())
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             total_loss += loss.item() * batch.num_graphs
             preds = logits.argmax(dim=1)
@@ -111,11 +115,13 @@ def train():
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)
-                voxel = torch.log1p(batch.voxel.view(-1, 1, 10, 20, 20))  # log1p 标准化
+                voxel = torch.log1p(batch.voxel.view(-1, 1, 10, 20, 20))
 
-                logits = model(batch.x, batch.edge_index, batch.batch,
-                               graph_feat=graph_feat, voxel=voxel)
-                loss = criterion(logits, batch.y.squeeze())
+                with torch.amp.autocast('cuda'):
+                    logits = model(batch.x, batch.edge_index, batch.batch,
+                                   graph_feat=graph_feat, voxel=voxel)
+                    loss = criterion(logits, batch.y.squeeze())
+
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
                 val_correct += (preds == batch.y.squeeze()).sum().item()
