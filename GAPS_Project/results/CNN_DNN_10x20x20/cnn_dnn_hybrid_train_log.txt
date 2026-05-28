@@ -65,30 +65,30 @@ Epoch  41/100 | train_loss: 0.3673  train_acc: 0.8299 | val_loss: 0.4021  val_ac
 
 (base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python evaluate_hybrid.py
 使用设备：cuda
-  loaded 642228 events from /home/a/workspace/ai/HEP_Project/GAPS_Project/dataset/split/test.pkl
+  loaded 642,228 events from /home/a/workspace/ai/HEP_Project/GAPS_Project/dataset/split/test_hybrid_20x20.npz
 test events: 642228
-已加载模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/cnn_dnn_hybrid_best.pth
-
+已加载模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/cnn_dnn_hybrid_20x20_best.pth
+CNN+DNN eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1255/1255 [05:09<00:00,  4.06it/s]
 
 ==================================================
-模型: CNN+DNN (Nakagami A.2)
-  Accuracy : 0.8474
-  Precision: 0.8854  (antiD识别精确率)
-  Recall   : 0.8456  (antiD信号效率)
-  F1 Score : 0.8650
-  ROC AUC  : 0.9294
-  混淆矩阵 : TN=230226  FP=40655  FN=57342  TP=314005
-  背景抑制率: 0.8499  (270881个antiP中正确拒绝230226个)
+模型: CNN_DNN_20x20
+  Accuracy : 0.8254
+  Precision: 0.8427  (antiD识别精确率)
+  Recall   : 0.8583  (antiD信号效率)
+  F1 Score : 0.8504
+  ROC AUC  : 0.9085
+  混淆矩阵 : TN=211378  FP=59503  FN=52625  TP=318722
+  背景抑制率: 0.7803  (270881个antiP中正确拒绝211378个)
 推理结果已保存至: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation
 
 ============================================================
 各信号效率下的背景抑制率 （Background Rejection = 1/FPR）
-  Signal Eff CNN+DNN (Nakagami A.2)
+  Signal Eff        CNN_DNN_20x20  GravNet_6b_h128_rec            DGCNN_rec
 ------------------------------------------------------------
-         0.50              1.67e+02
-         0.80              9.89e+00
-         0.90              4.15e+00
-         0.95              2.56e+00
-         0.98              1.76e+00
-         0.99              1.48e+00
-Rejection曲线已保存: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/hybrid_rejection_curve.png
+         0.50              4.98e+01              1.18e+03              8.18e+02
+         0.80              6.67e+00              4.37e+01              3.16e+01
+         0.90              3.39e+00              1.21e+01              9.71e+00
+         0.95              2.26e+00              5.92e+00              5.05e+00
+         0.98              1.63e+00              3.42e+00              3.07e+00
+         0.99              1.40e+00              2.58e+00              2.35e+00
+Rejection曲线已保存: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/rejection_CNN_DNN_20x20_vs_gnn.png

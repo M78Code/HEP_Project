@@ -42,15 +42,18 @@ def make_dataloaders(pkl_files: list, batch_size: int = 16, train_ratio: float =
     return train_loader, val_loader, test_loader
 
 
-def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle_train: bool = True, lazy: bool = True):
+def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle_train: bool = True,
+                                 lazy: bool = True, num_workers: int = 0, persistent_workers: bool = False):
     """
     从预先分割好的 train/val/test.pkl 构建DataLoader
     适用于已有 data_splitter.py 生成的split文件时
 
     Args:
-        split_dir:      dataset/split/目录
-        batch_size:     batch大小
-        shuffle_train:  训练集是否打乱
+        split_dir:          dataset/split/目录
+        batch_size:         batch大小
+        shuffle_train:      训练集是否打乱
+        num_workers:        数据加载子进程数
+        persistent_workers: 是否保持worker常驻（num_workers>0时有效）
     Returns:
         train_loader, val_loader, test_loader
     """
@@ -59,9 +62,13 @@ def make_data_loaders_from_split(split_dir: Path, batch_size: int = 128, shuffle
     val_dataset = GapsDataset([split_dir / 'val.pkl'], lazy=lazy)
     test_dataset = GapsDataset([split_dir / 'test.pkl'], lazy=lazy)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    pw = persistent_workers and num_workers > 0
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train,
+                              num_workers=num_workers, pin_memory=True, persistent_workers=pw)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
+                            num_workers=num_workers, pin_memory=True, persistent_workers=pw)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False,
+                             num_workers=num_workers, pin_memory=True, persistent_workers=pw)
 
     return train_loader, val_loader, test_loader
 
