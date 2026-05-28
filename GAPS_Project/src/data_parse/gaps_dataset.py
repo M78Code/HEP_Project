@@ -1,4 +1,5 @@
 # Step 2.2: PyG数据集类
+import numpy as np
 import torch
 import uproot
 import pickle
@@ -40,14 +41,16 @@ class GapsDataset(Dataset):
             raw_events.extend(payload['events'])
 
         if self.lazy:
-            # 只存原始dict，get()时再转换；预计算voxel缓存到numpy数组
             self._raw_events = raw_events
-            import numpy as np
-            print(f'  预计算 {len(raw_events):,} 个 voxel 缓存...')
-            self._voxel_cache = np.stack(
-                [build_sili_voxel(e) for e in raw_events], axis=0
-            )  # (N, 10, 20, 20) float32
-            print(f'  voxel缓存完成，占用 {self._voxel_cache.nbytes / 1024**3:.1f} GB')
+            # 尝试加载预计算的 voxel 缓存（mmap模式，不占内存）
+            pkl_path = Path(pkl_files[0])
+            cache_path = pkl_path.parent / f'{pkl_path.stem}_voxel_cache.npy'
+            if cache_path.exists():
+                self._voxel_cache = np.load(cache_path, mmap_mode='r')
+                print(f'  已加载 voxel 缓存 (mmap): {cache_path}')
+            else:
+                self._voxel_cache = None
+                print(f'  未找到 voxel 缓存，将实时计算: {cache_path}')
         else:
             # 全部预转换为PyG Data对象（含voxel）
             self._data_list = []
@@ -76,7 +79,10 @@ class GapsDataset(Dataset):
         if self.lazy:
             event = self._raw_events[idx]
             data = self.builder.build_from_dict(event)
-            data.voxel = torch.from_numpy(self._voxel_cache[idx]).clone()  # (10,20,20)
+            if self._voxel_cache is not None:
+                data.voxel = torch.from_numpy(self._voxel_cache[idx].copy())
+            else:
+                data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32)
             return data
         return self._data_list[idx]
 
