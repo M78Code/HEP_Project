@@ -42,15 +42,6 @@ class GapsDataset(Dataset):
 
         if self.lazy:
             self._raw_events = raw_events
-            # 尝试加载预计算的 voxel 缓存（mmap模式，不占内存）
-            pkl_path = Path(pkl_files[0])
-            cache_path = pkl_path.parent / f'{pkl_path.stem}_voxel_cache.npy'
-            if cache_path.exists():
-                self._voxel_cache = np.load(cache_path, mmap_mode='r')
-                print(f'  已加载 voxel 缓存 (mmap): {cache_path}')
-            else:
-                self._voxel_cache = None
-                print(f'  未找到 voxel 缓存，将实时计算: {cache_path}')
         else:
             # 全部预转换为PyG Data对象（含voxel）
             self._data_list = []
@@ -79,10 +70,7 @@ class GapsDataset(Dataset):
         if self.lazy:
             event = self._raw_events[idx]
             data = self.builder.build_from_dict(event)
-            if self._voxel_cache is not None:
-                data.voxel = torch.from_numpy(self._voxel_cache[idx].copy())
-            else:
-                data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32)
+            data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32)
             return data
         return self._data_list[idx]
 
