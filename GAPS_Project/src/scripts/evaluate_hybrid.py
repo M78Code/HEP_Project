@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 512
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
-MODEL_PATH = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_best.pth'
+MODEL_PATH = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_20x20_best.pth'
 OUT_DIR    = PROJECT_ROOT / 'results' / 'evaluation'
 
 
@@ -111,7 +111,7 @@ def evaluate():
     # ── 加载测试数据 ──
     # 评估12×12模型时改为 test_hybrid.npz
     # 评估20×20模型时改为 test_hybrid_20x20.npz
-    test_npz = DATA_DIR / 'test_hybrid.npz'
+    test_npz = DATA_DIR / 'test_hybrid_20x20.npz'
     test_set    = HybridDatasetFast(test_npz)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
                              num_workers=8, pin_memory=True)
@@ -129,7 +129,7 @@ def evaluate():
     betas = np.load(test_npz)['betas']
 
     # ── 评价指标 ──
-    tag = 'CNN_DNN_12x12'   # 评估20×20时改为 CNN_DNN_20x20
+    tag = 'CNN_DNN_20x20'
     print_metrics(tag, labels, probs)
 
     np.save(OUT_DIR / f'{tag}_labels.npy', labels)
