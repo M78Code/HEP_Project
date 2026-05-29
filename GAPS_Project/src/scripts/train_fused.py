@@ -34,6 +34,7 @@ GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
 NUM_WORKERS = 0
+PATIENCE = 10  # early stopping: val_loss连续10个epoch无改善则停止
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
@@ -64,6 +65,7 @@ def train():
 
     best_val_loss = float('inf')
     best_model_path = log_dir / f'{timestamp}_FusedGravNet_best.pth'
+    patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
         epoch_start = time.time()
@@ -141,8 +143,14 @@ def train():
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+            patience_counter = 0
             torch.save(model.state_dict(), best_model_path)
             print(f"  → best model saved (val_loss={best_val_loss:.4f})")
+        else:
+            patience_counter += 1
+            if patience_counter >= PATIENCE:
+                print(f"  → early stopping: val_loss未改善已达{PATIENCE}个epoch")
+                break
 
     writer.close()
     print(f"\n训练完成，最优模型: {best_model_path}")
