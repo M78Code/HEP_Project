@@ -33,7 +33,7 @@ STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
-NUM_WORKERS = 8
+NUM_WORKERS = 4
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
