@@ -33,7 +33,7 @@ STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
-NUM_WORKERS = 4
+NUM_WORKERS = 0
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
@@ -55,7 +55,7 @@ def train():
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
-    scaler = torch.amp.GradScaler('cuda')  # AMP 混合精度
+    # AMP已移除：torch_geometric C扩展在FP16下可能触发段错误
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_dir = PROJECT_ROOT / 'results' / f"{timestamp}_FusedGravNet"
@@ -85,14 +85,12 @@ def train():
 
             voxel = torch.log1p(batch.voxel.view(-1, 1, 10, 20, 20))  # log1p 标准化
 
-            with torch.amp.autocast('cuda'):
-                logits = model(batch.x, batch.edge_index, batch.batch,
-                               graph_feat=graph_feat, voxel=voxel)
-                loss = criterion(logits, batch.y.squeeze())
+            logits = model(batch.x, batch.edge_index, batch.batch,
+                           graph_feat=graph_feat, voxel=voxel)
+            loss = criterion(logits, batch.y.squeeze())
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            loss.backward()
+            optimizer.step()
 
             total_loss += loss.item() * batch.num_graphs
             preds = logits.argmax(dim=1)
@@ -117,10 +115,9 @@ def train():
                 ], dim=1)
                 voxel = torch.log1p(batch.voxel.view(-1, 1, 10, 20, 20))
 
-                with torch.amp.autocast('cuda'):
-                    logits = model(batch.x, batch.edge_index, batch.batch,
-                                   graph_feat=graph_feat, voxel=voxel)
-                    loss = criterion(logits, batch.y.squeeze())
+                logits = model(batch.x, batch.edge_index, batch.batch,
+                               graph_feat=graph_feat, voxel=voxel)
+                loss = criterion(logits, batch.y.squeeze())
 
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
