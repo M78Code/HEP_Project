@@ -33,14 +33,14 @@ STEP_SIZE = 15
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5
 LAZY_LOAD = True
-NUM_WORKERS = 12
+NUM_WORKERS = 8
 
 def train():
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
     train_loader, val_loader, _ = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
-        num_workers=NUM_WORKERS, persistent_workers=True)
+        num_workers=NUM_WORKERS, persistent_workers=False)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
 
