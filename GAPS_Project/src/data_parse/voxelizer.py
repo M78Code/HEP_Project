@@ -53,8 +53,8 @@ def build_tof_features(event):
   tof_t   = times[is_tof]
   tof_li  = layer_idx[is_tof] % 100
 
-  is_outer = tof_li < 6      # layer 10X: 0,2,3,4,5
-  is_inner = ~is_outer        # layer 11X: 10,11,12,13,14,15,16
+  is_outer = tof_li < 10     # digit2=0 → outer (100-106), tof_li=0-6
+  is_inner = ~is_outer        # digit2=1 → inner (110-115), tof_li=10-15
 
   # 1-2: outer/inner energy loss
   outer_e = float(tof_e[is_outer].sum()) if is_outer.any() else 0.0

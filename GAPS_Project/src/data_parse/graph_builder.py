@@ -140,8 +140,9 @@ class GraphBuilder:
         )
 
     # TOF layer分组（基于volume_id空间分布分析）
-    OUTER_TOF_LAYERS = {100, 102, 103, 104, 105}
-    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}
+    # 官方volume_id規則: digit2=0→outer, digit2=1→inner
+    OUTER_TOF_LAYERS = {100, 101, 102, 103, 104, 105, 106}  # face 0-6
+    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115}        # CUBE 6面
 
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
