@@ -38,7 +38,9 @@ STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
-LAZY_LOAD = False  # 服务器设False，Mac设True
+LAZY_LOAD = True
+NUM_WORKERS = 0
+PATIENCE = 10  # early stopping
 
 IN_CHANNEL = 8
 
@@ -58,8 +60,9 @@ def train():
     # ── 1. 数据加载 ────────────────────────────────────
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
-    train_loader, val_loader, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE,
-                                                                         lazy=LAZY_LOAD)
+    train_loader, val_loader, test_loader = make_data_loaders_from_split(
+        split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
+        num_workers=NUM_WORKERS, persistent_workers=False)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
     print(f"test  batches: {len(test_loader)}")
@@ -83,6 +86,7 @@ def train():
     # ── 5. 训练循环 ────────────────────────────────────
     best_val_loss = float('inf')
     best_model_path = log_dir / f'{timestamp}_{MODEL_NAME}_best.pth'
+    patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
         epoch_start = time.time()
@@ -101,8 +105,9 @@ def train():
                 batch.tof_profile.view(-1, 16),
                 batch.tof_feat.view(-1, 11),
             ], dim=1)  # (B, 45)
-            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-            loss = criterion(logits, batch.y.squeeze())
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                loss = criterion(logits, batch.y.squeeze())
             loss.backward()
             optimizer.step()
 
@@ -129,8 +134,9 @@ def train():
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)  # (B, 45)
-                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                loss = criterion(logits, batch.y.squeeze())
+                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                    logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                    loss = criterion(logits, batch.y.squeeze())
 
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
@@ -157,8 +163,14 @@ def train():
         # ── 保存最优模型 ────────────────────────────────
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+            patience_counter = 0
             torch.save(model.state_dict(), best_model_path)
             print(f"  → best model saved (val_loss={best_val_loss:.4f})")
+        else:
+            patience_counter += 1
+            if patience_counter >= PATIENCE:
+                print(f"  → early stopping: val_loss未改善已达{PATIENCE}个epoch")
+                break
 
     writer.close()
     print(f"\n训练完成，最优模型: {best_model_path}")
@@ -545,7 +557,9 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
     """测试不同深度/宽度GravNet，num_blocks可选4/6/8，hidden_dim可选64/128"""
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载数据集...')
-    train_loader, val_loader, _ = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
+    train_loader, val_loader, _ = make_data_loaders_from_split(
+        split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
+        num_workers=NUM_WORKERS, persistent_workers=False)
 
     exp_name = f"GravNet_{num_blocks}blocks_h{hidden_dim}"
     model = GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=hidden_dim, graph_feat_dim=45, num_blocks=num_blocks).to(DEVICE)
@@ -563,6 +577,7 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
 
     best_val_loss = float('inf')
     best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
+    patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
         epoch_start = time.time()
@@ -579,8 +594,9 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
                 batch.tof_profile.view(-1, 16),
                 batch.tof_feat.view(-1, 11),
             ], dim=1)  # (B, 45)
-            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-            loss = criterion(logits, batch.y.squeeze())
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                loss = criterion(logits, batch.y.squeeze())
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * batch.num_graphs
@@ -604,8 +620,9 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)  # (B, 45)
-                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                loss = criterion(logits, batch.y.squeeze())
+                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                    logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                    loss = criterion(logits, batch.y.squeeze())
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
                 val_correct += (preds == batch.y.squeeze()).sum().item()
@@ -628,8 +645,14 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+            patience_counter = 0
             torch.save(model.state_dict(), best_model_path)
             print(f"  → best model saved (val_loss={best_val_loss:.4f})")
+        else:
+            patience_counter += 1
+            if patience_counter >= PATIENCE:
+                print(f"  → early stopping: val_loss未改善已达{PATIENCE}个epoch")
+                break
 
     writer.close()
     print(f"\n训练完成，最优模型: {best_model_path}")

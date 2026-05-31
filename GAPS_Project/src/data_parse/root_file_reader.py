@@ -89,11 +89,13 @@ def look_TreeMc_TreeRec_SimulationParameterTree():
 
 
 def check_event():
-    tree_mc = f['TreeMc']
-    tree_rec = f['TreeRec']
+
 
     f = uproot.open(
         PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
+
+    tree_mc = f['TreeMc']
+    tree_rec = f['TreeRec']
 
     # 1. 总event数
     print(f'\n总event数：{tree_mc.num_entries}')
@@ -153,6 +155,8 @@ def check_node_feature():
     边的构建方式：用k近邻（k-NN），基于空间距离连接最近的k个hit。
     :return:
     """
+    f = uproot.open(
+        PROJECT_ROOT / 'dataset' / 'test_sample' / 'anti_deuteron_gaps_FTFP_BERT_1778138909.root')
     tree_rec = f['TreeRec']
     # 读取第一个event的各字段
     volume_id = tree_rec['Rec/hitseries_/hitseries_.volume_id_'].array()
@@ -523,7 +527,8 @@ def rec_beta():
 
 
 if __name__ == '__main__':
-    rec_beta()
+    # rec_beta()
+    check_node_feature()
     # diagnose_detector()
     # check_graph_nan()
     # batch_check_branches()

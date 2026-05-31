@@ -137,7 +137,9 @@ def check_range():
 if __name__ == '__main__':
     # clustering_demo()
     # cuda_knn_ok()
-    check_range()
+    # check_range()
+    a = 1000 // 6
+    print(a)
     # rec_primary_energy_depositions()
 
 
