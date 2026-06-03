@@ -105,9 +105,8 @@ def train():
                 batch.tof_profile.view(-1, 16),
                 batch.tof_feat.view(-1, 11),
             ], dim=1)  # (B, 45)
-            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                loss = criterion(logits, batch.y.squeeze())
+            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+            loss = criterion(logits, batch.y.squeeze())
             loss.backward()
             optimizer.step()
 
@@ -134,9 +133,8 @@ def train():
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)  # (B, 45)
-                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                    logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                    loss = criterion(logits, batch.y.squeeze())
+                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                loss = criterion(logits, batch.y.squeeze())
 
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
@@ -594,9 +592,8 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
                 batch.tof_profile.view(-1, 16),
                 batch.tof_feat.view(-1, 11),
             ], dim=1)  # (B, 45)
-            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                loss = criterion(logits, batch.y.squeeze())
+            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+            loss = criterion(logits, batch.y.squeeze())
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * batch.num_graphs
@@ -620,9 +617,8 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)  # (B, 45)
-                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                    logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
-                    loss = criterion(logits, batch.y.squeeze())
+                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                loss = criterion(logits, batch.y.squeeze())
                 val_loss += loss.item() * batch.num_graphs
                 preds = logits.argmax(dim=1)
                 val_correct += (preds == batch.y.squeeze()).sum().item()
