@@ -30,7 +30,7 @@ else:
 print(f'使用设备：{DEVICE}')
 
 # ── 超参数 ─────────────────────────────────────────────
-MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'
+MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'  ← DGCNN训练时用此配置
 EPOCHS = 80
 BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
@@ -675,10 +675,10 @@ def train_all_combinations():
 
 
 if __name__ == "__main__":
-    # train()   # DGCNN × graph_feat_dim=45（含stopping特征）
+    train()        # DGCNN（MODEL_NAME='DGCNN'）
     # resume_train()
     # train_narrow_beta()
     # train_ablation()
     # train_dnn_baseline()
-    train_deeper_gravnet(num_blocks=6, hidden_dim=128)
+    # train_deeper_gravnet(num_blocks=6, hidden_dim=128)  # GravNet用
     # train_all_combinations()
