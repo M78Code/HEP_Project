@@ -132,14 +132,32 @@ def check_range():
     print(f'Y: {min(y_all):.1f} ~ {max(y_all):.1f}')
 
 
+def train_log():
+    from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+
+    event_file = PROJECT_ROOT / 'results' / '20260603-035100_DGCNN' / 'events.out.tfevents.1780458660.1e45c81b8399.363.0'
+
+    ea = EventAccumulator(str(event_file))
+    ea.Reload()
+    print("Tags:")
+    print(ea.Tags())
+
+    for tag in ea.Tags().get("scalars", []):
+        events = ea.Scalars(tag)
+        if events:
+            last = events[-1]
+            print(f"{tag}: last step = {last.step}, value = {last.value}")
+
+
 
 
 if __name__ == '__main__':
     # clustering_demo()
     # cuda_knn_ok()
     # check_range()
-    a = 1000 // 6
-    print(a)
+    # a = 1000 // 6
+    # print(a)
+    train_log()
     # rec_primary_energy_depositions()
 
 
