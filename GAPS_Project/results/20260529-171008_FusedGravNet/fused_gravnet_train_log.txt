@@ -1,4 +1,4 @@
-(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python train_fused.py 
+(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python train_fused.py
 使用设备：cuda:0
 加载数据集...
 train batches: 23415
@@ -6,116 +6,184 @@ val   batches: 5018
 
 模型: FusedGravNet (GravNet_6b_h128 + CNN encoder)
 参数量: 1,533,280
-Epoch   1/80 | train_loss: 0.1516  train_acc: 0.8061 | val_loss: 0.1524  val_acc: 0.8045 | lr: 0.000300 | 6434s                             
+Epoch   1/80 | train_loss: 0.1516  train_acc: 0.8061 | val_loss: 0.1524  val_acc: 0.8045 | lr: 0.000300 | 6434s
   → best model saved (val_loss=0.1524)
-Epoch   2/80 | train_loss: 0.1252  train_acc: 0.8447 | val_loss: 0.1201  val_acc: 0.8486 | lr: 0.000300 | 6429s                             
+Epoch   2/80 | train_loss: 0.1252  train_acc: 0.8447 | val_loss: 0.1201  val_acc: 0.8486 | lr: 0.000300 | 6429s
   → best model saved (val_loss=0.1201)
-Epoch   3/80 | train_loss: 0.1159  train_acc: 0.8573 | val_loss: 0.1068  val_acc: 0.8696 | lr: 0.000300 | 6431s                             
+Epoch   3/80 | train_loss: 0.1159  train_acc: 0.8573 | val_loss: 0.1068  val_acc: 0.8696 | lr: 0.000300 | 6431s
   → best model saved (val_loss=0.1068)
-Epoch   4/80 | train_loss: 0.1106  train_acc: 0.8641 | val_loss: 0.1134  val_acc: 0.8605 | lr: 0.000300 | 6429s                             
-Epoch   5/80 | train_loss: 0.1071  train_acc: 0.8690 | val_loss: 0.1021  val_acc: 0.8739 | lr: 0.000300 | 6426s                             
+Epoch   4/80 | train_loss: 0.1106  train_acc: 0.8641 | val_loss: 0.1134  val_acc: 0.8605 | lr: 0.000300 | 6429s
+Epoch   5/80 | train_loss: 0.1071  train_acc: 0.8690 | val_loss: 0.1021  val_acc: 0.8739 | lr: 0.000300 | 6426s
   → best model saved (val_loss=0.1021)
-Epoch   6/80 | train_loss: 0.1046  train_acc: 0.8722 | val_loss: 0.0997  val_acc: 0.8782 | lr: 0.000300 | 6428s                             
+Epoch   6/80 | train_loss: 0.1046  train_acc: 0.8722 | val_loss: 0.0997  val_acc: 0.8782 | lr: 0.000300 | 6428s
   → best model saved (val_loss=0.0997)
-Epoch   7/80 | train_loss: 0.1022  train_acc: 0.8754 | val_loss: 0.0993  val_acc: 0.8813 | lr: 0.000300 | 6432s                             
+Epoch   7/80 | train_loss: 0.1022  train_acc: 0.8754 | val_loss: 0.0993  val_acc: 0.8813 | lr: 0.000300 | 6432s
   → best model saved (val_loss=0.0993)
-Epoch   8/80 | train_loss: 0.1004  train_acc: 0.8777 | val_loss: 0.0954  val_acc: 0.8828 | lr: 0.000300 | 6428s                             
+Epoch   8/80 | train_loss: 0.1004  train_acc: 0.8777 | val_loss: 0.0954  val_acc: 0.8828 | lr: 0.000300 | 6428s
   → best model saved (val_loss=0.0954)
-Epoch   9/80 | train_loss: 0.0988  train_acc: 0.8798 | val_loss: 0.0952  val_acc: 0.8826 | lr: 0.000300 | 6426s                             
+Epoch   9/80 | train_loss: 0.0988  train_acc: 0.8798 | val_loss: 0.0952  val_acc: 0.8826 | lr: 0.000300 | 6426s
   → best model saved (val_loss=0.0952)
-Epoch  10/80 | train_loss: 0.0974  train_acc: 0.8814 | val_loss: 0.0941  val_acc: 0.8841 | lr: 0.000300 | 6429s                             
+Epoch  10/80 | train_loss: 0.0974  train_acc: 0.8814 | val_loss: 0.0941  val_acc: 0.8841 | lr: 0.000300 | 6429s
   → best model saved (val_loss=0.0941)
-Epoch  11/80 | train_loss: 0.0963  train_acc: 0.8831 | val_loss: 0.0979  val_acc: 0.8811 | lr: 0.000300 | 6426s                             
-Epoch  12/80 | train_loss: 0.0951  train_acc: 0.8844 | val_loss: 0.0988  val_acc: 0.8791 | lr: 0.000300 | 6428s                             
-Epoch  13/80 | train_loss: 0.0946  train_acc: 0.8854 | val_loss: 0.0926  val_acc: 0.8886 | lr: 0.000300 | 6428s                             
+Epoch  11/80 | train_loss: 0.0963  train_acc: 0.8831 | val_loss: 0.0979  val_acc: 0.8811 | lr: 0.000300 | 6426s
+Epoch  12/80 | train_loss: 0.0951  train_acc: 0.8844 | val_loss: 0.0988  val_acc: 0.8791 | lr: 0.000300 | 6428s
+Epoch  13/80 | train_loss: 0.0946  train_acc: 0.8854 | val_loss: 0.0926  val_acc: 0.8886 | lr: 0.000300 | 6428s
   → best model saved (val_loss=0.0926)
-Epoch  14/80 | train_loss: 0.0934  train_acc: 0.8869 | val_loss: 0.1010  val_acc: 0.8790 | lr: 0.000300 | 6426s                             
-Epoch  15/80 | train_loss: 0.0927  train_acc: 0.8874 | val_loss: 0.0925  val_acc: 0.8870 | lr: 0.000150 | 6425s                             
+Epoch  14/80 | train_loss: 0.0934  train_acc: 0.8869 | val_loss: 0.1010  val_acc: 0.8790 | lr: 0.000300 | 6426s
+Epoch  15/80 | train_loss: 0.0927  train_acc: 0.8874 | val_loss: 0.0925  val_acc: 0.8870 | lr: 0.000150 | 6425s
   → best model saved (val_loss=0.0925)
-Epoch  16/80 | train_loss: 0.0866  train_acc: 0.8953 | val_loss: 0.0856  val_acc: 0.8973 | lr: 0.000150 | 6430s                             
+Epoch  16/80 | train_loss: 0.0866  train_acc: 0.8953 | val_loss: 0.0856  val_acc: 0.8973 | lr: 0.000150 | 6430s
   → best model saved (val_loss=0.0856)
-Epoch  17/80 | train_loss: 0.0855  train_acc: 0.8966 | val_loss: 0.0841  val_acc: 0.8988 | lr: 0.000150 | 6426s                             
+Epoch  17/80 | train_loss: 0.0855  train_acc: 0.8966 | val_loss: 0.0841  val_acc: 0.8988 | lr: 0.000150 | 6426s
   → best model saved (val_loss=0.0841)
-Epoch  18/80 | train_loss: 0.0848  train_acc: 0.8976 | val_loss: 0.0841  val_acc: 0.8980 | lr: 0.000150 | 6428s                             
+Epoch  18/80 | train_loss: 0.0848  train_acc: 0.8976 | val_loss: 0.0841  val_acc: 0.8980 | lr: 0.000150 | 6428s
   → best model saved (val_loss=0.0841)
-Epoch  19/80 | train_loss: 0.0843  train_acc: 0.8981 | val_loss: 0.0842  val_acc: 0.8992 | lr: 0.000150 | 6426s                             
-Epoch  20/80 | train_loss: 0.0839  train_acc: 0.8988 | val_loss: 0.0827  val_acc: 0.8997 | lr: 0.000150 | 6425s                             
+Epoch  19/80 | train_loss: 0.0843  train_acc: 0.8981 | val_loss: 0.0842  val_acc: 0.8992 | lr: 0.000150 | 6426s
+Epoch  20/80 | train_loss: 0.0839  train_acc: 0.8988 | val_loss: 0.0827  val_acc: 0.8997 | lr: 0.000150 | 6425s
   → best model saved (val_loss=0.0827)
-Epoch  21/80 | train_loss: 0.0834  train_acc: 0.8992 | val_loss: 0.0833  val_acc: 0.9002 | lr: 0.000150 | 6426s                             
-Epoch  22/80 | train_loss: 0.0831  train_acc: 0.8995 | val_loss: 0.0827  val_acc: 0.9010 | lr: 0.000150 | 6427s                             
+Epoch  21/80 | train_loss: 0.0834  train_acc: 0.8992 | val_loss: 0.0833  val_acc: 0.9002 | lr: 0.000150 | 6426s
+Epoch  22/80 | train_loss: 0.0831  train_acc: 0.8995 | val_loss: 0.0827  val_acc: 0.9010 | lr: 0.000150 | 6427s
   → best model saved (val_loss=0.0827)
-Epoch  23/80 | train_loss: 0.0828  train_acc: 0.8999 | val_loss: 0.0839  val_acc: 0.8981 | lr: 0.000150 | 6428s                             
-Epoch  24/80 | train_loss: 0.0825  train_acc: 0.9006 | val_loss: 0.0828  val_acc: 0.9004 | lr: 0.000150 | 6429s                             
-Epoch  25/80 | train_loss: 0.0821  train_acc: 0.9010 | val_loss: 0.0810  val_acc: 0.9029 | lr: 0.000150 | 6427s                             
+Epoch  23/80 | train_loss: 0.0828  train_acc: 0.8999 | val_loss: 0.0839  val_acc: 0.8981 | lr: 0.000150 | 6428s
+Epoch  24/80 | train_loss: 0.0825  train_acc: 0.9006 | val_loss: 0.0828  val_acc: 0.9004 | lr: 0.000150 | 6429s
+Epoch  25/80 | train_loss: 0.0821  train_acc: 0.9010 | val_loss: 0.0810  val_acc: 0.9029 | lr: 0.000150 | 6427s
   → best model saved (val_loss=0.0810)
-Epoch  26/80 | train_loss: 0.0818  train_acc: 0.9012 | val_loss: 0.0815  val_acc: 0.9014 | lr: 0.000150 | 6428s                             
-Epoch  27/80 | train_loss: 0.0815  train_acc: 0.9017 | val_loss: 0.0827  val_acc: 0.8999 | lr: 0.000150 | 6428s                             
-Epoch  28/80 | train_loss: 0.0813  train_acc: 0.9017 | val_loss: 0.0812  val_acc: 0.9022 | lr: 0.000150 | 6426s                             
-Epoch  29/80 | train_loss: 0.0811  train_acc: 0.9022 | val_loss: 0.0819  val_acc: 0.9014 | lr: 0.000150 | 6427s                             
-Epoch  30/80 | train_loss: 0.0808  train_acc: 0.9026 | val_loss: 0.0817  val_acc: 0.9015 | lr: 0.000075 | 6427s                             
-Epoch  31/80 | train_loss: 0.0774  train_acc: 0.9067 | val_loss: 0.0784  val_acc: 0.9051 | lr: 0.000075 | 6427s                             
+Epoch  26/80 | train_loss: 0.0818  train_acc: 0.9012 | val_loss: 0.0815  val_acc: 0.9014 | lr: 0.000150 | 6428s
+Epoch  27/80 | train_loss: 0.0815  train_acc: 0.9017 | val_loss: 0.0827  val_acc: 0.8999 | lr: 0.000150 | 6428s
+Epoch  28/80 | train_loss: 0.0813  train_acc: 0.9017 | val_loss: 0.0812  val_acc: 0.9022 | lr: 0.000150 | 6426s
+Epoch  29/80 | train_loss: 0.0811  train_acc: 0.9022 | val_loss: 0.0819  val_acc: 0.9014 | lr: 0.000150 | 6427s
+Epoch  30/80 | train_loss: 0.0808  train_acc: 0.9026 | val_loss: 0.0817  val_acc: 0.9015 | lr: 0.000075 | 6427s
+Epoch  31/80 | train_loss: 0.0774  train_acc: 0.9067 | val_loss: 0.0784  val_acc: 0.9051 | lr: 0.000075 | 6427s
   → best model saved (val_loss=0.0784)
-Epoch  32/80 | train_loss: 0.0767  train_acc: 0.9074 | val_loss: 0.0787  val_acc: 0.9053 | lr: 0.000075 | 6427s                             
-Epoch  33/80 | train_loss: 0.0764  train_acc: 0.9080 | val_loss: 0.0787  val_acc: 0.9054 | lr: 0.000075 | 6429s                             
-Epoch  34/80 | train_loss: 0.0762  train_acc: 0.9082 | val_loss: 0.0778  val_acc: 0.9059 | lr: 0.000075 | 6427s                             
+Epoch  32/80 | train_loss: 0.0767  train_acc: 0.9074 | val_loss: 0.0787  val_acc: 0.9053 | lr: 0.000075 | 6427s
+Epoch  33/80 | train_loss: 0.0764  train_acc: 0.9080 | val_loss: 0.0787  val_acc: 0.9054 | lr: 0.000075 | 6429s
+Epoch  34/80 | train_loss: 0.0762  train_acc: 0.9082 | val_loss: 0.0778  val_acc: 0.9059 | lr: 0.000075 | 6427s
   → best model saved (val_loss=0.0778)
-Epoch  35/80 | train_loss: 0.0760  train_acc: 0.9083 | val_loss: 0.0784  val_acc: 0.9051 | lr: 0.000075 | 6426s                             
-Epoch  36/80 | train_loss: 0.0758  train_acc: 0.9086 | val_loss: 0.0784  val_acc: 0.9056 | lr: 0.000075 | 6428s                             
-Epoch  37/80 | train_loss: 0.0756  train_acc: 0.9089 | val_loss: 0.0783  val_acc: 0.9060 | lr: 0.000075 | 6430s                             
-Epoch  38/80 | train_loss: 0.0755  train_acc: 0.9088 | val_loss: 0.0790  val_acc: 0.9049 | lr: 0.000075 | 6430s                             
-Epoch  39/80 | train_loss: 0.0752  train_acc: 0.9091 | val_loss: 0.0776  val_acc: 0.9058 | lr: 0.000075 | 6430s                             
+Epoch  35/80 | train_loss: 0.0760  train_acc: 0.9083 | val_loss: 0.0784  val_acc: 0.9051 | lr: 0.000075 | 6426s
+Epoch  36/80 | train_loss: 0.0758  train_acc: 0.9086 | val_loss: 0.0784  val_acc: 0.9056 | lr: 0.000075 | 6428s
+Epoch  37/80 | train_loss: 0.0756  train_acc: 0.9089 | val_loss: 0.0783  val_acc: 0.9060 | lr: 0.000075 | 6430s
+Epoch  38/80 | train_loss: 0.0755  train_acc: 0.9088 | val_loss: 0.0790  val_acc: 0.9049 | lr: 0.000075 | 6430s
+Epoch  39/80 | train_loss: 0.0752  train_acc: 0.9091 | val_loss: 0.0776  val_acc: 0.9058 | lr: 0.000075 | 6430s
   → best model saved (val_loss=0.0776)
-Epoch  40/80 | train_loss: 0.0751  train_acc: 0.9094 | val_loss: 0.0778  val_acc: 0.9063 | lr: 0.000075 | 6431s                             
-Epoch  41/80 | train_loss: 0.0749  train_acc: 0.9095 | val_loss: 0.0773  val_acc: 0.9067 | lr: 0.000075 | 6429s                             
+Epoch  40/80 | train_loss: 0.0751  train_acc: 0.9094 | val_loss: 0.0778  val_acc: 0.9063 | lr: 0.000075 | 6431s
+Epoch  41/80 | train_loss: 0.0749  train_acc: 0.9095 | val_loss: 0.0773  val_acc: 0.9067 | lr: 0.000075 | 6429s
   → best model saved (val_loss=0.0773)
-Epoch  42/80 | train_loss: 0.0747  train_acc: 0.9098 | val_loss: 0.0781  val_acc: 0.9056 | lr: 0.000075 | 6428s                             
-Epoch  43/80 | train_loss: 0.0746  train_acc: 0.9099 | val_loss: 0.0788  val_acc: 0.9050 | lr: 0.000075 | 6428s                             
-Epoch  44/80 | train_loss: 0.0744  train_acc: 0.9100 | val_loss: 0.0798  val_acc: 0.9040 | lr: 0.000075 | 6425s                             
-Epoch  45/80 | train_loss: 0.0743  train_acc: 0.9103 | val_loss: 0.0776  val_acc: 0.9066 | lr: 0.000037 | 6428s                             
-Epoch  46/80 | train_loss: 0.0723  train_acc: 0.9127 | val_loss: 0.0767  val_acc: 0.9080 | lr: 0.000037 | 6427s                             
+Epoch  42/80 | train_loss: 0.0747  train_acc: 0.9098 | val_loss: 0.0781  val_acc: 0.9056 | lr: 0.000075 | 6428s
+Epoch  43/80 | train_loss: 0.0746  train_acc: 0.9099 | val_loss: 0.0788  val_acc: 0.9050 | lr: 0.000075 | 6428s
+Epoch  44/80 | train_loss: 0.0744  train_acc: 0.9100 | val_loss: 0.0798  val_acc: 0.9040 | lr: 0.000075 | 6425s
+Epoch  45/80 | train_loss: 0.0743  train_acc: 0.9103 | val_loss: 0.0776  val_acc: 0.9066 | lr: 0.000037 | 6428s
+Epoch  46/80 | train_loss: 0.0723  train_acc: 0.9127 | val_loss: 0.0767  val_acc: 0.9080 | lr: 0.000037 | 6427s
   → best model saved (val_loss=0.0767)
-Epoch  47/80 | train_loss: 0.0719  train_acc: 0.9132 | val_loss: 0.0767  val_acc: 0.9078 | lr: 0.000037 | 6426s                             
-Epoch  48/80 | train_loss: 0.0717  train_acc: 0.9133 | val_loss: 0.0762  val_acc: 0.9082 | lr: 0.000037 | 6429s                             
+Epoch  47/80 | train_loss: 0.0719  train_acc: 0.9132 | val_loss: 0.0767  val_acc: 0.9078 | lr: 0.000037 | 6426s
+Epoch  48/80 | train_loss: 0.0717  train_acc: 0.9133 | val_loss: 0.0762  val_acc: 0.9082 | lr: 0.000037 | 6429s
   → best model saved (val_loss=0.0762)
-Epoch  49/80 | train_loss: 0.0716  train_acc: 0.9133 | val_loss: 0.0761  val_acc: 0.9082 | lr: 0.000037 | 6428s                             
+Epoch  49/80 | train_loss: 0.0716  train_acc: 0.9133 | val_loss: 0.0761  val_acc: 0.9082 | lr: 0.000037 | 6428s
   → best model saved (val_loss=0.0761)
-Epoch  50/80 | train_loss: 0.0715  train_acc: 0.9135 | val_loss: 0.0761  val_acc: 0.9088 | lr: 0.000037 | 6426s                             
+Epoch  50/80 | train_loss: 0.0715  train_acc: 0.9135 | val_loss: 0.0761  val_acc: 0.9088 | lr: 0.000037 | 6426s
   → best model saved (val_loss=0.0761)
-Epoch  51/80 | train_loss: 0.0714  train_acc: 0.9138 | val_loss: 0.0769  val_acc: 0.9078 | lr: 0.000037 | 6429s                             
-Epoch  52/80 | train_loss: 0.0712  train_acc: 0.9138 | val_loss: 0.0764  val_acc: 0.9080 | lr: 0.000037 | 6427s                             
-Epoch  53/80 | train_loss: 0.0711  train_acc: 0.9140 | val_loss: 0.0767  val_acc: 0.9078 | lr: 0.000037 | 6433s                             
-Epoch  54/80 | train_loss: 0.0710  train_acc: 0.9142 | val_loss: 0.0765  val_acc: 0.9081 | lr: 0.000037 | 6431s                             
-Epoch  55/80 | train_loss: 0.0709  train_acc: 0.9144 | val_loss: 0.0765  val_acc: 0.9080 | lr: 0.000037 | 6428s                             
-Epoch  56/80 | train_loss: 0.0709  train_acc: 0.9142 | val_loss: 0.0769  val_acc: 0.9074 | lr: 0.000037 | 6426s                             
-Epoch  57/80 | train_loss: 0.0708  train_acc: 0.9143 | val_loss: 0.0759  val_acc: 0.9087 | lr: 0.000037 | 6425s                             
+Epoch  51/80 | train_loss: 0.0714  train_acc: 0.9138 | val_loss: 0.0769  val_acc: 0.9078 | lr: 0.000037 | 6429s
+Epoch  52/80 | train_loss: 0.0712  train_acc: 0.9138 | val_loss: 0.0764  val_acc: 0.9080 | lr: 0.000037 | 6427s
+Epoch  53/80 | train_loss: 0.0711  train_acc: 0.9140 | val_loss: 0.0767  val_acc: 0.9078 | lr: 0.000037 | 6433s
+Epoch  54/80 | train_loss: 0.0710  train_acc: 0.9142 | val_loss: 0.0765  val_acc: 0.9081 | lr: 0.000037 | 6431s
+Epoch  55/80 | train_loss: 0.0709  train_acc: 0.9144 | val_loss: 0.0765  val_acc: 0.9080 | lr: 0.000037 | 6428s
+Epoch  56/80 | train_loss: 0.0709  train_acc: 0.9142 | val_loss: 0.0769  val_acc: 0.9074 | lr: 0.000037 | 6426s
+Epoch  57/80 | train_loss: 0.0708  train_acc: 0.9143 | val_loss: 0.0759  val_acc: 0.9087 | lr: 0.000037 | 6425s
   → best model saved (val_loss=0.0759)
-Epoch  58/80 | train_loss: 0.0706  train_acc: 0.9146 | val_loss: 0.0762  val_acc: 0.9088 | lr: 0.000037 | 6430s                             
-Epoch  59/80 | train_loss: 0.0706  train_acc: 0.9147 | val_loss: 0.0766  val_acc: 0.9082 | lr: 0.000037 | 6429s                             
-Epoch  60/80 | train_loss: 0.0704  train_acc: 0.9148 | val_loss: 0.0764  val_acc: 0.9082 | lr: 0.000019 | 6429s                             
-Epoch  61/80 | train_loss: 0.0692  train_acc: 0.9162 | val_loss: 0.0759  val_acc: 0.9090 | lr: 0.000019 | 6430s                             
+Epoch  58/80 | train_loss: 0.0706  train_acc: 0.9146 | val_loss: 0.0762  val_acc: 0.9088 | lr: 0.000037 | 6430s
+Epoch  59/80 | train_loss: 0.0706  train_acc: 0.9147 | val_loss: 0.0766  val_acc: 0.9082 | lr: 0.000037 | 6429s
+Epoch  60/80 | train_loss: 0.0704  train_acc: 0.9148 | val_loss: 0.0764  val_acc: 0.9082 | lr: 0.000019 | 6429s
+Epoch  61/80 | train_loss: 0.0692  train_acc: 0.9162 | val_loss: 0.0759  val_acc: 0.9090 | lr: 0.000019 | 6430s
   → best model saved (val_loss=0.0759)
-Epoch  62/80 | train_loss: 0.0690  train_acc: 0.9163 | val_loss: 0.0759  val_acc: 0.9093 | lr: 0.000019 | 6427s                             
-Epoch  63/80 | train_loss: 0.0690  train_acc: 0.9163 | val_loss: 0.0759  val_acc: 0.9091 | lr: 0.000019 | 6431s                             
-Epoch  64/80 | train_loss: 0.0690  train_acc: 0.9164 | val_loss: 0.0758  val_acc: 0.9091 | lr: 0.000019 | 6429s                             
+Epoch  62/80 | train_loss: 0.0690  train_acc: 0.9163 | val_loss: 0.0759  val_acc: 0.9093 | lr: 0.000019 | 6427s
+Epoch  63/80 | train_loss: 0.0690  train_acc: 0.9163 | val_loss: 0.0759  val_acc: 0.9091 | lr: 0.000019 | 6431s
+Epoch  64/80 | train_loss: 0.0690  train_acc: 0.9164 | val_loss: 0.0758  val_acc: 0.9091 | lr: 0.000019 | 6429s
   → best model saved (val_loss=0.0758)
-Epoch  65/80 | train_loss: 0.0688  train_acc: 0.9165 | val_loss: 0.0759  val_acc: 0.9089 | lr: 0.000019 | 6428s                             
-Epoch  66/80 | train_loss: 0.0688  train_acc: 0.9166 | val_loss: 0.0756  val_acc: 0.9093 | lr: 0.000019 | 6429s                             
+Epoch  65/80 | train_loss: 0.0688  train_acc: 0.9165 | val_loss: 0.0759  val_acc: 0.9089 | lr: 0.000019 | 6428s
+Epoch  66/80 | train_loss: 0.0688  train_acc: 0.9166 | val_loss: 0.0756  val_acc: 0.9093 | lr: 0.000019 | 6429s
   → best model saved (val_loss=0.0756)
-Epoch  67/80 | train_loss: 0.0686  train_acc: 0.9169 | val_loss: 0.0758  val_acc: 0.9090 | lr: 0.000019 | 6429s                             
-Epoch  68/80 | train_loss: 0.0687  train_acc: 0.9167 | val_loss: 0.0757  val_acc: 0.9094 | lr: 0.000019 | 6429s                             
-Epoch  69/80 | train_loss: 0.0686  train_acc: 0.9169 | val_loss: 0.0760  val_acc: 0.9087 | lr: 0.000019 | 6430s                             
-Epoch  70/80 | train_loss: 0.0685  train_acc: 0.9169 | val_loss: 0.0756  val_acc: 0.9096 | lr: 0.000019 | 6430s                             
+Epoch  67/80 | train_loss: 0.0686  train_acc: 0.9169 | val_loss: 0.0758  val_acc: 0.9090 | lr: 0.000019 | 6429s
+Epoch  68/80 | train_loss: 0.0687  train_acc: 0.9167 | val_loss: 0.0757  val_acc: 0.9094 | lr: 0.000019 | 6429s
+Epoch  69/80 | train_loss: 0.0686  train_acc: 0.9169 | val_loss: 0.0760  val_acc: 0.9087 | lr: 0.000019 | 6430s
+Epoch  70/80 | train_loss: 0.0685  train_acc: 0.9169 | val_loss: 0.0756  val_acc: 0.9096 | lr: 0.000019 | 6430s
   → best model saved (val_loss=0.0756)
-Epoch  71/80 | train_loss: 0.0685  train_acc: 0.9168 | val_loss: 0.0758  val_acc: 0.9092 | lr: 0.000019 | 6428s                             
-Epoch  72/80 | train_loss: 0.0684  train_acc: 0.9171 | val_loss: 0.0760  val_acc: 0.9092 | lr: 0.000019 | 6430s                             
-Epoch  73/80 | train_loss: 0.0683  train_acc: 0.9172 | val_loss: 0.0758  val_acc: 0.9092 | lr: 0.000019 | 6425s                             
-Epoch  74/80 | train_loss: 0.0683  train_acc: 0.9171 | val_loss: 0.0761  val_acc: 0.9090 | lr: 0.000019 | 6427s                             
-Epoch  75/80 | train_loss: 0.0681  train_acc: 0.9174 | val_loss: 0.0759  val_acc: 0.9091 | lr: 0.000009 | 6429s                             
-Epoch  76/80 | train_loss: 0.0676  train_acc: 0.9181 | val_loss: 0.0755  val_acc: 0.9097 | lr: 0.000009 | 6429s                             
+Epoch  71/80 | train_loss: 0.0685  train_acc: 0.9168 | val_loss: 0.0758  val_acc: 0.9092 | lr: 0.000019 | 6428s
+Epoch  72/80 | train_loss: 0.0684  train_acc: 0.9171 | val_loss: 0.0760  val_acc: 0.9092 | lr: 0.000019 | 6430s
+Epoch  73/80 | train_loss: 0.0683  train_acc: 0.9172 | val_loss: 0.0758  val_acc: 0.9092 | lr: 0.000019 | 6425s
+Epoch  74/80 | train_loss: 0.0683  train_acc: 0.9171 | val_loss: 0.0761  val_acc: 0.9090 | lr: 0.000019 | 6427s
+Epoch  75/80 | train_loss: 0.0681  train_acc: 0.9174 | val_loss: 0.0759  val_acc: 0.9091 | lr: 0.000009 | 6429s
+Epoch  76/80 | train_loss: 0.0676  train_acc: 0.9181 | val_loss: 0.0755  val_acc: 0.9097 | lr: 0.000009 | 6429s
   → best model saved (val_loss=0.0755)
-Epoch  77/80 | train_loss: 0.0675  train_acc: 0.9181 | val_loss: 0.0759  val_acc: 0.9094 | lr: 0.000009 | 6426s                             
-Epoch  78/80 | train_loss: 0.0674  train_acc: 0.9181 | val_loss: 0.0757  val_acc: 0.9096 | lr: 0.000009 | 6432s                             
-Epoch  79/80 | train_loss: 0.0674  train_acc: 0.9181 | val_loss: 0.0757  val_acc: 0.9096 | lr: 0.000009 | 6429s                             
-Epoch  80/80 | train_loss: 0.0674  train_acc: 0.9183 | val_loss: 0.0757  val_acc: 0.9098 | lr: 0.000009 | 6431s                             
+Epoch  77/80 | train_loss: 0.0675  train_acc: 0.9181 | val_loss: 0.0759  val_acc: 0.9094 | lr: 0.000009 | 6426s
+Epoch  78/80 | train_loss: 0.0674  train_acc: 0.9181 | val_loss: 0.0757  val_acc: 0.9096 | lr: 0.000009 | 6432s
+Epoch  79/80 | train_loss: 0.0674  train_acc: 0.9181 | val_loss: 0.0757  val_acc: 0.9096 | lr: 0.000009 | 6429s
+Epoch  80/80 | train_loss: 0.0674  train_acc: 0.9183 | val_loss: 0.0757  val_acc: 0.9098 | lr: 0.000009 | 6431s
 
 训练完成，最优模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260529-171008_FusedGravNet/20260529-171008_FusedGravNet_best.pth
+
+
+
+(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python evaluate_fused.py
+使用设备: cuda:0
+加载test数据集...
+test batches: 10035
+已加载模型: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260529-171008_FusedGravNet/20260529-171008_FusedGravNet_best.pth
+参数量: 1,533,280
+FusedGravNet eval: 100%|███████████████████████████████████████████████████████| 10035/10035 [08:58<00:00, 18.64it/s]
+
+=======================================================
+模型: FusedGravNet
+  Accuracy  : 0.9099
+  Precision : 0.9348  (antiD识别精确率)
+  Recall    : 0.9075  (antiD信号效率)
+  F1 Score  : 0.9209
+  ROC AUC   : 0.9736
+  混淆矩阵  : TN=247374  FP=23507  FN=34363  TP=336984
+  背景抑制率: 0.9132  (270881个antiP中正确拒绝247374个)
+
+推理结果已保存至: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation
+已加载对比模型: GravNet_6b_h128_rec
+已加载对比模型: DGCNN_rec
+
+======================================================================
+各信号效率下的背景抑制率 (Background Rejection = 1/FPR)
+  Signal Eff           FusedGravNet    GravNet_6b_h128_rec              DGCNN_rec
+---------------------------------------------------------------------------------
+         0.50                1.76e+03                1.18e+03                8.18e+02
+         0.80                4.82e+01                4.37e+01                3.16e+01
+         0.90                1.28e+01                1.21e+01                9.71e+00
+         0.95                6.14e+00                5.92e+00                5.05e+00
+         0.98                3.57e+00                3.42e+00                3.07e+00
+         0.99                2.67e+00                2.58e+00                2.35e+00
+Rejection曲线已保存: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/rejection_FusedGravNet_vs_all.png
+
+最终AUC: 0.9736
+
+
+⏺ 结果分析：
+
+  FusedGravNet 评估结果
+
+  ┌──────────┬──────────────┬─────────────────────┬───────────┐
+  │   指标   │ FusedGravNet │ GravNet_6b_h128_rec │ DGCNN_rec │
+  ├──────────┼──────────────┼─────────────────────┼───────────┤
+  │ AUC      │ 0.9736       │ 0.9722              │ —         │
+  ├──────────┼──────────────┼─────────────────────┼───────────┤
+  │ Rej@0.90 │ 12.8         │ 12.1                │ 9.71      │
+  ├──────────┼──────────────┼─────────────────────┼───────────┤
+  │ Rej@0.98 │ 3.57         │ 3.42                │ 3.07      │
+  ├──────────┼──────────────┼─────────────────────┼───────────┤
+  │ Accuracy │ 91.0%        │ —                   │ —         │
+  └──────────┴──────────────┴─────────────────────┴───────────┘
+
+  结论：
+
+  FusedGravNet（GravNet + CNN Encoder）整体优于纯GravNet，各效率点下Rejection Power均有提升：
+  - AUC: 0.9722 → 0.9736（+0.0014）
+  - Rej@0.90: 12.1 → 12.8（+5.8%）
+  - Rej@0.98: 3.42 → 3.57（+4.4%）
+
+  CNN编码器加入了Si(Li)
+  voxel的空间分布信息，对GNN图特征形成互补，但提升幅度相对温和，说明GravNet本身已经从hits序列中捕获了大部分有用信息。
+
+  论文可以写：Hybrid GNN（FusedGravNet）通过融合3D
+  CNN提取的voxel特征，在AUC和背景抑制率上均超过单一GravNet基线，验证了多模态特征融合的有效性。
