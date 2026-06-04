@@ -32,7 +32,7 @@ print(f'使用设备：{DEVICE}')
 # ── 超参数 ─────────────────────────────────────────────
 MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'  ← DGCNN训练时用此配置
 EPOCHS = 80
-BATCH_SIZE = 128
+BATCH_SIZE = 512
 LEARNING_RATE = 3e-4
 STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
 GAMMA = 0.5
@@ -62,7 +62,7 @@ def train():
     print('加载数据集...')
     train_loader, val_loader, test_loader = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
-        num_workers=NUM_WORKERS, persistent_workers=False)
+        num_workers=NUM_WORKERS, persistent_workers=True)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
     print(f"test  batches: {len(test_loader)}")
