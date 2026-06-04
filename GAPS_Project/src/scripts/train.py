@@ -38,7 +38,7 @@ STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
-LAZY_LOAD = True
+LAZY_LOAD = False
 NUM_WORKERS = 8
 PATIENCE = 10  # early stopping
 
