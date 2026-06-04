@@ -62,7 +62,7 @@ def train():
     print('加载数据集...')
     train_loader, val_loader, test_loader = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
-        num_workers=NUM_WORKERS, persistent_workers=True)
+        num_workers=NUM_WORKERS, persistent_workers=True, use_voxel=False)
     print(f"train batches: {len(train_loader)}")
     print(f"val   batches: {len(val_loader)}")
     print(f"test  batches: {len(test_loader)}")
@@ -557,7 +557,7 @@ def train_deeper_gravnet(num_blocks: int = 6, hidden_dim: int = 64):
     print('加载数据集...')
     train_loader, val_loader, _ = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
-        num_workers=NUM_WORKERS, persistent_workers=False)
+        num_workers=NUM_WORKERS, persistent_workers=True, use_voxel=False)
 
     exp_name = f"GravNet_{num_blocks}blocks_h{hidden_dim}"
     model = GravNetClassifier(in_channels=IN_CHANNEL, hidden_dim=hidden_dim, graph_feat_dim=45, num_blocks=num_blocks).to(DEVICE)

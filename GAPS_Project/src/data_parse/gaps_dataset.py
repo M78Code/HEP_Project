@@ -24,10 +24,11 @@ class GapsDataset(Dataset):
         lazy        : bool              True=按需转换（省内存），False=全部预加载（快，服务器用）
     """
 
-    def __init__(self, pkl_files: list, k: int = 8, normalize: bool = True, lazy: bool = True):
+    def __init__(self, pkl_files: list, k: int = 8, normalize: bool = True, lazy: bool = True, use_voxel: bool = True):
         super().__init__()
         self.builder = GraphBuilder(k=k, normalize=normalize)
         self.lazy = lazy
+        self.use_voxel = use_voxel
         self.k = k
         self.normalize = normalize
         self._load(pkl_files)
@@ -43,11 +44,12 @@ class GapsDataset(Dataset):
         if self.lazy:
             self._raw_events = raw_events
         else:
-            # 全部预转换为PyG Data对象（含voxel）
+            # 全部预转换为PyG Data对象
             self._data_list = []
             for e in raw_events:
                 data = self.builder.build_from_dict(e)
-                data.voxel = torch.tensor(build_sili_voxel(e), dtype=torch.float32)
+                if self.use_voxel:
+                    data.voxel = torch.tensor(build_sili_voxel(e), dtype=torch.float32)
                 self._data_list.append(data)
 
     # def _load_all(self, pkl_files: list) -> list:
@@ -70,7 +72,8 @@ class GapsDataset(Dataset):
         if self.lazy:
             event = self._raw_events[idx]
             data = self.builder.build_from_dict(event)
-            data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32)
+            if self.use_voxel:
+                data.voxel = torch.tensor(build_sili_voxel(event), dtype=torch.float32)
             return data
         return self._data_list[idx]
 
