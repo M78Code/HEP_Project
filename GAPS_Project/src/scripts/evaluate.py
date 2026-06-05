@@ -85,7 +85,7 @@ EVAL_MODELS_OLD = [
 
 # ── 新 Rec-only 模型（in_channels=8, graph_feat_dim=45）──
 EVAL_MODELS = [
-    ('DGCNN_rec',              PROJECT_ROOT / 'results/20260525-013820_DGCNN/20260525-013820_DGCNN_best.pth',                                    8, 45, 4, 64),
+    ('DGCNN_rec',              PROJECT_ROOT / 'results/20260605-111041_DGCNN/20260605-111041_DGCNN_best.pth',                                    8, 45, 4, 64),
     ('GravNet_6b_h128_rec',    PROJECT_ROOT / 'results/20260525-063936_GravNet_6blocks_h128/20260525-063936_GravNet_6blocks_h128_best.pth',      8, 45, 6, 128),
 ]
 
@@ -582,10 +582,10 @@ def plot_three_way():
 
 
 if __name__ == '__main__':
-    # evaluate()              # Rec-only 模型完整推理+评估
+    evaluate()                # Rec-only 模型完整推理+评估
     # analyze_only()          # 只输出各效率下的Rejection表
     # analyze_threshold()     # 阈值优化分析（无需重新推理）
-    analyze_beta_window()     # β速度窗口分析（GravNet_6b_h128_rec，推理后运行）
+    # analyze_beta_window()   # β速度窗口分析（GravNet_6b_h128_rec，推理后运行）
     # evaluate_narrow_beta()
     # evaluate_ablation()
     # evaluate_dnn_baseline()
