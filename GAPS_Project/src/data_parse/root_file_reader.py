@@ -455,14 +455,19 @@ def check_new_fields_nan():
               f'NaN stopping_ke: {nan_ke} | NaN stopping_pos: {nan_pos}')
 
 
+
 def diagnose_detector():
+    """判断探测器新旧用的方法"""
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
 
     print("加载 test.pkl（前5000个事例）...")
-    with open(split_dir / 'test.pkl', 'rb') as f:
+    with open(split_dir / 'train.pkl', 'rb') as f:
         payload = pickle.load(f)
     events = payload['events']  # 直接取events列表
     sample = events[:5000]
+
+    # 先确认event的key名
+    print(f"event keys: {list(sample[0].keys())}")
 
     all_vol_ids = []
     for ev in sample:
@@ -528,8 +533,8 @@ def rec_beta():
 
 if __name__ == '__main__':
     # rec_beta()
-    check_node_feature()
-    # diagnose_detector()
+    # check_node_feature()
+    diagnose_detector()
     # check_graph_nan()
     # batch_check_branches()
     # 反重氘核

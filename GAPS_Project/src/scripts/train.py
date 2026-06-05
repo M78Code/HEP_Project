@@ -39,7 +39,7 @@ GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
 LAZY_LOAD = True
-NUM_WORKERS = 12
+NUM_WORKERS = 0
 PATIENCE = 10  # early stopping
 
 IN_CHANNEL = 8
