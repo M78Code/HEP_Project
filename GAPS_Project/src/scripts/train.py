@@ -32,14 +32,14 @@ print(f'使用设备：{DEVICE}')
 # ── 超参数 ─────────────────────────────────────────────
 MODEL_NAME = 'DGCNN'  # 'GIN' | 'GravNet' | 'DGCNN'  ← DGCNN训练时用此配置
 EPOCHS = 80
-BATCH_SIZE = 512
+BATCH_SIZE = 128
 LEARNING_RATE = 3e-4
 STEP_SIZE = 15  # StepLR: 每10个epoch衰减一次
 GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
-LAZY_LOAD = False
-NUM_WORKERS = 8
+LAZY_LOAD = True
+NUM_WORKERS = 16
 PATIENCE = 10  # early stopping
 
 IN_CHANNEL = 8

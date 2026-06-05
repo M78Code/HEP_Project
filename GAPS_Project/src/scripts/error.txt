@@ -1,0 +1,75 @@
+base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python train.py 
+使用设备：cuda:0
+加载数据集...
+train batches: 23415
+val   batches: 5018
+test  batches: 5018
+
+模型: DGCNN
+参数量: 56,610
+Epoch   1/80 | train_loss: 0.1562  train_acc: 0.8009 | val_loss: 0.1306  val_acc: 0.8351 | lr: 0.000300 | 228s                                                                         
+  → best model saved (val_loss=0.1306)
+Epoch   2/80 | train_loss: 0.1299  train_acc: 0.8393 | val_loss: 0.1177  val_acc: 0.8532 | lr: 0.000300 | 224s                                                                         
+  → best model saved (val_loss=0.1177)
+Epoch   3/80 | train_loss: 0.1213  train_acc: 0.8512 | val_loss: 0.1119  val_acc: 0.8620 | lr: 0.000300 | 223s                                                                         
+  → best model saved (val_loss=0.1119)
+Epoch   4/80 | train_loss: 0.1164  train_acc: 0.8580 | val_loss: 0.1072  val_acc: 0.8662 | lr: 0.000300 | 224s                                                                         
+  → best model saved (val_loss=0.1072)
+Epoch   5/80 | train_loss: 0.1131  train_acc: 0.8623 | val_loss: 0.1046  val_acc: 0.8700 | lr: 0.000300 | 226s                                                                         
+  → best model saved (val_loss=0.1046)
+Epoch   6/80 | train_loss: 0.1105  train_acc: 0.8657 | val_loss: 0.1034  val_acc: 0.8729 | lr: 0.000300 | 227s                                                                         
+  → best model saved (val_loss=0.1034)
+Epoch   7/80 | train_loss: 0.1086  train_acc: 0.8683 | val_loss: 0.1033  val_acc: 0.8731 | lr: 0.000300 | 227s                                                                         
+  → best model saved (val_loss=0.1033)
+Epoch   8/80 | train_loss: 0.1069  train_acc: 0.8706 | val_loss: 0.1001  val_acc: 0.8775 | lr: 0.000300 | 227s                                                                         
+  → best model saved (val_loss=0.1001)
+Epoch   9/80 | train_loss: 0.1054  train_acc: 0.8724 | val_loss: 0.1013  val_acc: 0.8742 | lr: 0.000300 | 226s                                                                         
+Epoch  10/80 | train_loss: 0.1042  train_acc: 0.8739 | val_loss: 0.0986  val_acc: 0.8786 | lr: 0.000300 | 224s                                                                         
+  → best model saved (val_loss=0.0986)
+Epoch  11/80 | train_loss: 0.1031  train_acc: 0.8755 | val_loss: 0.0975  val_acc: 0.8816 | lr: 0.000300 | 225s                                                                         
+  → best model saved (val_loss=0.0975)
+Epoch  12/80 | train_loss: 0.1022  train_acc: 0.8765 | val_loss: 0.0994  val_acc: 0.8782 | lr: 0.000300 | 224s                                                                         
+Epoch  13/80 | train_loss: 0.1014  train_acc: 0.8775 | val_loss: 0.1003  val_acc: 0.8768 | lr: 0.000300 | 223s                                                                         
+Epoch  14/80 | train_loss: 0.1005  train_acc: 0.8788 | val_loss: 0.0955  val_acc: 0.8828 | lr: 0.000300 | 223s                                                                         
+  → best model saved (val_loss=0.0955)
+Epoch  15/80 | train_loss: 0.0998  train_acc: 0.8797 | val_loss: 0.0946  val_acc: 0.8846 | lr: 0.000150 | 222s                                                                         
+  → best model saved (val_loss=0.0946)
+Epoch  16/80 | train_loss: 0.0957  train_acc: 0.8847 | val_loss: 0.0955  val_acc: 0.8851 | lr: 0.000150 | 223s                                                                         
+Epoch  17/80 | train_loss: 0.0950  train_acc: 0.8856 | val_loss: 0.0936  val_acc: 0.8879 | lr: 0.000150 | 222s                                                                         
+  → best model saved (val_loss=0.0936)
+Traceback (most recent call last):                                                                                                                                                     
+  File "/home/a/workspace/ai/HEP_Project/GAPS_Project/src/scripts/train.py", line 674, in <module>
+    train()                                              # 1. DGCNN（MODEL_NAME='DGCNN'）
+    ~~~~~^^
+  File "/home/a/workspace/ai/HEP_Project/GAPS_Project/src/scripts/train.py", line 98, in train
+    for batch in train_bar:
+                 ^^^^^^^^^
+  File "/home/a/miniconda3/lib/python3.13/site-packages/tqdm/std.py", line 1181, in __iter__
+    for obj in iterable:
+               ^^^^^^^^
+  File "/home/a/miniconda3/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 741, in __next__
+    data = self._next_data()
+  File "/home/a/miniconda3/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 1524, in _next_data
+    idx, data = self._get_data()
+                ~~~~~~~~~~~~~~^^
+  File "/home/a/miniconda3/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 1483, in _get_data
+    success, data = self._try_get_data()
+                    ~~~~~~~~~~~~~~~~~~^^
+  File "/home/a/miniconda3/lib/python3.13/site-packages/torch/utils/data/dataloader.py", line 1310, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+  File "/home/a/miniconda3/lib/python3.13/multiprocessing/queues.py", line 120, in get
+    return _ForkingPickler.loads(res)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/home/a/miniconda3/lib/python3.13/site-packages/torch/multiprocessing/reductions.py", line 540, in rebuild_storage_fd
+    fd = df.detach()
+  File "/home/a/miniconda3/lib/python3.13/multiprocessing/resource_sharer.py", line 58, in detach
+    return reduction.recv_handle(conn)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/a/miniconda3/lib/python3.13/multiprocessing/reduction.py", line 189, in recv_handle
+    return recvfds(s, 1)[0]
+           ~~~~~~~^^^^^^
+  File "/home/a/miniconda3/lib/python3.13/multiprocessing/reduction.py", line 164, in recvfds
+    raise RuntimeError('received %d items of ancdata' %
+                       len(ancdata))
+RuntimeError: received 0 items of ancdata
+
