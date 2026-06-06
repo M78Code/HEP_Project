@@ -39,7 +39,7 @@ GAMMA = 0.5
 FOCAL_GAMMA = 1.5  # Focal Loss γ（IceCube 2025论文最优值）
 
 LAZY_LOAD = True
-NUM_WORKERS = 0
+NUM_WORKERS = 16
 PATIENCE = 10  # early stopping
 
 IN_CHANNEL = 8
@@ -671,8 +671,8 @@ def train_all_combinations():
 
 
 if __name__ == "__main__":
-    train()                                              # 1. DGCNN（MODEL_NAME='DGCNN'）
-    # train_deeper_gravnet(num_blocks=6, hidden_dim=128)  # 2. GravNet_6b_h128（完成后自动继续）
+    # train()                                              # 1. DGCNN（MODEL_NAME='DGCNN'）
+    train_deeper_gravnet(num_blocks=6, hidden_dim=128)  # 2. GravNet_6b_h128（corrected TOF）
     # resume_train()
     # train_narrow_beta()
     # train_ablation()
