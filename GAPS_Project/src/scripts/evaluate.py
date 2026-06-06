@@ -231,7 +231,9 @@ def evaluate():
     # 数据加载（只用test集）
     split_dir = PROJECT_ROOT / 'dataset' / 'split'
     print('加载test数据集')
-    _, _, test_loader = make_data_loaders_from_split(split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD)
+    _, _, test_loader = make_data_loaders_from_split(
+        split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
+        num_workers=4, use_voxel=False)
     print(f'test batches: {len(test_loader)}')
 
     # 输出目录
