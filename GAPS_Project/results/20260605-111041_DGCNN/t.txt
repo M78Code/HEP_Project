@@ -1,0 +1,44 @@
+(base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python evaluate.py 
+使用设备：cuda:0
+加载test数据集
+test batches: 1255
+
+加载模型 DGCNN_rec: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260605-111041_DGCNN/20260605-111041_DGCNN_best.pth
+
+==================================================
+模型: DGCNN_rec
+  Accuracy : 0.8954
+  Precision: 0.9131  (antiD识别精确率)
+  Recall   : 0.9053  (antiD信号效率)
+  F1 Score : 0.9091
+  ROC AUC  : 0.9651
+  混淆矩阵: TN=238875  FP=32006  FN=35180  TP=336167
+  背景抑制率(Rejection): 0.8818  (270881个antiP中正确拒绝238875个)
+
+加载模型 GravNet_6b_h128_rec: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/20260525-063936_GravNet_6blocks_h128/20260525-063936_GravNet_6blocks_h128_best.pth
+
+==================================================
+模型: GravNet_6b_h128_rec
+  Accuracy : 0.9074
+  Precision: 0.9379  (antiD识别精确率)
+  Recall   : 0.8993  (antiD信号效率)
+  F1 Score : 0.9182
+  ROC AUC  : 0.9722
+  混淆矩阵: TN=248769  FP=22112  FN=37382  TP=333965
+  背景抑制率(Rejection): 0.9184  (270881个antiP中正确拒绝248769个)
+
+ROC曲线已保存：/home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/roc_curves.png
+Rejection曲线已保存: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation/rejection_curve.png
+
+============================================================
+各信号效率下的背景抑制率 （Background Rejection = 1/FPR）
+  Signal Eff    DGCNN_rec GravNet_6b_h128_rec
+------------------------------------------------------------
+         0.50      7.59e+02      1.18e+03
+         0.80      2.78e+01      4.37e+01
+         0.90      8.96e+00      1.21e+01
+         0.95      4.86e+00      5.92e+00
+         0.98      2.98e+00      3.42e+00
+         0.99      2.30e+00      2.58e+00
+
+所有结果保存至: /home/a/workspace/ai/HEP_Project/GAPS_Project/results/evaluation
