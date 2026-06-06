@@ -70,8 +70,9 @@ else:
     DEVICE = torch.device("cpu")
 print(f'使用设备：{DEVICE}')
 
-BATCH_SIZE = 256
-LAZY_LOAD = False
+BATCH_SIZE = 512
+LAZY_LOAD = True
+NUM_WORKERS = 16
 
 # 要评估的模型列表：(模型名, 权重路径, in_channels)
 # ── 旧 MC-assisted 模型（in_channels=9, graph_feat_dim=46）──
@@ -233,7 +234,7 @@ def evaluate():
     print('加载test数据集')
     _, _, test_loader = make_data_loaders_from_split(
         split_dir=split_dir, batch_size=BATCH_SIZE, lazy=LAZY_LOAD,
-        num_workers=4, use_voxel=False)
+        num_workers=NUM_WORKERS, use_voxel=False)
     print(f'test batches: {len(test_loader)}')
 
     # 输出目录
