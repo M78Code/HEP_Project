@@ -29,8 +29,11 @@ def train():
   train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
   val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
 
-  model     = CNNDNNHybrid(tof_dim=11).to(DEVICE)
-  model     = torch.compile(model)  # PyTorch 2.x 编译加速
+  model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
+  try:
+      model = torch.compile(model)
+  except Exception as e:
+      print(f'torch.compile 不可用，使用 eager 模式: {e}')
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
   criterion = nn.BCEWithLogitsLoss()
@@ -81,7 +84,8 @@ def train():
       if v_loss < best_val_loss:
           best_val_loss = v_loss
           patience_counter = 0
-          torch.save(model.state_dict(), SAVE_PATH)
+          raw = model._orig_mod if hasattr(model, '_orig_mod') else model
+          torch.save(raw.state_dict(), SAVE_PATH)
           print(f'  → best model saved (val_loss={v_loss:.4f})')
       else:
           patience_counter += 1

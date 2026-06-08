@@ -72,7 +72,7 @@ print(f'使用设备：{DEVICE}')
 
 BATCH_SIZE = 512
 LAZY_LOAD = True
-NUM_WORKERS = 16
+NUM_WORKERS = 8
 
 # 要评估的模型列表：(模型名, 权重路径, in_channels)
 # ── 旧 MC-assisted 模型（in_channels=9, graph_feat_dim=46）──
