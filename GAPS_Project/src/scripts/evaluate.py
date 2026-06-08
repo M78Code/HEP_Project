@@ -87,7 +87,7 @@ EVAL_MODELS_OLD = [
 # ── 新 Rec-only 模型（in_channels=8, graph_feat_dim=45）──
 EVAL_MODELS = [
     ('DGCNN_rec',              PROJECT_ROOT / 'results/20260605-111041_DGCNN/20260605-111041_DGCNN_best.pth',                                    8, 45, 4, 64),
-    ('GravNet_6b_h128_rec',    PROJECT_ROOT / 'results/20260525-063936_GravNet_6blocks_h128/20260525-063936_GravNet_6blocks_h128_best.pth',      8, 45, 6, 128),
+    ('GravNet_6b_h128_rec',    PROJECT_ROOT / 'results/20260606-131047_GravNet_6blocks_h128/20260606-131047_GravNet_6blocks_h128_best.pth',      8, 45, 6, 128),
 ]
 
 
