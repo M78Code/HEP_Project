@@ -13,9 +13,9 @@ from GAPS_Project.src.data_parse.hybrid_dataset import HybridDatasetFast
 from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 256       # 4090 24GB，3D CNN 512ch 较重
+BATCH_SIZE = 200       # A.2 7.1.1 原版设定
 EPOCHS     = 100
-LR         = 1e-4      # batch 增大，LR 同比上调
+LR         = 4e-5      # A.2 7.1.1 原版设定
 PATIENCE   = 10        # early stopping
 NUM_WORKERS = 8        # Docker shm制限のため抑える
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
@@ -35,7 +35,6 @@ def train():
   except Exception as e:
       print(f'torch.compile 不可用，使用 eager 模式: {e}')
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-  scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
   criterion = nn.BCEWithLogitsLoss()
   scaler    = torch.amp.GradScaler('cuda')   # 混合精度
 
@@ -73,7 +72,6 @@ def train():
 
       t_loss /= len(train_loader); t_acc /= len(train_loader)
       v_loss /= len(val_loader);   v_acc /= len(val_loader)
-      scheduler.step()
       elapsed = time.time() - epoch_start
 
       print(f'Epoch {epoch:3d}/{EPOCHS} | '
