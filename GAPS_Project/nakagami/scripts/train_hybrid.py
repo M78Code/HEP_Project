@@ -26,7 +26,7 @@ from data_parse.hybrid_dataset import HybridDatasetFast
 from models.cnn_dnn_hybrid import CNNDNNHybrid
 
 DEVICE      = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE  = 200       # A.2 7.1.1 原版设定
+BATCH_SIZE  = 400       # DataParallel で2GPU分割: 各GPU 200 (A.2 7.1.1原版設定)
 EPOCHS      = 100
 LR          = 4e-5      # A.2 7.1.1 原版设定
 PATIENCE    = 10        # early stopping
@@ -73,6 +73,13 @@ def train():
   model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
   # 注: torch.compile はPyTorch 2.0+でのみ利用可能、PyTorch 1.10では使わない
   # 注: AMP は無効化（TOF特徴量の値範囲が±1700mmと広く、FP16でNaNを起こすため）
+
+  # ── DataParallel で複数GPUを利用 ──
+  n_gpu = torch.cuda.device_count()
+  print(f'使用 GPU 数量: {n_gpu}')
+  if n_gpu > 1:
+      model = nn.DataParallel(model)
+
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   criterion = nn.BCEWithLogitsLoss()
 
@@ -119,7 +126,8 @@ def train():
       if v_loss < best_val_loss:
           best_val_loss = v_loss
           patience_counter = 0
-          raw = model._orig_mod if hasattr(model, '_orig_mod') else model
+          # DataParallel の場合は .module を取り出す
+          raw = model.module if isinstance(model, nn.DataParallel) else model
           torch.save(raw.state_dict(), SAVE_PATH)
           print(f'  → best model saved (val_loss={v_loss:.4f})')
       else:
