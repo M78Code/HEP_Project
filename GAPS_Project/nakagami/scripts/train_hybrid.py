@@ -71,13 +71,10 @@ def train():
   )
 
   model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
-  try:
-      model = torch.compile(model)
-  except Exception as e:
-      print(f'torch.compile 不可用，使用 eager 模式: {e}')
+  # 注: torch.compile はPyTorch 2.0+でのみ利用可能、PyTorch 1.10では使わない
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   criterion = nn.BCEWithLogitsLoss()
-  scaler    = torch.amp.GradScaler('cuda')   # 混合精度
+  scaler    = torch.cuda.amp.GradScaler()    # 混合精度（PyTorch 1.10 API）
 
   print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
   best_val_loss = float('inf')
@@ -91,7 +88,7 @@ def train():
       for voxel, tof, label in train_bar:
           voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
           optimizer.zero_grad()
-          with torch.amp.autocast('cuda'):
+          with torch.cuda.amp.autocast():
               out  = model(voxel, tof)
               loss = criterion(out, label)
           scaler.scale(loss).backward()
@@ -106,7 +103,7 @@ def train():
       with torch.no_grad():
           for voxel, tof, label in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
               voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
-              with torch.amp.autocast('cuda'):
+              with torch.cuda.amp.autocast():
                   out    = model(voxel, tof)
                   v_loss += criterion(out, label).item()
               v_acc  += ((out > 0).long() == label.long()).float().mean().item()
