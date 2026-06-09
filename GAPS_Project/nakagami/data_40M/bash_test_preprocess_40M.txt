@@ -1,0 +1,49 @@
+(base) m78code@gp1:~/HEP_Project/GAPS_Project/nakagami$ bash bash/test_preprocess_40M.sh
+Start: 2026年  6月  9日 火曜日 13:26:56 JST
+Test files:
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_000.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_001.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_002.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_003.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_004.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_005.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_006.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_007.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_008.csv
+CNN211209_Dbar_isot_50K_beta02to05_Atrest_009.csv
+Found 10 CSV files
+Train: 8 files, Val: 2 files
+=== Processing train ===
+train: 100%|██████████| 8/8 [01:20<00:00, 10.12s/it]
+  saved → /home/m78code/HEP_Project/GAPS_Project/nakagami/data_40M/train_40M.npz  (320,000 events)
+=== Processing val ===
+val: 100%|██████████| 2/2 [00:20<00:00, 10.09s/it]
+  saved → /home/m78code/HEP_Project/GAPS_Project/nakagami/data_40M/val_40M.npz  (80,000 events)
+Done.
+train_40M.npz:
+  si shape : (320000, 10, 12, 12)
+  tof shape: (320000, 11)
+  label    : (320000,), unique=[1]
+  tof[0]   : [1.000000e+00 1.562290e+01 2.597750e+01 1.548470e+01 1.582920e+02
+ 4.234870e+02 1.397490e+02 2.601740e+02 3.828440e+02 1.044272e+03
+ 1.461820e+02]
+val_40M.npz:
+  si shape : (80000, 10, 12, 12)
+  tof shape: (80000, 11)
+  label    : (80000,), unique=[1]
+  tof[0]   : [ 1.00000e+00  7.93059e+00  8.49386e+00  1.16165e+01  2.70479e+02
+  2.61412e+02  1.35000e+02  1.13082e+03  1.73496e+02  1.08977e+03
+ -5.68838e+02]
+End: 2026年  6月  9日 火曜日 13:28:59 JST
+
+
+测试成功！关键验证：
+
+  - si shape: (N, 10, 12, 12) ✓
+  - tof shape: (N, 11) ✓
+  - val_40M的 tof[0] 值 [1.0, 7.93, 8.49, 11.6, 270, 261, 135, 1130, 173, 1089, -568] 和之前从CSV直接读到的值完全一致 ✓
+
+  唯一要注意的是 unique=[1]，因为测试只取了前10个Dbar文件，全量处理时Pbar文件也会进来，label就会有0和1。
+
+  ---
+  现在更新 run_preprocess_40M.sh，输出路径改到NAS：
