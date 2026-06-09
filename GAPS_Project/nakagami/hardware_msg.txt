@@ -1,0 +1,71 @@
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ echo "=== CPU ===" && lscpu | grep -E "Model name|Socket|Core|Thread|MHz"
+=== CPU ===
+モデル名:                            Intel(R) Core(TM) i9-9900X CPU @ 3.50GHz
+CPU MHz:                             1200.043
+CPU 最大 MHz:                        4500.0000
+CPU 最小 MHz:                        1200.0000
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ echo "=== RAM ===" && free -h
+=== RAM ===
+              total        used        free      shared  buff/cache   available
+Mem:           62Gi       5.1Gi       421Mi       4.0Mi        57Gi        56Gi
+Swap:         2.0Gi       114Mi       1.9Gi
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ echo "=== GPU ===" && nvidia-smi
+=== GPU ===
+Tue Jun  9 13:42:50 2026
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.80.02    Driver Version: 450.80.02    CUDA Version: 11.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  GeForce RTX 208...  Off  | 00000000:1A:00.0 Off |                  N/A |
+| 27%   33C    P8    21W / 250W |      6MiB / 11019MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+|   1  GeForce RTX 208...  Off  | 00000000:68:00.0 Off |                  N/A |
+| 27%   33C    P8    20W / 250W |     77MiB / 11018MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|    0   N/A  N/A      2033      G   /usr/lib/xorg/Xorg                  4MiB |
+|    1   N/A  N/A      2033      G   /usr/lib/xorg/Xorg                 56MiB |
+|    1   N/A  N/A      2086      G   /usr/bin/gnome-shell               18MiB |
++-----------------------------------------------------------------------------+
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ echo "=== Disk ===" && df -h | grep -E "Filesystem|/mnt/ynakagami3|/home"
+=== Disk ===
+Filesystem                       Size  Used Avail Use% Mounted on
+192.168.9.22:/volume1/ynakagami  104T   54T   51T  52% /mnt/ynakagami3
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ echo "=== CPU cores ===" && nproc
+=== CPU cores ===
+20
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$
+
+
+⏺ 服务器配置：
+
+  ┌──────┬────────────────────────────────────────┐
+  │ 项目 │                  规格                  │
+  ├──────┼────────────────────────────────────────┤
+  │ CPU  │ i9-9900X @ 3.5GHz，20核                │
+  ├──────┼────────────────────────────────────────┤
+  │ RAM  │ 62GB，可用56GB                         │
+  ├──────┼────────────────────────────────────────┤
+  │ GPU  │ 2× RTX 2080 Ti（各11GB，目前完全空闲） │
+  ├──────┼────────────────────────────────────────┤
+  │ NAS  │ 104TB，剩余51TB                        │
+  ├──────┼────────────────────────────────────────┤
+  │ CUDA │ 11.0                                   │
+  └──────┴────────────────────────────────────────┘
+
+  ---
+  针对性优化方案
+
+  1. 预处理：加多进程（CPU绑定任务）
+
+  20核空闲，可以用12个进程并行读CSV。更新预处理脚本：
