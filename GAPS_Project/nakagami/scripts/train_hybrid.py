@@ -2,13 +2,20 @@
 中上40M CSVから生成したnpzでCNN+DNN（A.2 7.1.1）を訓練するスクリプト。
 GAPS_Project/src/scripts/train_hybrid.pyをベースに、importとデータパスを
 nakagami配下に書き換えたもの。
+
+クラス不均衡対策:
+  Dbar (signal,    label=1): ~400K events
+  Pbar (background, label=0): ~20K events
+  比例 約 20:1 のため WeightedRandomSampler を使用して
+  各 mini-batch を近似平衡化する（pos_weight は併用しない）。
 """
 import sys
 from pathlib import Path
 import time
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 
 # nakagami配下のmodels/data_parseをimportするためsys.pathを追加
@@ -34,8 +41,34 @@ def train():
   print(f'使用设备：{DEVICE}')
   train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid_nakagami40M.npz')
   val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid_nakagami40M.npz')
-  train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
-  val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
+
+  # ── WeightedRandomSampler でクラス不均衡を補償 ──
+  train_labels = train_set.labels
+  n_pbar = int((train_labels == 0).sum())
+  n_dbar = int((train_labels == 1).sum())
+  print(f'train label counts: Pbar={n_pbar:,}, Dbar={n_dbar:,}')
+
+  sample_weights = np.where(
+      train_labels == 0,
+      1.0 / max(n_pbar, 1),
+      1.0 / max(n_dbar, 1),
+  )
+  sampler = WeightedRandomSampler(
+      weights=torch.as_tensor(sample_weights, dtype=torch.double),
+      num_samples=len(sample_weights),
+      replacement=True,
+  )
+
+  train_loader = DataLoader(
+      train_set, batch_size=BATCH_SIZE,
+      sampler=sampler, shuffle=False,
+      num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True,
+  )
+  # 検証集は元の分布を保持（samplerは使わない）
+  val_loader = DataLoader(
+      val_set, batch_size=BATCH_SIZE, shuffle=False,
+      num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True,
+  )
 
   model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
   try:
