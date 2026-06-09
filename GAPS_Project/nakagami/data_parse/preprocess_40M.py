@@ -22,9 +22,15 @@ preprocess_40M.py
        stopping_x, stopping_y]
 
 注意事項:
-  - VolIDファイルは列構造が異なるため除外。
+  - VolIDファイル（列構造異なる）は除外。
+  - Inflightファイル（1632列）も除外、Atrest(1631列)のみ使用。
+  - Pbarは4M目录(csvFiles_Mc)のみ使用、40M目录の3個は不完全データ。
   - len(row) != 1631 の行は除外。
   - 出力npzのkey名はHybridDatasetFastに合わせる: voxels / tofs / labels。
+
+データ確認結果（Step 0/1検証済み）:
+  Dbar Atrest (40M目录, csvFiles)        : 97 files (≈4.85M events)
+  Pbar Atrest (4M目录,  csvFiles_Mc)     : 10 files (≈400K events)
 
 用法:
   python preprocess_40M.py \
@@ -137,22 +143,31 @@ if __name__ == "__main__":
     out = pathlib.Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # 複数ディレクトリから全CNN*.csvを収集（VolID除外）
+    # 複数ディレクトリから全CNN*.csvを収集
+    # 除外条件:
+    #   1. VolID: 列構造が異なる
+    #   2. Inflight: 1632列（Atrestは1631列）— 現状はAtrestのみ使用
     all_files = []
     for d in args.csv_dirs:
         d = pathlib.Path(d)
         files = sorted(
             p for p in d.glob("CNN*.csv")
-            if "VolID" not in p.name
+            if "VolID"    not in p.name
+            and "Inflight" not in p.name   # Inflight (1632列) を除外
         )
-        print(f"  {d}: {len(files)} non-VolID files")
+        print(f"  {d}: {len(files)} Atrest files (VolID/Inflight excluded)")
         all_files.extend(files)
     print(f"Total CSV files: {len(all_files)}")
 
     # 粒子種ごとに分層
+    # 注: Pbar は 4M目录(csvFiles_Mc) のみを使用すべき
+    #     40M目录里的 3 個 Pbar は不完全データなので除外
     dbar_files = [f for f in all_files if 'Dbar' in f.name]
-    pbar_files = [f for f in all_files if 'Pbar' in f.name]
-    print(f"  Dbar files: {len(dbar_files)}, Pbar files: {len(pbar_files)}")
+    pbar_files = [f for f in all_files
+                  if 'Pbar' in f.name
+                  and 'csvFiles_Mc' in str(f)]      # Pbar は 4M目录のみ
+    print(f"  Dbar files: {len(dbar_files)} (Atrest only)")
+    print(f"  Pbar files: {len(pbar_files)} (Atrest only, from csvFiles_Mc)")
 
     # テスト用に各クラスのファイル数を制限
     if args.max_files_per_class is not None:
