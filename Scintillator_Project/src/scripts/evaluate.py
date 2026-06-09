@@ -36,7 +36,7 @@ def evaluate():
     import re
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--best', action='store_true', help='load best model result 4.78cm')
+    parser.add_argument('--best', action='store_true', help='load best models result 4.78cm')
     args = parser.parse_args()
 
     candidates = sorted(

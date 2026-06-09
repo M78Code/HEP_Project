@@ -99,7 +99,7 @@ def get_model(name: str, in_channels: int = 8, graph_feat_dim: int = 45, num_blo
     elif 'DGCNN' in name:
         return DGCNNClassifier(in_channels=in_channels, hidden_dim=hidden_dim, k=8, graph_feat_dim=graph_feat_dim)
     else:
-        raise ValueError(f"Unknown model: {name}")
+        raise ValueError(f"Unknown models: {name}")
 
 
 @torch.no_grad()
