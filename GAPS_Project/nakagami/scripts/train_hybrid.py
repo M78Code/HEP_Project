@@ -72,9 +72,9 @@ def train():
 
   model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
   # 注: torch.compile はPyTorch 2.0+でのみ利用可能、PyTorch 1.10では使わない
+  # 注: AMP は無効化（TOF特徴量の値範囲が±1700mmと広く、FP16でNaNを起こすため）
   optimizer = torch.optim.Adam(model.parameters(), lr=LR)
   criterion = nn.BCEWithLogitsLoss()
-  scaler    = torch.cuda.amp.GradScaler()    # 混合精度（PyTorch 1.10 API）
 
   print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
   best_val_loss = float('inf')
@@ -88,12 +88,12 @@ def train():
       for voxel, tof, label in train_bar:
           voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
           optimizer.zero_grad()
-          with torch.cuda.amp.autocast():
-              out  = model(voxel, tof)
-              loss = criterion(out, label)
-          scaler.scale(loss).backward()
-          scaler.step(optimizer)
-          scaler.update()
+          out  = model(voxel, tof)
+          loss = criterion(out, label)
+          loss.backward()
+          # 勾配クリッピングで爆発を防ぐ
+          torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+          optimizer.step()
           t_loss += loss.item()
           t_acc  += ((out > 0).long() == label.long()).float().mean().item()
           train_bar.set_postfix(loss=f'{loss.item():.4f}')
@@ -103,9 +103,8 @@ def train():
       with torch.no_grad():
           for voxel, tof, label in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{EPOCHS} [val]  ', leave=False):
               voxel, tof, label = voxel.to(DEVICE), tof.to(DEVICE), label.float().to(DEVICE)
-              with torch.cuda.amp.autocast():
-                  out    = model(voxel, tof)
-                  v_loss += criterion(out, label).item()
+              out    = model(voxel, tof)
+              v_loss += criterion(out, label).item()
               v_acc  += ((out > 0).long() == label.long()).float().mean().item()
 
       t_loss /= len(train_loader); t_acc /= len(train_loader)
