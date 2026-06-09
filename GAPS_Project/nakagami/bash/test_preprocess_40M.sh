@@ -1,46 +1,49 @@
 #!/bin/bash
-# 40Mデータ前処理テスト（少量ファイルで動作確認）
-# 実行方法: bash nakagami/bash/test_preprocess_40M.sh
+# 中上40M CSV 前処理 - 小サンプルテスト
+# 目的: pipeline動作確認（各クラス2ファイル）
+# 実行: bash nakagami/bash/test_preprocess_40M.sh
 
-CSV_DIR=/mnt/ynakagami3/SimulationData/211209_isot_0205_renewal_looseTrigger_40M/csvFiles
-OUT_DIR=~/HEP_Project/GAPS_Project/nakagami/data_40M
+OUT_DIR=~/HEP_Project/GAPS_Project/nakagami/data_40M_test
 SCRIPT=~/HEP_Project/GAPS_Project/nakagami/data_parse/preprocess_40M.py
 LOG=~/HEP_Project/GAPS_Project/nakagami/bash/test_preprocess_40M.log
-TEST_DIR=/tmp/csv_test
 
-mkdir -p $OUT_DIR $TEST_DIR
+DBAR_DIR=/mnt/ynakagami3/SimulationData/211209_isot_0205_renewal_looseTrigger_40M/csvFiles
+PBAR_DIR=/mnt/ynakagami3/SimulationData/220104_4Mevents_isot_loose/csvFiles_Mc
 
-# CSVファイルを10個だけtmpにコピーしてテスト
-ls $CSV_DIR/CNN*.csv | head -10 | xargs -I{} cp {} $TEST_DIR/
+mkdir -p $OUT_DIR
 
 echo "Start: $(date)" | tee $LOG
-echo "Test files:" | tee -a $LOG
-ls $TEST_DIR/ | tee -a $LOG
+echo "Dbar dir: $DBAR_DIR" | tee -a $LOG
+echo "Pbar dir: $PBAR_DIR" | tee -a $LOG
+echo "Out dir : $OUT_DIR"  | tee -a $LOG
+echo "max_files_per_class: 2 (テスト)" | tee -a $LOG
 
 python $SCRIPT \
-    --csv_dir $TEST_DIR \
-    --out_dir $OUT_DIR \
+    --csv_dirs $DBAR_DIR $PBAR_DIR \
+    --out_dir  $OUT_DIR \
+    --max_files_per_class 2 \
     --train_ratio 0.8 \
+    --num_workers 12 \
     2>&1 | tee -a $LOG
 
-# 結果確認
+# npz内容を検証
 python -c "
 import numpy as np
 import os
-for f in ['train_40M.npz', 'val_40M.npz']:
-    path = os.path.expanduser('~/HEP_Project/GAPS_Project/nakagami/data_40M/') + f
+for f in ['train_hybrid_nakagami40M.npz', 'val_hybrid_nakagami40M.npz']:
+    path = os.path.expanduser('~/HEP_Project/GAPS_Project/nakagami/data_40M_test/') + f
     if not os.path.exists(path):
         print(f'{f}: not found')
         continue
     d = np.load(path)
     print(f'{f}:')
-    print(f'  si shape : {d[\"si\"].shape}')
-    print(f'  tof shape: {d[\"tof\"].shape}')
-    print(f'  label    : {d[\"label\"].shape}, unique={np.unique(d[\"label\"])}')
-    print(f'  tof[0]   : {d[\"tof\"][0]}')
+    print(f'  keys      : {list(d.keys())}')
+    print(f'  voxels    : {d[\"voxels\"].shape}  dtype={d[\"voxels\"].dtype}')
+    print(f'  tofs      : {d[\"tofs\"].shape}    dtype={d[\"tofs\"].dtype}')
+    print(f'  labels    : {d[\"labels\"].shape}  dtype={d[\"labels\"].dtype}')
+    u, c = np.unique(d['labels'], return_counts=True)
+    print(f'  label dist: {dict(zip(u.tolist(), c.tolist()))}')
+    print(f'  tof[0]    : {d[\"tofs\"][0]}')
 " 2>&1 | tee -a $LOG
-
-# tmpクリーンアップ
-rm -rf $TEST_DIR
 
 echo "End: $(date)" | tee -a $LOG
