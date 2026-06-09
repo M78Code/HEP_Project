@@ -58,16 +58,26 @@ def process_one_file(path):
 
 
 def process_files(file_list, desc, num_workers=12):
+    import time
     all_si, all_tof, all_labels = [], [], []
+    t0 = time.time()
     with Pool(processes=num_workers) as pool:
-        results = list(tqdm(
+        for i, (labels, si_list, tof_list) in enumerate(tqdm(
             pool.imap(process_one_file, file_list),
-            total=len(file_list), desc=desc
-        ))
-    for labels, si_list, tof_list in results:
-        all_labels.extend(labels)
-        all_si.extend(si_list)
-        all_tof.extend(tof_list)
+            total=len(file_list), desc=desc,
+            dynamic_ncols=True
+        )):
+            all_labels.extend(labels)
+            all_si.extend(si_list)
+            all_tof.extend(tof_list)
+            elapsed = time.time() - t0
+            done = i + 1
+            remain = len(file_list) - done
+            eta = elapsed / done * remain
+            print(f"  [{desc}] {done}/{len(file_list)} files | "
+                  f"{len(all_labels):,} events | "
+                  f"elapsed {elapsed/60:.1f}m | ETA {eta/60:.1f}m",
+                  flush=True)
     return all_si, all_tof, all_labels
 
 
