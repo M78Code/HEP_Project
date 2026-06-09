@@ -2,4 +2,308 @@ Start: 2026年  6月  9日 火曜日 13:39:58 JST
 Found 291 CSV files
 Train: 232 files, Val: 59 files
 === Processing train ===
-train:   0%|          | 0/232 [00:00<?, ?it/s]train:   0%|          | 1/232 [00:10<41:20, 10.74s/it]train:   1%|          | 2/232 [00:15<27:45,  7.24s/it]train:   1%|▏         | 3/232 [00:18<20:33,  5.39s/it]train:   2%|▏         | 4/232 [00:19<14:09,  3.73s/it]train:   2%|▏         | 5/232 [00:30<23:08,  6.12s/it]train:   3%|▎         | 6/232 [00:31<16:24,  4.36s/it]train:   3%|▎         | 7/232 [00:32<12:23,  3.30s/it]train:   3%|▎         | 8/232 [00:36<13:27,  3.61s/it]train:   4%|▍         | 9/232 [00:48<23:01,  6.20s/it]train:   4%|▍         | 10/232 [00:49<16:56,  4.58s/it]train:   5%|▍         | 11/232 [01:00<23:59,  6.51s/it]train:   5%|▌         | 12/232 [01:01<17:51,  4.87s/it]train:   6%|▌         | 13/232 [01:05<17:09,  4.70s/it]train:   6%|▌         | 14/232 [01:06<12:49,  3.53s/it]train:   6%|▋         | 15/232 [01:07<09:48,  2.71s/it]train:   7%|▋         | 16/232 [01:17<17:39,  4.90s/it]train:   7%|▋         | 17/232 [01:18<13:25,  3.74s/it]train:   8%|▊         | 18/232 [01:24<15:51,  4.45s/it]train:   8%|▊         | 19/232 [01:25<12:01,  3.39s/it]train:   9%|▊         | 20/232 [01:29<12:48,  3.63s/it]train:   9%|▉         | 21/232 [01:40<20:03,  5.70s/it]train:   9%|▉         | 22/232 [01:51<26:22,  7.54s/it]train:  10%|▉         | 23/232 [01:53<19:41,  5.65s/it]train:  10%|█         | 24/232 [02:03<24:08,  6.96s/it]train:  11%|█         | 25/232 [02:15<29:31,  8.56s/it]train:  11%|█         | 26/232 [02:16<21:43,  6.33s/it]train:  12%|█▏        | 27/232 [02:17<16:17,  4.77s/it]train:  12%|█▏        | 28/232 [02:30<23:54,  7.03s/it]train:  12%|█▎        | 29/232 [02:40<27:19,  8.08s/it]train:  13%|█▎        | 30/232 [02:44<23:15,  6.91s/it]train:  13%|█▎        | 31/232 [02:45<17:18,  5.17s/it]train:  14%|█▍        | 32/232 [02:46<12:57,  3.89s/it]train:  14%|█▍        | 33/232 [02:57<19:34,  5.90s/it]train:  15%|█▍        | 34/232 [02:59<15:47,  4.79s/it]train:  15%|█▌        | 35/232 [03:00<12:04,  3.68s/it]train:  16%|█▌        | 36/232 [03:01<09:15,  2.84s/it]train:  16%|█▌        | 37/232 [03:02<07:35,  2.34s/it]train:  16%|█▋        | 38/232 [03:13<15:33,  4.81s/it]train:  17%|█▋        | 39/232 [03:17<15:10,  4.72s/it]train:  17%|█▋        | 40/232 [03:21<14:31,  4.54s/it]train:  18%|█▊        | 41/232 [03:32<20:04,  6.31s/it]train:  18%|█▊        | 42/232 [03:43<24:36,  7.77s/it]train:  19%|█▊        | 43/232 [03:54<27:07,  8.61s/it]train:  19%|█▉        | 44/232 [04:04<28:16,  9.02s/it]train:  19%|█▉        | 45/232 [04:10<25:22,  8.14s/it]train:  20%|█▉        | 46/232 [04:20<27:23,  8.84s/it]train:  20%|██        | 47/232 [04:31<28:42,  9.31s/it]train:  21%|██        | 48/232 [04:35<24:13,  7.90s/it]train:  21%|██        | 49/232 [04:41<22:15,  7.30s/it]train:  22%|██▏       | 50/232 [04:46<19:35,  6.46s/it]train:  22%|██▏       | 51/232 [04:50<17:42,  5.87s/it]train:  22%|██▏       | 52/232 [04:51<13:00,  4.34s/it]train:  23%|██▎       | 53/232 [04:55<12:54,  4.33s/it]train:  23%|██▎       | 54/232 [05:06<18:19,  6.18s/it]train:  24%|██▎       | 55/232 [05:07<13:46,  4.67s/it]train:  24%|██▍       | 56/232 [05:08<10:22,  3.54s/it]train:  25%|██▍       | 57/232 [05:20<17:55,  6.14s/it]train:  25%|██▌       | 58/232 [05:21<13:23,  4.62s/it]train:  25%|██▌       | 59/232 [05:32<18:28,  6.41s/it]train:  26%|██▌       | 60/232 [05:42<21:52,  7.63s/it]train:  26%|██▋       | 61/232 [05:48<20:31,  7.20s/it]train:  27%|██▋       | 62/232 [05:59<23:16,  8.21s/it]train:  27%|██▋       | 63/232 [06:09<25:09,  8.93s/it]train:  28%|██▊       | 64/232 [06:20<26:02,  9.30s/it]train:  28%|██▊       | 65/232 [06:21<19:01,  6.84s/it]train:  28%|██▊       | 66/232 [06:22<14:00,  5.06s/it]train:  29%|██▉       | 67/232 [06:23<10:37,  3.87s/it]train:  29%|██▉       | 68/232 [06:33<15:36,  5.71s/it]train:  30%|██▉       | 69/232 [06:37<14:21,  5.29s/it]train:  30%|███       | 70/232 [06:41<13:22,  4.96s/it]train:  31%|███       | 71/232 [06:42<10:09,  3.79s/it]train:  31%|███       | 72/232 [06:43<07:39,  2.87s/it]train:  31%|███▏      | 73/232 [06:47<08:42,  3.29s/it]train:  32%|███▏      | 74/232 [06:48<06:48,  2.59s/it]train:  32%|███▏      | 75/232 [06:54<09:22,  3.58s/it]train:  33%|███▎      | 76/232 [06:58<09:49,  3.78s/it]train:  33%|███▎      | 77/232 [06:59<07:42,  2.99s/it]train:  34%|███▎      | 78/232 [07:01<06:13,  2.43s/it]train:  34%|███▍      | 79/232 [07:02<05:07,  2.01s/it]train:  34%|███▍      | 80/232 [07:12<11:34,  4.57s/it]train:  35%|███▍      | 81/232 [07:17<11:25,  4.54s/it]train:  35%|███▌      | 82/232 [07:18<08:47,  3.52s/it]train:  36%|███▌      | 83/232 [07:30<15:18,  6.16s/it]train:  36%|███▌      | 84/232 [07:34<13:54,  5.64s/it]train:  37%|███▋      | 85/232 [07:35<10:22,  4.24s/it]train:  37%|███▋      | 86/232 [07:40<10:18,  4.24s/it]train:  38%|███▊      | 87/232 [07:44<10:24,  4.31s/it]train:  38%|███▊      | 88/232 [07:45<07:46,  3.24s/it]train:  38%|███▊      | 89/232 [07:56<13:06,  5.50s/it]
+train:   0%|          | 0/232 [00:00<?, ?it/s]train:   0%|          | 1/232 [00:10<41:20, 10.74s/it]train:   1%|          | 2/232 [00:15<27:45,  7.24s/it]train:   1%|▏         | 3/232 [00:18<20:33,  5.39s/it]train:   2%|▏         | 4/232 [00:19<14:09,  3.73s/it]train:   2%|▏         | 5/232 [00:30<23:08,  6.12s/it]train:   3%|▎         | 6/232 [00:31<16:24,  4.36s/it]train:   3%|▎         | 7/232 [00:32<12:23,  3.30s/it]train:   3%|▎         | 8/232 [00:36<13:27,  3.61s/it]train:   4%|▍         | 9/232 [00:48<23:01,  6.20s/it]train:   4%|▍         | 10/232 [00:49<16:56,  4.58s/it]train:   5%|▍         | 11/232 [01:00<23:59,  6.51s/it]train:   5%|▌         | 12/232 [01:01<17:51,  4.87s/it]train:   6%|▌         | 13/232 [01:05<17:09,  4.70s/it]train:   6%|▌         | 14/232 [01:06<12:49,  3.53s/it]train:   6%|▋         | 15/232 [01:07<09:48,  2.71s/it]train:   7%|▋         | 16/232 [01:17<17:39,  4.90s/it]train:   7%|▋         | 17/232 [01:18<13:25,  3.74s/it]train:   8%|▊         | 18/232 [01:24<15:51,  4.45s/it]train:   8%|▊         | 19/232 [01:25<12:01,  3.39s/it]train:   9%|▊         | 20/232 [01:29<12:48,  3.63s/it]train:   9%|▉         | 21/232 [01:40<20:03,  5.70s/it]train:   9%|▉         | 22/232 [01:51<26:22,  7.54s/it]train:  10%|▉         | 23/232 [01:53<19:41,  5.65s/it]train:  10%|█         | 24/232 [02:03<24:08,  6.96s/it]train:  11%|█         | 25/232 [02:15<29:31,  8.56s/it]train:  11%|█         | 26/232 [02:16<21:43,  6.33s/it]train:  12%|█▏        | 27/232 [02:17<16:17,  4.77s/it]train:  12%|█▏        | 28/232 [02:30<23:54,  7.03s/it]train:  12%|█▎        | 29/232 [02:40<27:19,  8.08s/it]train:  13%|█▎        | 30/232 [02:44<23:15,  6.91s/it]train:  13%|█▎        | 31/232 [02:45<17:18,  5.17s/it]train:  14%|█▍        | 32/232 [02:46<12:57,  3.89s/it]train:  14%|█▍        | 33/232 [02:57<19:34,  5.90s/it]train:  15%|█▍        | 34/232 [02:59<15:47,  4.79s/it]train:  15%|█▌        | 35/232 [03:00<12:04,  3.68s/it]train:  16%|█▌        | 36/232 [03:01<09:15,  2.84s/it]train:  16%|█▌        | 37/232 [03:02<07:35,  2.34s/it]train:  16%|█▋        | 38/232 [03:13<15:33,  4.81s/it]train:  17%|█▋        | 39/232 [03:17<15:10,  4.72s/it]train:  17%|█▋        | 40/232 [03:21<14:31,  4.54s/it]train:  18%|█▊        | 41/232 [03:32<20:04,  6.31s/it]train:  18%|█▊        | 42/232 [03:43<24:36,  7.77s/it]train:  19%|█▊        | 43/232 [03:54<27:07,  8.61s/it]train:  19%|█▉        | 44/232 [04:04<28:16,  9.02s/it]train:  19%|█▉        | 45/232 [04:10<25:22,  8.14s/it]train:  20%|█▉        | 46/232 [04:20<27:23,  8.84s/it]train:  20%|██        | 47/232 [04:31<28:42,  9.31s/it]train:  21%|██        | 48/232 [04:35<24:13,  7.90s/it]train:  21%|██        | 49/232 [04:41<22:15,  7.30s/it]train:  22%|██▏       | 50/232 [04:46<19:35,  6.46s/it]train:  22%|██▏       | 51/232 [04:50<17:42,  5.87s/it]train:  22%|██▏       | 52/232 [04:51<13:00,  4.34s/it]train:  23%|██▎       | 53/232 [04:55<12:54,  4.33s/it]train:  23%|██▎       | 54/232 [05:06<18:19,  6.18s/it]train:  24%|██▎       | 55/232 [05:07<13:46,  4.67s/it]train:  24%|██▍       | 56/232 [05:08<10:22,  3.54s/it]train:  25%|██▍       | 57/232 [05:20<17:55,  6.14s/it]train:  25%|██▌       | 58/232 [05:21<13:23,  4.62s/it]train:  25%|██▌       | 59/232 [05:32<18:28,  6.41s/it]train:  26%|██▌       | 60/232 [05:42<21:52,  7.63s/it]train:  26%|██▋       | 61/232 [05:48<20:31,  7.20s/it]train:  27%|██▋       | 62/232 [05:59<23:16,  8.21s/it]train:  27%|██▋       | 63/232 [06:09<25:09,  8.93s/it]train:  28%|██▊       | 64/232 [06:20<26:02,  9.30s/it]train:  28%|██▊       | 65/232 [06:21<19:01,  6.84s/it]train:  28%|██▊       | 66/232 [06:22<14:00,  5.06s/it]train:  29%|██▉       | 67/232 [06:23<10:37,  3.87s/it]train:  29%|██▉       | 68/232 [06:33<15:36,  5.71s/it]train:  30%|██▉       | 69/232 [06:37<14:21,  5.29s/it]train:  30%|███       | 70/232 [06:41<13:22,  4.96s/it]train:  31%|███       | 71/232 [06:42<10:09,  3.79s/it]train:  31%|███       | 72/232 [06:43<07:39,  2.87s/it]train:  31%|███▏      | 73/232 [06:47<08:42,  3.29s/it]train:  32%|███▏      | 74/232 [06:48<06:48,  2.59s/it]train:  32%|███▏      | 75/232 [06:54<09:22,  3.58s/it]train:  33%|███▎      | 76/232 [06:58<09:49,  3.78s/it]train:  33%|███▎      | 77/232 [06:59<07:42,  2.99s/it]train:  34%|███▎      | 78/232 [07:01<06:13,  2.43s/it]train:  34%|███▍      | 79/232 [07:02<05:07,  2.01s/it]train:  34%|███▍      | 80/232 [07:12<11:34,  4.57s/it]train:  35%|███▍      | 81/232 [07:17<11:25,  4.54s/it]train:  35%|███▌      | 82/232 [07:18<08:47,  3.52s/it]train:  36%|███▌      | 83/232 [07:30<15:18,  6.16s/it]train:  36%|███▌      | 84/232 [07:34<13:54,  5.64s/it]train:  37%|███▋      | 85/232 [07:35<10:22,  4.24s/it]train:  37%|███▋      | 86/232 [07:40<10:18,  4.24s/it]train:  38%|███▊      | 87/232 [07:44<10:24,  4.31s/it]train:  38%|███▊      | 88/232 [07:45<07:46,  3.24s/it]train:  38%|███▊      | 89/232 [07:56<13:06,  5.50s/it]Start: 2026年  6月  9日 火曜日 13:54:31 JST
+CSV dir : /mnt/ynakagami3/SimulationData/211209_isot_0205_renewal_looseTrigger_40M/csvFiles
+Out dir : /mnt/ynakagami3/nakagami_data/data_40M
+Workers : 12 (of 20 cores)
+Found 291 CSV files
+Train: 232 files, Val: 59 files
+=== Processing train ===
+train:   0%|          | 0/232 [00:00<?, ?it/s]  [train] 1/232 files | 40,000 events | elapsed 0.3m | ETA 60.1m
+train:   0%|          | 1/232 [00:15<1:00:01, 15.59s/it]  [train] 2/232 files | 56,424 events | elapsed 0.3m | ETA 29.9m
+  [train] 3/232 files | 56,424 events | elapsed 0.3m | ETA 19.9m
+  [train] 4/232 files | 56,424 events | elapsed 0.3m | ETA 14.8m
+  [train] 5/232 files | 96,424 events | elapsed 0.3m | ETA 12.8m
+train:   2%|▏         | 5/232 [00:16<09:49,  2.60s/it]    [train] 6/232 files | 96,424 events | elapsed 0.3m | ETA 10.6m
+  [train] 7/232 files | 96,424 events | elapsed 0.3m | ETA 9.1m
+  [train] 8/232 files | 112,709 events | elapsed 0.3m | ETA 7.9m
+  [train] 9/232 files | 152,709 events | elapsed 0.3m | ETA 7.0m
+  [train] 10/232 files | 152,709 events | elapsed 0.3m | ETA 6.3m
+  [train] 11/232 files | 192,709 events | elapsed 0.3m | ETA 7.0m
+train:   5%|▍         | 11/232 [00:20<04:59,  1.35s/it]  [train] 12/232 files | 192,709 events | elapsed 0.3m | ETA 6.4m
+  [train] 13/232 files | 208,417 events | elapsed 0.3m | ETA 5.9m
+  [train] 14/232 files | 208,417 events | elapsed 0.3m | ETA 5.4m
+  [train] 15/232 files | 208,417 events | elapsed 0.3m | ETA 5.1m
+  [train] 16/232 files | 248,417 events | elapsed 0.4m | ETA 5.8m
+train:   7%|▋         | 16/232 [00:25<04:16,  1.19s/it]  [train] 17/232 files | 248,417 events | elapsed 0.4m | ETA 5.4m
+  [train] 18/232 files | 264,574 events | elapsed 0.4m | ETA 5.1m
+  [train] 19/232 files | 264,574 events | elapsed 0.4m | ETA 4.8m
+  [train] 20/232 files | 280,500 events | elapsed 0.4m | ETA 4.6m
+  [train] 21/232 files | 320,500 events | elapsed 0.4m | ETA 4.3m
+  [train] 22/232 files | 360,500 events | elapsed 0.5m | ETA 4.6m
+train:   9%|▉         | 22/232 [00:28<03:05,  1.13it/s]  [train] 23/232 files | 360,500 events | elapsed 0.5m | ETA 4.3m
+  [train] 24/232 files | 400,500 events | elapsed 0.5m | ETA 4.1m
+  [train] 25/232 files | 447,822 events | elapsed 0.6m | ETA 4.7m
+train:  11%|█         | 25/232 [00:33<03:45,  1.09s/it]  [train] 26/232 files | 447,822 events | elapsed 0.6m | ETA 4.5m
+  [train] 27/232 files | 447,822 events | elapsed 0.6m | ETA 4.3m
+  [train] 28/232 files | 487,822 events | elapsed 0.6m | ETA 4.1m
+  [train] 29/232 files | 527,822 events | elapsed 0.6m | ETA 4.0m
+  [train] 30/232 files | 543,792 events | elapsed 0.6m | ETA 3.8m
+  [train] 31/232 files | 543,792 events | elapsed 0.6m | ETA 3.7m
+  [train] 32/232 files | 543,792 events | elapsed 0.6m | ETA 3.5m
+  [train] 33/232 files | 583,792 events | elapsed 0.6m | ETA 3.4m
+  [train] 34/232 files | 583,792 events | elapsed 0.6m | ETA 3.3m
+  [train] 35/232 files | 583,792 events | elapsed 0.6m | ETA 3.2m
+  [train] 36/232 files | 583,792 events | elapsed 0.6m | ETA 3.1m
+  [train] 37/232 files | 583,792 events | elapsed 0.6m | ETA 3.0m
+  [train] 38/232 files | 623,792 events | elapsed 0.7m | ETA 3.4m
+train:  16%|█▋        | 38/232 [00:39<02:15,  1.43it/s]  [train] 39/232 files | 640,156 events | elapsed 0.7m | ETA 3.3m
+  [train] 40/232 files | 656,176 events | elapsed 0.7m | ETA 3.2m
+  [train] 41/232 files | 696,176 events | elapsed 0.7m | ETA 3.1m
+  [train] 42/232 files | 736,176 events | elapsed 0.7m | ETA 3.0m
+  [train] 43/232 files | 776,176 events | elapsed 0.7m | ETA 2.9m
+  [train] 44/232 files | 816,176 events | elapsed 0.7m | ETA 2.9m
+train:  19%|█▉        | 44/232 [00:40<01:46,  1.76it/s]  [train] 45/232 files | 832,082 events | elapsed 0.7m | ETA 2.8m
+  [train] 46/232 files | 872,082 events | elapsed 0.7m | ETA 2.8m
+  [train] 47/232 files | 912,082 events | elapsed 0.7m | ETA 2.8m
+train:  20%|██        | 47/232 [00:42<01:45,  1.75it/s]  [train] 48/232 files | 928,152 events | elapsed 0.7m | ETA 2.7m
+  [train] 49/232 files | 944,217 events | elapsed 0.7m | ETA 2.7m
+  [train] 50/232 files | 960,418 events | elapsed 0.7m | ETA 2.6m
+  [train] 51/232 files | 976,827 events | elapsed 0.7m | ETA 2.5m
+  [train] 52/232 files | 976,827 events | elapsed 0.7m | ETA 2.5m
+  [train] 53/232 files | 992,830 events | elapsed 0.7m | ETA 2.4m
+  [train] 54/232 files | 1,032,830 events | elapsed 0.9m | ETA 2.9m
+train:  23%|██▎       | 54/232 [00:53<02:40,  1.11it/s]  [train] 55/232 files | 1,032,830 events | elapsed 0.9m | ETA 2.8m
+  [train] 56/232 files | 1,032,830 events | elapsed 0.9m | ETA 2.8m
+  [train] 57/232 files | 1,072,830 events | elapsed 0.9m | ETA 2.8m
+train:  25%|██▍       | 57/232 [00:55<02:33,  1.14it/s]  [train] 58/232 files | 1,072,830 events | elapsed 0.9m | ETA 2.8m
+  [train] 59/232 files | 1,112,830 events | elapsed 0.9m | ETA 2.8m
+train:  25%|██▌       | 59/232 [00:56<02:21,  1.22it/s]  [train] 60/232 files | 1,152,830 events | elapsed 0.9m | ETA 2.7m
+  [train] 61/232 files | 1,169,380 events | elapsed 0.9m | ETA 2.6m
+  [train] 62/232 files | 1,209,380 events | elapsed 0.9m | ETA 2.6m
+  [train] 63/232 files | 1,249,380 events | elapsed 0.9m | ETA 2.5m
+  [train] 64/232 files | 1,289,380 events | elapsed 0.9m | ETA 2.5m
+  [train] 65/232 files | 1,289,380 events | elapsed 0.9m | ETA 2.4m
+  [train] 66/232 files | 1,289,380 events | elapsed 0.9m | ETA 2.4m
+  [train] 67/232 files | 1,289,380 events | elapsed 0.9m | ETA 2.3m
+  [train] 68/232 files | 1,329,380 events | elapsed 0.9m | ETA 2.3m
+  [train] 69/232 files | 1,345,426 events | elapsed 0.9m | ETA 2.2m
+  [train] 70/232 files | 1,361,393 events | elapsed 0.9m | ETA 2.2m
+  [train] 71/232 files | 1,361,393 events | elapsed 0.9m | ETA 2.1m
+  [train] 72/232 files | 1,361,393 events | elapsed 0.9m | ETA 2.1m
+  [train] 73/232 files | 1,377,580 events | elapsed 0.9m | ETA 2.0m
+  [train] 74/232 files | 1,377,580 events | elapsed 0.9m | ETA 2.0m
+  [train] 75/232 files | 1,393,614 events | elapsed 0.9m | ETA 2.0m
+  [train] 76/232 files | 1,409,632 events | elapsed 0.9m | ETA 1.9m
+  [train] 77/232 files | 1,409,632 events | elapsed 0.9m | ETA 1.9m
+  [train] 78/232 files | 1,409,632 events | elapsed 0.9m | ETA 1.9m
+  [train] 79/232 files | 1,409,632 events | elapsed 0.9m | ETA 1.8m
+  [train] 80/232 files | 1,449,632 events | elapsed 1.1m | ETA 2.2m
+train:  34%|███▍      | 80/232 [01:08<01:39,  1.52it/s]  [train] 81/232 files | 1,465,736 events | elapsed 1.1m | ETA 2.1m
+  [train] 82/232 files | 1,465,736 events | elapsed 1.1m | ETA 2.1m
+  [train] 83/232 files | 1,505,736 events | elapsed 1.1m | ETA 2.1m
+  [train] 84/232 files | 1,521,687 events | elapsed 1.1m | ETA 2.0m
+  [train] 85/232 files | 1,521,687 events | elapsed 1.1m | ETA 2.0m
+  [train] 86/232 files | 1,537,807 events | elapsed 1.1m | ETA 1.9m
+  [train] 87/232 files | 1,553,747 events | elapsed 1.1m | ETA 1.9m
+  [train] 88/232 files | 1,553,747 events | elapsed 1.1m | ETA 1.9m
+  [train] 89/232 files | 1,593,747 events | elapsed 1.1m | ETA 1.8m
+  [train] 90/232 files | 1,609,789 events | elapsed 1.1m | ETA 1.8m
+  [train] 91/232 files | 1,649,789 events | elapsed 1.2m | ETA 1.9m
+train:  39%|███▉      | 91/232 [01:11<01:14,  1.89it/s]  [train] 92/232 files | 1,689,789 events | elapsed 1.2m | ETA 1.8m
+  [train] 93/232 files | 1,729,789 events | elapsed 1.2m | ETA 1.8m
+  [train] 94/232 files | 1,769,789 events | elapsed 1.2m | ETA 1.8m
+train:  41%|████      | 94/232 [01:13<01:11,  1.92it/s]  [train] 95/232 files | 1,809,789 events | elapsed 1.2m | ETA 1.8m
+train:  41%|████      | 95/232 [01:14<01:18,  1.74it/s]  [train] 96/232 files | 1,809,789 events | elapsed 1.2m | ETA 1.8m
+  [train] 97/232 files | 1,825,730 events | elapsed 1.2m | ETA 1.7m
+  [train] 98/232 files | 1,841,985 events | elapsed 1.2m | ETA 1.7m
+  [train] 99/232 files | 1,857,946 events | elapsed 1.2m | ETA 1.7m
+  [train] 100/232 files | 1,874,166 events | elapsed 1.2m | ETA 1.6m
+  [train] 101/232 files | 1,874,166 events | elapsed 1.2m | ETA 1.6m
+  [train] 102/232 files | 1,874,166 events | elapsed 1.2m | ETA 1.6m
+  [train] 103/232 files | 1,874,166 events | elapsed 1.2m | ETA 1.6m
+  [train] 104/232 files | 1,914,166 events | elapsed 1.4m | ETA 1.7m
+train:  45%|████▍     | 104/232 [01:24<01:38,  1.30it/s]  [train] 105/232 files | 1,954,166 events | elapsed 1.4m | ETA 1.7m
+train:  45%|████▌     | 105/232 [01:26<01:48,  1.17it/s]  [train] 106/232 files | 1,970,506 events | elapsed 1.4m | ETA 1.7m
+  [train] 107/232 files | 2,010,506 events | elapsed 1.4m | ETA 1.7m
+  [train] 108/232 files | 2,050,506 events | elapsed 1.4m | ETA 1.7m
+  [train] 109/232 files | 2,050,506 events | elapsed 1.4m | ETA 1.6m
+  [train] 110/232 files | 2,066,738 events | elapsed 1.4m | ETA 1.6m
+  [train] 111/232 files | 2,082,862 events | elapsed 1.4m | ETA 1.6m
+  [train] 112/232 files | 2,122,862 events | elapsed 1.5m | ETA 1.6m
+train:  48%|████▊     | 112/232 [01:28<01:21,  1.48it/s]  [train] 113/232 files | 2,139,025 events | elapsed 1.5m | ETA 1.6m
+  [train] 114/232 files | 2,154,909 events | elapsed 1.5m | ETA 1.5m
+  [train] 115/232 files | 2,154,909 events | elapsed 1.5m | ETA 1.5m
+  [train] 116/232 files | 2,154,909 events | elapsed 1.5m | ETA 1.5m
+  [train] 117/232 files | 2,171,050 events | elapsed 1.5m | ETA 1.5m
+  [train] 118/232 files | 2,187,428 events | elapsed 1.5m | ETA 1.4m
+  [train] 119/232 files | 2,187,428 events | elapsed 1.5m | ETA 1.4m
+  [train] 120/232 files | 2,203,626 events | elapsed 1.5m | ETA 1.4m
+  [train] 121/232 files | 2,203,626 events | elapsed 1.5m | ETA 1.4m
+  [train] 122/232 files | 2,219,528 events | elapsed 1.5m | ETA 1.3m
+  [train] 123/232 files | 2,219,528 events | elapsed 1.5m | ETA 1.3m
+  [train] 124/232 files | 2,219,528 events | elapsed 1.5m | ETA 1.3m
+  [train] 125/232 files | 2,235,367 events | elapsed 1.5m | ETA 1.3m
+train:  54%|█████▍    | 125/232 [01:29<00:37,  2.82it/s]  [train] 126/232 files | 2,235,367 events | elapsed 1.5m | ETA 1.3m
+  [train] 127/232 files | 2,275,367 events | elapsed 1.6m | ETA 1.4m
+train:  55%|█████▍    | 127/232 [01:38<01:22,  1.27it/s]  [train] 128/232 files | 2,315,367 events | elapsed 1.7m | ETA 1.3m
+train:  55%|█████▌    | 128/232 [01:39<01:20,  1.29it/s]  [train] 129/232 files | 2,355,367 events | elapsed 1.7m | ETA 1.4m
+train:  56%|█████▌    | 129/232 [01:42<01:38,  1.05it/s]  [train] 130/232 files | 2,395,367 events | elapsed 1.7m | ETA 1.3m
+  [train] 131/232 files | 2,411,123 events | elapsed 1.7m | ETA 1.3m
+  [train] 132/232 files | 2,451,123 events | elapsed 1.7m | ETA 1.3m
+  [train] 133/232 files | 2,467,383 events | elapsed 1.7m | ETA 1.3m
+  [train] 134/232 files | 2,483,563 events | elapsed 1.7m | ETA 1.2m
+  [train] 135/232 files | 2,523,563 events | elapsed 1.7m | ETA 1.2m
+  [train] 136/232 files | 2,523,563 events | elapsed 1.7m | ETA 1.2m
+  [train] 137/232 files | 2,539,830 events | elapsed 1.7m | ETA 1.2m
+  [train] 138/232 files | 2,539,830 events | elapsed 1.7m | ETA 1.2m
+  [train] 139/232 files | 2,539,830 events | elapsed 1.7m | ETA 1.1m
+  [train] 140/232 files | 2,539,830 events | elapsed 1.7m | ETA 1.1m
+  [train] 141/232 files | 2,579,830 events | elapsed 1.8m | ETA 1.2m
+train:  61%|██████    | 141/232 [01:49<01:09,  1.30it/s]  [train] 142/232 files | 2,595,652 events | elapsed 1.8m | ETA 1.2m
+  [train] 143/232 files | 2,611,850 events | elapsed 1.8m | ETA 1.1m
+  [train] 144/232 files | 2,651,850 events | elapsed 1.8m | ETA 1.1m
+train:  62%|██████▏   | 144/232 [01:50<00:58,  1.50it/s]  [train] 145/232 files | 2,691,850 events | elapsed 1.8m | ETA 1.1m
+  [train] 146/232 files | 2,691,850 events | elapsed 1.8m | ETA 1.1m
+  [train] 147/232 files | 2,731,850 events | elapsed 1.9m | ETA 1.1m
+train:  63%|██████▎   | 147/232 [01:54<01:09,  1.23it/s]  [train] 148/232 files | 2,748,162 events | elapsed 1.9m | ETA 1.1m
+  [train] 149/232 files | 2,748,162 events | elapsed 1.9m | ETA 1.1m
+  [train] 150/232 files | 2,748,162 events | elapsed 1.9m | ETA 1.0m
+  [train] 151/232 files | 2,764,378 events | elapsed 1.9m | ETA 1.0m
+  [train] 152/232 files | 2,764,378 events | elapsed 1.9m | ETA 1.0m
+  [train] 153/232 files | 2,780,480 events | elapsed 1.9m | ETA 1.0m
+  [train] 154/232 files | 2,820,480 events | elapsed 2.0m | ETA 1.0m
+train:  66%|██████▋   | 154/232 [01:58<00:55,  1.40it/s]  [train] 155/232 files | 2,860,480 events | elapsed 2.0m | ETA 1.0m
+train:  67%|██████▋   | 155/232 [02:00<01:03,  1.21it/s]  [train] 156/232 files | 2,900,480 events | elapsed 2.0m | ETA 1.0m
+  [train] 157/232 files | 2,907,670 events | elapsed 2.0m | ETA 1.0m
+  [train] 158/232 files | 2,947,670 events | elapsed 2.0m | ETA 0.9m
+train:  68%|██████▊   | 158/232 [02:01<00:49,  1.48it/s]  [train] 159/232 files | 2,963,735 events | elapsed 2.0m | ETA 0.9m
+  [train] 160/232 files | 2,979,823 events | elapsed 2.0m | ETA 0.9m
+  [train] 161/232 files | 2,979,823 events | elapsed 2.0m | ETA 0.9m
+  [train] 162/232 files | 2,979,823 events | elapsed 2.0m | ETA 0.9m
+  [train] 163/232 files | 2,979,823 events | elapsed 2.0m | ETA 0.9m
+  [train] 164/232 files | 2,995,890 events | elapsed 2.0m | ETA 0.8m
+  [train] 165/232 files | 3,011,981 events | elapsed 2.0m | ETA 0.8m
+  [train] 166/232 files | 3,028,034 events | elapsed 2.0m | ETA 0.8m
+  [train] 167/232 files | 3,043,725 events | elapsed 2.0m | ETA 0.8m
+  [train] 168/232 files | 3,043,725 events | elapsed 2.0m | ETA 0.8m
+  [train] 169/232 files | 3,043,725 events | elapsed 2.0m | ETA 0.8m
+  [train] 170/232 files | 3,059,603 events | elapsed 2.0m | ETA 0.7m
+train:  73%|███████▎  | 170/232 [02:01<00:18,  3.39it/s]  [train] 171/232 files | 3,099,603 events | elapsed 2.2m | ETA 0.8m
+  [train] 172/232 files | 3,139,603 events | elapsed 2.2m | ETA 0.8m
+train:  74%|███████▍  | 172/232 [02:13<00:57,  1.04it/s]  [train] 173/232 files | 3,139,603 events | elapsed 2.2m | ETA 0.8m
+  [train] 174/232 files | 3,179,603 events | elapsed 2.2m | ETA 0.7m
+train:  75%|███████▌  | 174/232 [02:14<00:51,  1.12it/s]  [train] 175/232 files | 3,179,603 events | elapsed 2.2m | ETA 0.7m
+  [train] 176/232 files | 3,195,611 events | elapsed 2.2m | ETA 0.7m
+  [train] 177/232 files | 3,195,611 events | elapsed 2.2m | ETA 0.7m
+  [train] 178/232 files | 3,211,629 events | elapsed 2.2m | ETA 0.7m
+  [train] 179/232 files | 3,227,445 events | elapsed 2.2m | ETA 0.7m
+  [train] 180/232 files | 3,243,550 events | elapsed 2.2m | ETA 0.6m
+  [train] 181/232 files | 3,243,550 events | elapsed 2.2m | ETA 0.6m
+  [train] 182/232 files | 3,259,482 events | elapsed 2.2m | ETA 0.6m
+  [train] 183/232 files | 3,299,482 events | elapsed 2.3m | ETA 0.6m
+train:  79%|███████▉  | 183/232 [02:18<00:33,  1.46it/s]  [train] 184/232 files | 3,299,482 events | elapsed 2.3m | ETA 0.6m
+  [train] 185/232 files | 3,299,482 events | elapsed 2.3m | ETA 0.6m
+  [train] 186/232 files | 3,315,391 events | elapsed 2.3m | ETA 0.6m
+  [train] 187/232 files | 3,355,391 events | elapsed 2.4m | ETA 0.6m
+train:  81%|████████  | 187/232 [02:22<00:33,  1.35it/s]  [train] 188/232 files | 3,395,391 events | elapsed 2.4m | ETA 0.6m
+  [train] 189/232 files | 3,395,391 events | elapsed 2.4m | ETA 0.5m
+  [train] 190/232 files | 3,435,391 events | elapsed 2.4m | ETA 0.5m
+train:  82%|████████▏ | 190/232 [02:24<00:30,  1.39it/s]  [train] 191/232 files | 3,475,391 events | elapsed 2.4m | ETA 0.5m
+train:  82%|████████▏ | 191/232 [02:25<00:30,  1.33it/s]  [train] 192/232 files | 3,491,494 events | elapsed 2.4m | ETA 0.5m
+  [train] 193/232 files | 3,531,494 events | elapsed 2.4m | ETA 0.5m
+train:  83%|████████▎ | 193/232 [02:26<00:27,  1.42it/s]  [train] 194/232 files | 3,531,494 events | elapsed 2.4m | ETA 0.5m
+  [train] 195/232 files | 3,531,494 events | elapsed 2.4m | ETA 0.5m
+  [train] 196/232 files | 3,547,439 events | elapsed 2.4m | ETA 0.4m
+  [train] 197/232 files | 3,587,439 events | elapsed 2.5m | ETA 0.4m
+train:  85%|████████▍ | 197/232 [02:29<00:26,  1.32it/s]  [train] 198/232 files | 3,587,439 events | elapsed 2.5m | ETA 0.4m
+  [train] 199/232 files | 3,603,479 events | elapsed 2.5m | ETA 0.4m
+  [train] 200/232 files | 3,603,479 events | elapsed 2.5m | ETA 0.4m
+  [train] 201/232 files | 3,643,479 events | elapsed 2.6m | ETA 0.4m
+train:  87%|████████▋ | 201/232 [02:34<00:28,  1.08it/s]  [train] 202/232 files | 3,643,479 events | elapsed 2.6m | ETA 0.4m
+  [train] 203/232 files | 3,659,649 events | elapsed 2.6m | ETA 0.4m
+  [train] 204/232 files | 3,699,649 events | elapsed 2.6m | ETA 0.4m
+train:  88%|████████▊ | 204/232 [02:36<00:23,  1.18it/s]  [train] 205/232 files | 3,699,649 events | elapsed 2.6m | ETA 0.3m
+  [train] 206/232 files | 3,715,886 events | elapsed 2.6m | ETA 0.3m
+  [train] 207/232 files | 3,755,886 events | elapsed 2.6m | ETA 0.3m
+train:  89%|████████▉ | 207/232 [02:38<00:20,  1.25it/s]  [train] 208/232 files | 3,771,997 events | elapsed 2.6m | ETA 0.3m
+  [train] 209/232 files | 3,771,997 events | elapsed 2.6m | ETA 0.3m
+  [train] 210/232 files | 3,788,200 events | elapsed 2.6m | ETA 0.3m
+  [train] 211/232 files | 3,828,200 events | elapsed 2.7m | ETA 0.3m
+train:  91%|█████████ | 211/232 [02:42<00:17,  1.18it/s]  [train] 212/232 files | 3,844,245 events | elapsed 2.7m | ETA 0.3m
+  [train] 213/232 files | 3,884,245 events | elapsed 2.7m | ETA 0.2m
+train:  92%|█████████▏| 213/232 [02:44<00:17,  1.11it/s]  [train] 214/232 files | 3,924,245 events | elapsed 2.7m | ETA 0.2m
+  [train] 215/232 files | 3,964,245 events | elapsed 2.7m | ETA 0.2m
+  [train] 216/232 files | 4,004,245 events | elapsed 2.8m | ETA 0.2m
+train:  93%|█████████▎| 216/232 [02:45<00:11,  1.37it/s]  [train] 217/232 files | 4,044,245 events | elapsed 2.8m | ETA 0.2m
+train:  94%|█████████▎| 217/232 [02:46<00:11,  1.36it/s]  [train] 218/232 files | 4,044,245 events | elapsed 2.8m | ETA 0.2m
+  [train] 219/232 files | 4,060,422 events | elapsed 2.8m | ETA 0.2m
+  [train] 220/232 files | 4,076,504 events | elapsed 2.8m | ETA 0.2m
+  [train] 221/232 files | 4,076,504 events | elapsed 2.8m | ETA 0.1m
+  [train] 222/232 files | 4,092,614 events | elapsed 2.8m | ETA 0.1m
+  [train] 223/232 files | 4,132,614 events | elapsed 2.8m | ETA 0.1m
+train:  96%|█████████▌| 223/232 [02:50<00:06,  1.40it/s]  [train] 224/232 files | 4,132,614 events | elapsed 2.8m | ETA 0.1m
+  [train] 225/232 files | 4,172,614 events | elapsed 2.9m | ETA 0.1m
+train:  97%|█████████▋| 225/232 [02:52<00:05,  1.27it/s]  [train] 226/232 files | 4,172,614 events | elapsed 2.9m | ETA 0.1m
+  [train] 227/232 files | 4,172,614 events | elapsed 2.9m | ETA 0.1m
+  [train] 228/232 files | 4,212,614 events | elapsed 2.9m | ETA 0.1m
+train:  98%|█████████▊| 228/232 [02:53<00:02,  1.52it/s]  [train] 229/232 files | 4,212,614 events | elapsed 2.9m | ETA 0.0m
+  [train] 230/232 files | 4,252,614 events | elapsed 2.9m | ETA 0.0m
+train:  99%|█████████▉| 230/232 [02:54<00:01,  1.55it/s]  [train] 231/232 files | 4,268,577 events | elapsed 2.9m | ETA 0.0m
+  [train] 232/232 files | 4,268,577 events | elapsed 2.9m | ETA 0.0m
+train: 100%|██████████| 232/232 [02:54<00:00,  1.33it/s]
+  saved → /mnt/ynakagami3/nakagami_data/data_40M/train_40M.npz  (4,268,577 events)
+=== Processing val ===
+val:   0%|          | 0/59 [00:00<?, ?it/s]  [val] 1/59 files | 40,000 events | elapsed 0.4m | ETA 22.7m
+val:   2%|▏         | 1/59 [00:19<19:14, 19.91s/it]  [val] 2/59 files | 56,068 events | elapsed 0.4m | ETA 11.2m
+  [val] 3/59 files | 56,068 events | elapsed 0.4m | ETA 7.3m
+  [val] 4/59 files | 71,816 events | elapsed 0.4m | ETA 5.4m
+  [val] 5/59 files | 111,816 events | elapsed 0.4m | ETA 4.2m
+  [val] 6/59 files | 111,816 events | elapsed 0.4m | ETA 3.5m
+  [val] 7/59 files | 111,816 events | elapsed 0.4m | ETA 2.9m
+  [val] 8/59 files | 127,780 events | elapsed 0.4m | ETA 2.5m
+  [val] 9/59 files | 143,865 events | elapsed 0.4m | ETA 2.2m
+  [val] 10/59 files | 143,865 events | elapsed 0.4m | ETA 1.9m
+  [val] 11/59 files | 183,865 events | elapsed 0.4m | ETA 1.7m
+  [val] 12/59 files | 199,706 events | elapsed 0.4m | ETA 1.5m
+  [val] 13/59 files | 239,706 events | elapsed 0.4m | ETA 1.5m
+val:  22%|██▏       | 13/59 [00:21<00:56,  1.23s/it]  [val] 14/59 files | 255,858 events | elapsed 0.4m | ETA 1.3m
+  [val] 15/59 files | 255,858 events | elapsed 0.4m | ETA 1.2m
+  [val] 16/59 files | 295,858 events | elapsed 0.5m | ETA 1.2m
+val:  27%|██▋       | 16/59 [00:23<00:46,  1.08s/it]  [val] 17/59 files | 311,983 events | elapsed 0.5m | ETA 1.1m
+  [val] 18/59 files | 327,825 events | elapsed 0.5m | ETA 1.0m
+  [val] 19/59 files | 344,014 events | elapsed 0.5m | ETA 0.9m
+  [val] 20/59 files | 384,014 events | elapsed 0.5m | ETA 0.9m
+val:  34%|███▍      | 20/59 [00:25<00:35,  1.11it/s]  [val] 21/59 files | 384,014 events | elapsed 0.5m | ETA 0.9m
+  [val] 22/59 files | 424,014 events | elapsed 0.5m | ETA 0.9m
+val:  37%|███▋      | 22/59 [00:27<00:32,  1.15it/s]  [val] 23/59 files | 440,113 events | elapsed 0.5m | ETA 0.8m
+  [val] 24/59 files | 455,982 events | elapsed 0.5m | ETA 0.7m
+  [val] 25/59 files | 472,083 events | elapsed 0.5m | ETA 0.7m
+  [val] 26/59 files | 512,083 events | elapsed 0.6m | ETA 0.7m
+val:  44%|████▍     | 26/59 [00:31<00:31,  1.05it/s]  [val] 27/59 files | 512,083 events | elapsed 0.6m | ETA 0.7m
+  [val] 28/59 files | 512,083 events | elapsed 0.6m | ETA 0.6m
+  [val] 29/59 files | 512,083 events | elapsed 0.6m | ETA 0.6m
+  [val] 30/59 files | 527,776 events | elapsed 0.6m | ETA 0.6m
+  [val] 31/59 files | 543,786 events | elapsed 0.6m | ETA 0.5m
+  [val] 32/59 files | 583,786 events | elapsed 0.7m | ETA 0.6m
+val:  54%|█████▍    | 32/59 [00:37<00:26,  1.04it/s]  [val] 33/59 files | 583,786 events | elapsed 0.7m | ETA 0.5m
+  [val] 34/59 files | 599,898 events | elapsed 0.7m | ETA 0.5m
+  [val] 35/59 files | 599,898 events | elapsed 0.7m | ETA 0.5m
+  [val] 36/59 files | 639,898 events | elapsed 0.7m | ETA 0.5m
+val:  61%|██████    | 36/59 [00:38<00:18,  1.25it/s]  [val] 37/59 files | 679,898 events | elapsed 0.7m | ETA 0.4m
+  [val] 38/59 files | 695,930 events | elapsed 0.7m | ETA 0.4m
+  [val] 39/59 files | 695,930 events | elapsed 0.7m | ETA 0.4m
+  [val] 40/59 files | 711,870 events | elapsed 0.7m | ETA 0.3m
+  [val] 41/59 files | 711,870 events | elapsed 0.7m | ETA 0.3m
+  [val] 42/59 files | 727,399 events | elapsed 0.7m | ETA 0.3m
+  [val] 43/59 files | 767,399 events | elapsed 0.8m | ETA 0.3m
+val:  73%|███████▎  | 43/59 [00:44<00:12,  1.24it/s]  [val] 44/59 files | 767,399 events | elapsed 0.8m | ETA 0.3m
+  [val] 45/59 files | 783,297 events | elapsed 0.8m | ETA 0.2m
+  [val] 46/59 files | 799,580 events | elapsed 0.8m | ETA 0.2m
+  [val] 47/59 files | 839,580 events | elapsed 0.8m | ETA 0.2m
+val:  80%|███████▉  | 47/59 [00:47<00:09,  1.33it/s]  [val] 48/59 files | 879,580 events | elapsed 0.8m | ETA 0.2m
+  [val] 49/59 files | 919,580 events | elapsed 0.9m | ETA 0.2m
+val:  83%|████████▎ | 49/59 [00:47<00:06,  1.45it/s]  [val] 50/59 files | 919,580 events | elapsed 0.9m | ETA 0.2m
+  [val] 51/59 files | 959,580 events | elapsed 0.9m | ETA 0.1m
+val:  86%|████████▋ | 51/59 [00:48<00:05,  1.57it/s]  [val] 52/59 files | 959,580 events | elapsed 0.9m | ETA 0.1m
+  [val] 53/59 files | 999,580 events | elapsed 0.9m | ETA 0.1m
+val:  90%|████████▉ | 53/59 [00:50<00:04,  1.47it/s]  [val] 54/59 files | 1,039,580 events | elapsed 0.9m | ETA 0.1m
+val:  92%|█████████▏| 54/59 [00:50<00:03,  1.48it/s]  [val] 55/59 files | 1,055,514 events | elapsed 0.9m | ETA 0.1m
+  [val] 56/59 files | 1,071,769 events | elapsed 0.9m | ETA 0.0m
+  [val] 57/59 files | 1,087,727 events | elapsed 0.9m | ETA 0.0m
+  [val] 58/59 files | 1,127,727 events | elapsed 0.9m | ETA 0.0m
+val:  98%|█████████▊| 58/59 [00:51<00:00,  2.17it/s]  [val] 59/59 files | 1,167,727 events | elapsed 0.9m | ETA 0.0m
+val: 100%|██████████| 59/59 [00:52<00:00,  1.84it/s]val: 100%|██████████| 59/59 [00:52<00:00,  1.12it/s]
+  saved → /mnt/ynakagami3/nakagami_data/data_40M/val_40M.npz  (1,167,727 events)
+Done.
+End: 2026年  6月  9日 火曜日 14:02:10 JST

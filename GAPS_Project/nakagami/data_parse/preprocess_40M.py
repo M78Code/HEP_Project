@@ -21,6 +21,7 @@ import pathlib
 import random
 import numpy as np
 from tqdm import tqdm
+from multiprocessing import Pool, cpu_count
 
 SI_START  = 3
 SI_END    = 1443    # 1440値 → reshape(10,12,12)
@@ -42,19 +43,42 @@ def parse_row(row):
     return label, si.reshape(10, 12, 12), tof
 
 
-def process_files(file_list, desc):
+def process_one_file(path):
     si_list, tof_list, labels = [], [], []
-    for path in tqdm(file_list, desc=desc):
-        with open(path) as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if len(row) < TOF_END:
-                    continue
-                label, si, tof = parse_row(row)
-                labels.append(label)
-                si_list.append(si)
-                tof_list.append(tof)
-    return si_list, tof_list, labels
+    with open(path) as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if len(row) < TOF_END:
+                continue
+            label, si, tof = parse_row(row)
+            labels.append(label)
+            si_list.append(si)
+            tof_list.append(tof)
+    return labels, si_list, tof_list
+
+
+def process_files(file_list, desc, num_workers=12):
+    import time
+    all_si, all_tof, all_labels = [], [], []
+    t0 = time.time()
+    with Pool(processes=num_workers) as pool:
+        for i, (labels, si_list, tof_list) in enumerate(tqdm(
+            pool.imap(process_one_file, file_list),
+            total=len(file_list), desc=desc,
+            dynamic_ncols=True
+        )):
+            all_labels.extend(labels)
+            all_si.extend(si_list)
+            all_tof.extend(tof_list)
+            elapsed = time.time() - t0
+            done = i + 1
+            remain = len(file_list) - done
+            eta = elapsed / done * remain
+            print(f"  [{desc}] {done}/{len(file_list)} files | "
+                  f"{len(all_labels):,} events | "
+                  f"elapsed {elapsed/60:.1f}m | ETA {eta/60:.1f}m",
+                  flush=True)
+    return all_si, all_tof, all_labels
 
 
 def save_npz(out_path, si_list, tof_list, labels):
@@ -73,9 +97,9 @@ if __name__ == "__main__":
                         help="40MデータのcsvFilesディレクトリ")
     parser.add_argument("--out_dir",     required=True,
                         help="npz出力先ディレクトリ")
-    parser.add_argument("--train_ratio", type=float, default=0.8,
-                        help="訓練データの割合（デフォルト0.8）")
-    parser.add_argument("--seed",        type=int,   default=42)
+    parser.add_argument("--train_ratio",  type=float, default=0.8)
+    parser.add_argument("--num_workers",  type=int,   default=12)
+    parser.add_argument("--seed",         type=int,   default=42)
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -92,11 +116,11 @@ if __name__ == "__main__":
     print(f"Train: {len(train_files)} files, Val: {len(val_files)} files")
 
     print("=== Processing train ===")
-    si_list, tof_list, labels = process_files(train_files, "train")
+    si_list, tof_list, labels = process_files(train_files, "train", args.num_workers)
     save_npz(out / "train_40M.npz", si_list, tof_list, labels)
 
     print("=== Processing val ===")
-    si_list, tof_list, labels = process_files(val_files, "val")
+    si_list, tof_list, labels = process_files(val_files, "val", args.num_workers)
     save_npz(out / "val_40M.npz", si_list, tof_list, labels)
 
     print("Done.")
