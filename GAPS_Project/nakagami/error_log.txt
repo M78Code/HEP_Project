@@ -1,0 +1,27 @@
+(base) m78code@gp1:~/HEP_Project/GAPS_Project$ conda activate naka
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ bash nakagami/bash/run_preprocess_4M.sh 
+Start: 2026年  6月 11日 木曜日 13:27:27 JST
+Train dir: /mnt/ynakagami3/SimulationData/220104_4Mevents_isot_loose/csvFiles_Digitized/shuffled/train_5cross
+Val   dir: /mnt/ynakagami3/SimulationData/220104_4Mevents_isot_loose/csvFiles_Digitized/shuffled/valid_5cross
+Out   dir: /mnt/ynakagami3/nakagami_data/data_4M
+Workers  : 12 (of 20 cores)
+Train files: 400
+Val   files: 100
+=== Processing train ===
+train:  12%|█▏        | 48/400 [00:09<00:38,  9.18it/s]  [train] 50/400 files | 200,000 events (skipped 0) | elapsed 0.2m | ETA 1.3m
+train:  24%|██▍       | 97/400 [00:21<01:45,  2.88it/s]  [train] 100/400 files | 400,000 events (skipped 0) | elapsed 0.4m | ETA 1.1m
+train:  37%|███▋      | 148/400 [00:31<01:10,  3.57it/s]  [train] 150/400 files | 600,000 events (skipped 0) | elapsed 0.5m | ETA 0.9m
+train:  50%|████▉     | 199/400 [00:41<00:26,  7.68it/s]  [train] 200/400 files | 800,000 events (skipped 0) | elapsed 0.7m | ETA 0.7m
+train:  62%|██████▏   | 249/400 [00:51<00:31,  4.81it/s]  [train] 250/400 files | 1,000,000 events (skipped 0) | elapsed 0.9m | ETA 0.5m
+train:  74%|███████▍  | 297/400 [01:01<00:26,  3.96it/s]  [train] 300/400 files | 1,200,000 events (skipped 0) | elapsed 1.0m | ETA 0.3m
+train:  87%|████████▋ | 349/400 [01:11<00:11,  4.63it/s]  [train] 350/400 files | 1,400,000 events (skipped 0) | elapsed 1.2m | ETA 0.2m
+train:  99%|█████████▉| 397/400 [01:21<00:00,  5.22it/s]  [train] 400/400 files | 1,600,000 events (skipped 0) | elapsed 1.4m | ETA 0.0m
+train: 100%|██████████| 400/400 [01:21<00:00,  4.90it/s]
+  saved → /mnt/ynakagami3/nakagami_data/data_4M/train_hybrid_nakagami4M.npz  (1,600,000 events, Dbar=800,000, Pbar=800,000)
+=== Processing val ===
+val:  49%|████▉     | 49/100 [00:11<00:11,  4.38it/s]  [val] 50/100 files | 200,000 events (skipped 0) | elapsed 0.2m | ETA 0.2m
+val:  98%|█████████▊| 98/100 [00:20<00:00,  6.51it/s]  [val] 100/100 files | 400,000 events (skipped 0) | elapsed 0.4m | ETA 0.0m
+val: 100%|██████████| 100/100 [00:20<00:00,  4.77it/s]
+  saved → /mnt/ynakagami3/nakagami_data/data_4M/val_hybrid_nakagami4M.npz  (400,000 events, Dbar=200,000, Pbar=200,000)
+Done.
+End: 2026年  6月 11日 木曜日 13:30:18 JST
