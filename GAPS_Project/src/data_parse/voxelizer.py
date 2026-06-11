@@ -1,11 +1,18 @@
 import numpy as np
 
-GRID_Z, GRID_X, GRID_Y = 10, 20, 20   # layers × x × y（中上と同じ軸順）
+GRID_Z = 10                            # layer 数（固定）
+DEFAULT_GRID_X, DEFAULT_GRID_Y = 20, 20  # デフォルトの x/y 解像度
 X_MIN, X_MAX = -700.0, 700.0
 Y_MIN, Y_MAX = -700.0, 700.0
 
-def build_sili_voxel(event):
-  """Si(Li)ヒット → 3Dボクセルグリッド (10,20,20) = layers×x×y"""
+def build_sili_voxel(event, grid_x=DEFAULT_GRID_X, grid_y=DEFAULT_GRID_Y):
+  """Si(Li)ヒット → 3Dボクセルグリッド (10, grid_x, grid_y) = layers×x×y
+
+  Args:
+      event  : event dict
+      grid_x : x方向ビン数（デフォルト 20、中上 12×12 対応で 12 を指定）
+      grid_y : y方向ビン数
+  """
   vids      = np.array(event['volume_id'])
   energies  = np.array(event['energy'])
   positions = np.array(event['positions'])
@@ -13,7 +20,7 @@ def build_sili_voxel(event):
   layer_idx = (vids // 1000000).astype(np.int64)
   is_sili   = layer_idx >= 200
   if not is_sili.any():
-      return np.zeros((GRID_Z, GRID_X, GRID_Y), dtype=np.float32)
+      return np.zeros((GRID_Z, grid_x, grid_y), dtype=np.float32)
 
   layer   = layer_idx[is_sili] % 100
   valid   = layer < GRID_Z
@@ -22,13 +29,13 @@ def build_sili_voxel(event):
   layer_v = layer[valid]
 
   if len(e_s) == 0:
-      return np.zeros((GRID_Z, GRID_X, GRID_Y), dtype=np.float32)
+      return np.zeros((GRID_Z, grid_x, grid_y), dtype=np.float32)
 
-  xi = ((pos_s[:, 0] - X_MIN) / (X_MAX - X_MIN) * GRID_X).astype(np.int32)
-  yi = ((pos_s[:, 1] - Y_MIN) / (Y_MAX - Y_MIN) * GRID_Y).astype(np.int32)
-  mask = (xi >= 0) & (xi < GRID_X) & (yi >= 0) & (yi < GRID_Y)
+  xi = ((pos_s[:, 0] - X_MIN) / (X_MAX - X_MIN) * grid_x).astype(np.int32)
+  yi = ((pos_s[:, 1] - Y_MIN) / (Y_MAX - Y_MIN) * grid_y).astype(np.int32)
+  mask = (xi >= 0) & (xi < grid_x) & (yi >= 0) & (yi < grid_y)
 
-  grid = np.zeros((GRID_Z, GRID_X, GRID_Y), dtype=np.float32)
+  grid = np.zeros((GRID_Z, grid_x, grid_y), dtype=np.float32)
   np.add.at(grid, (layer_v[mask], xi[mask], yi[mask]), e_s[mask])
   return grid
 

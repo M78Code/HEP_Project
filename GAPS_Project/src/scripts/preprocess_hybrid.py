@@ -3,9 +3,17 @@
 保存为压缩 npz 文件，供 HybridDatasetFast 直接加载，避免训练时重复计算。
 
 运行一次即可，约需 30~60 分钟（取决于 CPU）。
-输出文件：dataset/split/train_hybrid.npz, val_hybrid.npz, test_hybrid.npz
+
+用法:
+  python preprocess_hybrid.py --voxel-size 20    # 10x20x20 (默认)
+  python preprocess_hybrid.py --voxel-size 12    # 10x12x12 (中上対応)
+
+输出文件:
+  --voxel-size 20: train_hybrid_20x20.npz, val_hybrid_20x20.npz, test_hybrid_20x20.npz
+  --voxel-size 12: train_hybrid_12x12.npz, val_hybrid_12x12.npz, test_hybrid_12x12.npz
 """
 
+import argparse
 import pickle
 import numpy as np
 from pathlib import Path
@@ -19,21 +27,21 @@ SPLIT_DIR     = PROJECT_ROOT / 'dataset' / 'split'
 ANTIDEUTERON  = -1000010020
 
 
-def preprocess_split(pkl_path: Path, out_path: Path):
+def preprocess_split(pkl_path: Path, out_path: Path, voxel_size: int):
     print(f'\n处理: {pkl_path}')
     with open(pkl_path, 'rb') as f:
         payload = pickle.load(f)
     events = payload['events']
     N = len(events)
-    print(f'  事例数: {N:,}')
+    print(f'  事例数: {N:,}, voxel size: 10x{voxel_size}x{voxel_size}')
 
-    voxels = np.zeros((N, 10, 20, 20), dtype=np.float32)
-    tofs   = np.zeros((N, 11),         dtype=np.float32)
-    labels = np.zeros(N,               dtype=np.int64)
-    betas  = np.zeros(N,               dtype=np.float32)
+    voxels = np.zeros((N, 10, voxel_size, voxel_size), dtype=np.float32)
+    tofs   = np.zeros((N, 11),                          dtype=np.float32)
+    labels = np.zeros(N,                                dtype=np.int64)
+    betas  = np.zeros(N,                                dtype=np.float32)
 
     for i, ev in enumerate(tqdm(events, desc='  building features')):
-        voxels[i] = build_sili_voxel(ev)
+        voxels[i] = build_sili_voxel(ev, grid_x=voxel_size, grid_y=voxel_size)
         tofs[i]   = build_tof_features(ev)
         labels[i] = 1 if ev['label'] == ANTIDEUTERON else 0
         betas[i]  = float(ev.get('beta', 0.0))
@@ -45,9 +53,17 @@ def preprocess_split(pkl_path: Path, out_path: Path):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--voxel-size', type=int, default=20,
+                        choices=[12, 20],
+                        help='voxel size (10 x voxel_size x voxel_size)')
+    args = parser.parse_args()
+
+    suffix = f'{args.voxel_size}x{args.voxel_size}'
     for split in ['train', 'val', 'test']:
         preprocess_split(
-            pkl_path = SPLIT_DIR / f'{split}.pkl',
-            out_path = SPLIT_DIR / f'{split}_hybrid_20x20',   # 自动加 .npz 后缀
+            pkl_path   = SPLIT_DIR / f'{split}.pkl',
+            out_path   = SPLIT_DIR / f'{split}_hybrid_{suffix}',
+            voxel_size = args.voxel_size,
         )
     print('\n全部预处理完成。')

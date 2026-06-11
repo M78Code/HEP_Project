@@ -18,14 +18,16 @@ EPOCHS     = 100
 LR         = 4e-5      # A.2 7.1.1 原版设定
 PATIENCE   = 10        # early stopping
 NUM_WORKERS = 8        # Docker shm制限のため抑える
+VOXEL_SIZE = 12        # ★ 12 for 12x12, 20 for 20x20
 DATA_DIR   = PROJECT_ROOT / 'dataset' / 'split'
-SAVE_PATH  = PROJECT_ROOT / 'results' / 'cnn_dnn_hybrid_20x20_best.pth'
+SAVE_PATH  = PROJECT_ROOT / 'results' / f'cnn_dnn_hybrid_{VOXEL_SIZE}x{VOXEL_SIZE}_best.pth'
 
 
 def train():
-  print(f'使用设备：{DEVICE}')
-  train_set = HybridDatasetFast(DATA_DIR / 'train_hybrid_20x20.npz')
-  val_set   = HybridDatasetFast(DATA_DIR / 'val_hybrid_20x20.npz')
+  print(f'使用设备：{DEVICE}, voxel size: 10x{VOXEL_SIZE}x{VOXEL_SIZE}')
+  suffix = f'{VOXEL_SIZE}x{VOXEL_SIZE}'
+  train_set = HybridDatasetFast(DATA_DIR / f'train_hybrid_{suffix}.npz')
+  val_set   = HybridDatasetFast(DATA_DIR / f'val_hybrid_{suffix}.npz')
   train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
   val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=True)
 
