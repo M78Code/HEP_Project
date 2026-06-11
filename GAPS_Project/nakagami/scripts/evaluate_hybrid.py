@@ -1,12 +1,6 @@
 """
-中上40MデータでCNN+DNN（A.2 7.1.1）を評価するスクリプト。
-GAPS_Project/src/scripts/evaluate_hybrid.pyをベースに、
-importとデータパスをnakagami配下に書き換えたもの。
-
-主な変更:
-  - 評価集は val_40M.npz を使用（test setは未作成）
-  - betas関連の処理を削除（npzに含まれない）
-  - 他モデル(GNN)との比較を削除（中上データではbaseline単体評価）
+中上 4M (csvFiles_Digitized) で NakagamiNet (A.1) を評価。
+val_hybrid_nakagami4M.npz を test set として使用。
 """
 import sys
 from pathlib import Path
@@ -21,26 +15,24 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-# nakagami配下のmodels/data_parseをimportするためsys.pathを追加
 NAKAGAMI_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(NAKAGAMI_ROOT))
 
 from data_parse.hybrid_dataset import HybridDatasetFast
-from models.cnn_dnn_hybrid import CNNDNNHybrid
+from models.nakagami_model import NakagamiNet
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 512
-DATA_DIR   = Path('/mnt/ynakagami3/nakagami_data/data_40M')
-MODEL_PATH = NAKAGAMI_ROOT / 'results' / 'nakagami40M_cnndnn_best.pth'
+DATA_DIR   = Path('/mnt/ynakagami3/nakagami_data/data_4M')
+MODEL_PATH = NAKAGAMI_ROOT / 'results' / 'nakagami4M_cnndnn_best.pth'
 OUT_DIR    = NAKAGAMI_ROOT / 'results' / 'evaluation'
 
 
 @torch.no_grad()
 def run_inference(model, loader, device):
-    """返回 (labels, probs) numpy arrays"""
     model.eval()
     all_labels, all_probs = [], []
-    for voxel, tof, label in tqdm(loader, desc='CNN+DNN eval'):
+    for voxel, tof, label in tqdm(loader, desc='NakagamiNet eval'):
         voxel, tof = voxel.to(device), tof.to(device)
         logits = model(voxel, tof)
         probs = torch.sigmoid(logits).cpu().numpy()
@@ -62,20 +54,20 @@ def print_metrics(name, labels, probs):
     print(f"\n{'=' * 50}")
     print(f"模型: {name}")
     print(f"  Accuracy : {acc:.4f}")
-    print(f"  Precision: {prec:.4f}  (antiD识别精确率)")
-    print(f"  Recall   : {rec:.4f}  (antiD信号效率)")
+    print(f"  Precision: {prec:.4f}")
+    print(f"  Recall   : {rec:.4f}")
     print(f"  F1 Score : {f1:.4f}")
     print(f"  ROC AUC  : {auc:.4f}")
     print(f"  混淆矩阵 : TN={tn}  FP={fp}  FN={fn}  TP={tp}")
     if (tn + fp) > 0:
-        print(f"  背景抑制率: {tn / (tn + fp):.4f}  ({tn + fp}个antiP中正确拒绝{tn}个)")
+        print(f"  背景抑制率: {tn / (tn + fp):.4f}")
     return auc
 
 
 def print_rejection_at_efficiency(labels, probs,
                                   signal_efficiencies=(0.50, 0.80, 0.90, 0.95, 0.98, 0.99)):
     print(f"\n{'=' * 60}")
-    print('各信号效率下的背景抑制率 （Background Rejection = 1/FPR）')
+    print('各信号效率下的背景抑制率 (Background Rejection = 1/FPR)')
     print(f"{'Signal Eff':>12}  {'Rejection':>15}")
     print('-' * 30)
     fpr, tpr, _ = roc_curve(labels, probs)
@@ -90,7 +82,7 @@ def plot_rejection_curve(labels, probs, save_path):
     plt.figure(figsize=(7, 6))
     fpr, tpr, _ = roc_curve(labels, probs)
     fpr_safe = np.where(fpr == 0, 1e-10, fpr)
-    plt.semilogy(tpr, 1.0 / fpr_safe, label='Nakagami40M CNN+DNN')
+    plt.semilogy(tpr, 1.0 / fpr_safe, label='Nakagami4M (A.1)')
     plt.xlabel('Signal Efficiency (antiD recall)')
     plt.ylabel('Background Rejection (1 / FPR)')
     plt.legend()
@@ -114,25 +106,21 @@ def evaluate():
     print(f'使用设备：{DEVICE}')
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ── 加载评估数据（val_hybrid_nakagami40M.npzをtest setとして使用）──
-    test_npz    = DATA_DIR / 'val_hybrid_nakagami40M.npz'
+    test_npz    = DATA_DIR / 'val_hybrid_nakagami4M.npz'
     test_set    = HybridDatasetFast(test_npz)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
                              num_workers=8, pin_memory=True)
     print(f'test events: {len(test_set)}')
 
-    # ── 加载模型（处理 torch.compile 权重前缀）──
-    model = CNNDNNHybrid(tof_dim=11).to(DEVICE)
+    model = NakagamiNet(tof_dim=9).to(DEVICE)
     state = torch.load(MODEL_PATH, map_location=DEVICE)
     clean_state = {k.replace('_orig_mod.', ''): v for k, v in state.items()}
     model.load_state_dict(clean_state)
     print(f'已加载模型: {MODEL_PATH}')
 
-    # ── 推理 ──
     labels, probs = run_inference(model, test_loader, DEVICE)
 
-    # ── 评价指标 ──
-    tag = 'Nakagami40M_CNN_DNN'
+    tag = 'Nakagami4M_A1'
     print_metrics(tag, labels, probs)
 
     np.save(OUT_DIR / f'{tag}_labels.npy', labels)

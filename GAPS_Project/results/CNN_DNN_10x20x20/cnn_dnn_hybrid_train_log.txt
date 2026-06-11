@@ -48,9 +48,6 @@ Epoch  31/100 | train_loss: 0.3701  train_acc: 0.8284 | val_loss: 0.4214  val_ac
   → early stopping at epoch 31 (patience=10)
 
 
-
-
-
 (base) a@a-Z790-Pro-RS:~/workspace/ai/HEP_Project/GAPS_Project/src/scripts$ python evaluate_hybrid.py
 使用设备：cuda
   loaded 642,228 events from /home/a/workspace/ai/HEP_Project/GAPS_Project/dataset/split/test_hybrid_20x20.npz
