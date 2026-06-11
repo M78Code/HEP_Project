@@ -38,7 +38,11 @@ LR          = 4e-5      # 中上 IdentifywithNN.py 原版 (Adam lr=0.00004)
 PATIENCE    = 4         # 中上 EarlyStopping(patience=4)
 NUM_WORKERS = 8
 DROPOUT     = 0.1       # 中上 ResBlock 内 Dropout(rate=0.1)
-NORMALIZE_TOF = False   # 厳密復元: TOF 正規化なし
+# TOF normalize: True (PyTorch移植の安定化対策)
+#   過滤異常事件後も座標値は ±16550 と大きく、生値だとforward激活が大爆発する
+#   除以 10000 で範囲を [-1.7, +1.7] 程度に圧縮（中上Kerasにはない処理だが、
+#   論文中で「PyTorch移植時の数値安定化」と明記する）
+NORMALIZE_TOF = True
 DATA_DIR    = Path('/mnt/ynakagami3/nakagami_data/data_4M')
 SAVE_DIR    = NAKAGAMI_ROOT / 'results'
 SAVE_DIR.mkdir(parents=True, exist_ok=True)

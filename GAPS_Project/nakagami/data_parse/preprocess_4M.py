@@ -43,8 +43,15 @@ TOF_END   = 1452
 LABEL_COL = 2
 N_COLS    = 1452    # 1452列の厳密な列数
 
+# TOF異常値フィルタリング
+# 観測: TOF 9次元の正常値範囲は ±16,550 (99.9%ile)
+#        col 2 (TOF第3維) に 1e6~1e17 の非物理巨大値が混入 (約0.5%)
+# ⇒ abs(TOF) > 2e4 を含む事象は除外（物理的に妥当な範囲を超える）
+TOF_ABS_MAX = 2e4
+
 
 def parse_row(row):
+    """1行をパースする。異常事象は None を返してフィルタリング対象とする。"""
     label = int(float(row[LABEL_COL]))
 
     si = np.zeros(1440, dtype=np.float32)
@@ -54,6 +61,15 @@ def parse_row(row):
 
     tof = np.array([float(row[i]) for i in range(TOF_START, TOF_END)],
                    dtype=np.float32)
+
+    # ── 異常事象フィルタ ──
+    # 1. NaN/Inf を含む事象は除外
+    if not np.all(np.isfinite(tof)):
+        return None
+    # 2. abs(TOF) > 2e4 を含む事象は除外（非物理巨大値）
+    if np.any(np.abs(tof) > TOF_ABS_MAX):
+        return None
+
     return label, si.reshape(10, 12, 12), tof
 
 
@@ -66,7 +82,11 @@ def process_one_file(path):
             if len(row) != N_COLS:
                 skipped += 1
                 continue
-            label, si, tof = parse_row(row)
+            parsed = parse_row(row)
+            if parsed is None:    # 異常 TOF 含む事象を除外
+                skipped += 1
+                continue
+            label, si, tof = parsed
             labels.append(label)
             si_list.append(si)
             tof_list.append(tof)

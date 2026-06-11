@@ -107,7 +107,8 @@ def evaluate():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     test_npz    = DATA_DIR / 'val_hybrid_nakagami4M.npz'
-    test_set    = HybridDatasetFast(test_npz)
+    # 訓練時と同じ TOF normalize 設定
+    test_set    = HybridDatasetFast(test_npz, normalize_tof=True)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
                              num_workers=8, pin_memory=True)
     print(f'test events: {len(test_set)}')
