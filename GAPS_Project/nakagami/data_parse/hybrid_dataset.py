@@ -42,6 +42,9 @@ class HybridDatasetFast(Dataset):
         return len(self.voxels)
 
     def __getitem__(self, idx):
+        # NumPy 2.x はtensor/0-d arrayをindexとして受け付けない厳格仕様。
+        # WeightedRandomSamplerが返すtensor indexをintに変換。
+        idx = int(idx)
         return (
             torch.from_numpy(self.voxels[idx]).unsqueeze(0),     # (1,10,12,12)
             torch.from_numpy(self.tofs[idx] / self.TOF_SCALE),    # (11,) 正規化
