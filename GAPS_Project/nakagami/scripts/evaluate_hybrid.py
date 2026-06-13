@@ -23,6 +23,7 @@ from models.nakagami_model import NakagamiNet
 
 DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 512
+NUM_WORKERS = 0
 DATA_DIR   = Path('/mnt/ynakagami3/nakagami_data/data_4M')
 MODEL_PATH = NAKAGAMI_ROOT / 'results' / 'nakagami4M_cnndnn_best.pth'
 OUT_DIR    = NAKAGAMI_ROOT / 'results' / 'evaluation'
@@ -110,7 +111,7 @@ def evaluate():
     # 訓練時と同じ TOF normalize 設定
     test_set    = HybridDatasetFast(test_npz, normalize_tof=True)
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False,
-                             num_workers=8, pin_memory=True)
+                             num_workers=NUM_WORKERS, pin_memory=True)
     print(f'test events: {len(test_set)}')
 
     model = NakagamiNet(tof_dim=9).to(DEVICE)
