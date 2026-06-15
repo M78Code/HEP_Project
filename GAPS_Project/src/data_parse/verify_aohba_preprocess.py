@@ -202,3 +202,100 @@ if __name__ == '__main__':
         check_tof(events)
         print('\n--- graph builder ---')
         check_graph(events)
+
+
+"""
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ python src/data_parse/verify_aohba_preprocess.py 2>&1 | tee ~/aohba_preprocess.log
+
+============================================================
+antiD
+============================================================
+
+[antiD] file: antiD_2tof_FTFP_BERT_1781253355.root
+  loaded 1000 events
+
+--- raw hits ---
+  hits/event  min=8  max=71  mean=26.16  median=25
+  zero-hit events: 0/1000
+  PDG distribution: {-1000010020: 1000}
+  beta  min=0.200  max=0.500  mean=0.306
+  hit_position range:
+    x: [-1655.0, 1655.0]
+    y: [-1735.0, 1735.0]
+    z: [-1113.6, 1113.6]
+  Si(Li) hits: 9509  out_x=0 (0.00%)  out_y=0 (0.00%)  out_xy=0 (0.00%)
+  hit_time range (NaN除く): [9.379, 11005.395]  nan_frac=0.363
+
+--- voxelizer ---
+  [10×12×12] shape OK: 1000/1000  nonzero  mean=0.0053  max=0.0187  voxel_max  mean=1.089e+01  max=1.241e+02
+  [10×20×20] shape OK: 1000/1000  nonzero  mean=0.0020  max=0.0070  voxel_max  mean=1.062e+01  max=1.241e+02
+
+--- tof features ---
+  tof_feat shape: (1000, 11)  (期待 (N,11))
+  has NaN: False  has Inf: False
+  per-dim stats:
+    [ 0] outer_e   min=5.221e-02  max=2.899e+00  mean=4.533e-01
+    [ 1] inner_e   min=5.435e-02  max=2.933e+00  mean=5.983e-01
+    [ 2] outer_n   min=3.000e-01  max=2.000e+00  mean=7.372e-01
+    [ 3] inner_n   min=3.000e-01  max=2.100e+00  mean=8.342e-01
+    [ 4] tof       min=5.689e-02  max=1.869e+00  mean=2.679e-01
+    [ 5] oeX       min=-1.098e+00  max=8.200e-01  mean=7.516e-04
+    [ 6] oeY       min=-1.377e+00  max=9.000e-01  mean=-5.827e-03
+    [ 7] oeZ       min=1.037e+00  max=1.093e+00  mean=1.041e+00
+    [ 8] ieX       min=-8.306e-01  max=8.306e-01  mean=-6.016e-03
+    [ 9] ieY       min=-9.000e-01  max=9.000e-01  mean=-1.034e-02
+    [10] ieZ       min=-1.107e+00  max=1.382e-01  mean=1.010e-01
+
+--- graph builder ---
+  skipped N<=1 events: 0/1000
+  x dim (期待 8):  unique={8}
+  graph_feat dim (期待 45):  unique={45}
+  y distribution:  {1: 1000}
+  tof_feat has NaN/Inf: 0/1000
+
+============================================================
+antiP
+============================================================
+
+[antiP] file: antiP_2tof_FTFP_BERT_1781424263.root
+  loaded 1000 events
+
+--- raw hits ---
+  hits/event  min=8  max=58  mean=18.71  median=17
+  zero-hit events: 0/1000
+  PDG distribution: {-2212: 1000}
+  beta  min=0.202  max=0.499  mean=0.343
+  hit_position range:
+    x: [-1655.0, 1655.0]
+    y: [-1735.0, 1735.0]
+    z: [-1113.6, 1113.6]
+  Si(Li) hits: 6477  out_x=0 (0.00%)  out_y=0 (0.00%)  out_xy=0 (0.00%)
+  hit_time range (NaN除く): [9.456, 11875.948]  nan_frac=0.346
+
+--- voxelizer ---
+  [10×12×12] shape OK: 1000/1000  nonzero  mean=0.0037  max=0.0194  voxel_max  mean=8.530e+00  max=7.285e+01
+  [10×20×20] shape OK: 1000/1000  nonzero  mean=0.0014  max=0.0077  voxel_max  mean=8.334e+00  max=7.238e+01
+
+--- tof features ---
+  tof_feat shape: (1000, 11)  (期待 (N,11))
+  has NaN: False  has Inf: False
+  per-dim stats:
+    [ 0] outer_e   min=4.709e-02  max=2.409e+00  mean=2.878e-01
+    [ 1] inner_e   min=4.858e-02  max=2.559e+00  mean=4.362e-01
+    [ 2] outer_n   min=3.000e-01  max=1.400e+00  mean=5.349e-01
+    [ 3] inner_n   min=3.000e-01  max=1.700e+00  mean=6.310e-01
+    [ 4] tof       min=5.263e-02  max=9.748e-01  mean=2.322e-01
+    [ 5] oeX       min=-9.592e-01  max=8.200e-01  mean=-1.117e-02
+    [ 6] oeY       min=-8.979e-01  max=7.978e-01  mean=-1.907e-02
+    [ 7] oeZ       min=1.037e+00  max=1.100e+00  mean=1.041e+00
+    [ 8] ieX       min=-8.306e-01  max=8.306e-01  mean=-1.530e-02
+    [ 9] ieY       min=-9.000e-01  max=9.000e-01  mean=-1.183e-02
+    [10] ieZ       min=-9.293e-01  max=1.382e-01  mean=1.183e-01
+
+--- graph builder ---
+  skipped N<=1 events: 0/1000
+  x dim (期待 8):  unique={8}
+  graph_feat dim (期待 45):  unique={45}
+  y distribution:  {0: 1000}
+  tof_feat has NaN/Inf: 0/1000
+"""
