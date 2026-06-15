@@ -31,7 +31,9 @@ PDG_ANTIDEUTERON = -1000010020
 
 
 def load_events(particle, n=N_EVENTS):
-    """1 file から先頭 n events を dict list に変換する。"""
+    """1 file から先頭 n events を dict list に変換する。
+    既存 convert_root_to_pickle と同じく awkward array 経由で TVector3 にアクセスする。
+    """
     fp = sorted((ROOT_DIR / particle).glob('*.root'))[0]
     print(f'\n[{particle}] file: {fp.name}')
 
@@ -40,25 +42,29 @@ def load_events(particle, n=N_EVENTS):
         rec_key = sorted(k for k in f.keys() if k.startswith('TreeRec;'))[-1]
         mc, rec = f[mc_key], f[rec_key]
 
-        pdg   = mc['Mc/primaryPdg_'].array(entry_stop=n, library='np')
-        beta  = mc['Mc/CEventBase/primaryBetaGenerated_'].array(entry_stop=n, library='np')
+        pdg   = mc['Mc/primaryPdg_'].array(entry_stop=n)
+        beta  = mc['Mc/CEventBase/primaryBetaGenerated_'].array(entry_stop=n)
 
-        vol   = rec['Rec/hitseries_/hitseries_.volume_id_'].array(entry_stop=n, library='np')
-        edep  = rec['Rec/hitseries_/hitseries_.energydep_'].array(entry_stop=n, library='np')
-        hpos  = rec['Rec/hitseries_/hitseries_.hit_position_'].array(entry_stop=n, library='np')
-        htime = rec['Rec/hitseries_/hitseries_.hit_time_'].array(entry_stop=n, library='np')
+        vol   = rec['Rec/hitseries_/hitseries_.volume_id_'].array(entry_stop=n)
+        edep  = rec['Rec/hitseries_/hitseries_.energydep_'].array(entry_stop=n)
+        hpos  = rec['Rec/hitseries_/hitseries_.hit_position_'].array(entry_stop=n)
+        htime = rec['Rec/hitseries_/hitseries_.hit_time_'].array(entry_stop=n)
 
     events = []
     for i in range(len(pdg)):
-        v = np.asarray(vol[i], dtype=np.int64)
-        e = np.asarray(edep[i], dtype=np.float32)
-        # TVector3 jagged → (N, 3) ndarray
+        v = np.array(vol[i], dtype=np.int64)
+        e = np.array(edep[i], dtype=np.float32)
+        # TVector3 jagged → (N, 3) ndarray (awkward の field access)
         p_raw = hpos[i]
         if len(p_raw) > 0:
-            pos = np.stack([p_raw['fX'], p_raw['fY'], p_raw['fZ']], axis=1).astype(np.float32)
+            pos = np.stack([
+                np.array(p_raw['fX'], dtype=np.float32),
+                np.array(p_raw['fY'], dtype=np.float32),
+                np.array(p_raw['fZ'], dtype=np.float32),
+            ], axis=1)
         else:
             pos = np.zeros((0, 3), dtype=np.float32)
-        t = np.asarray(htime[i], dtype=np.float32)
+        t = np.array(htime[i], dtype=np.float32)
 
         events.append({
             'volume_id': v,
