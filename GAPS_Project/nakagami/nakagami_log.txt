@@ -1,27 +1,87 @@
-(base) m78code@gp1:~/HEP_Project/GAPS_Project$ conda activate naka
-(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ bash nakagami/bash/run_preprocess_4M.sh 
-Start: 2026年  6月 11日 木曜日 13:27:27 JST
-Train dir: /mnt/ynakagami3/SimulationData/220104_4Mevents_isot_loose/csvFiles_Digitized/shuffled/train_5cross
-Val   dir: /mnt/ynakagami3/SimulationData/220104_4Mevents_isot_loose/csvFiles_Digitized/shuffled/valid_5cross
-Out   dir: /mnt/ynakagami3/nakagami_data/data_4M
-Workers  : 12 (of 20 cores)
-Train files: 400
-Val   files: 100
-=== Processing train ===
-train:  12%|█▏        | 48/400 [00:09<00:38,  9.18it/s]  [train] 50/400 files | 200,000 events (skipped 0) | elapsed 0.2m | ETA 1.3m
-train:  24%|██▍       | 97/400 [00:21<01:45,  2.88it/s]  [train] 100/400 files | 400,000 events (skipped 0) | elapsed 0.4m | ETA 1.1m
-train:  37%|███▋      | 148/400 [00:31<01:10,  3.57it/s]  [train] 150/400 files | 600,000 events (skipped 0) | elapsed 0.5m | ETA 0.9m
-train:  50%|████▉     | 199/400 [00:41<00:26,  7.68it/s]  [train] 200/400 files | 800,000 events (skipped 0) | elapsed 0.7m | ETA 0.7m
-train:  62%|██████▏   | 249/400 [00:51<00:31,  4.81it/s]  [train] 250/400 files | 1,000,000 events (skipped 0) | elapsed 0.9m | ETA 0.5m
-train:  74%|███████▍  | 297/400 [01:01<00:26,  3.96it/s]  [train] 300/400 files | 1,200,000 events (skipped 0) | elapsed 1.0m | ETA 0.3m
-train:  87%|████████▋ | 349/400 [01:11<00:11,  4.63it/s]  [train] 350/400 files | 1,400,000 events (skipped 0) | elapsed 1.2m | ETA 0.2m
-train:  99%|█████████▉| 397/400 [01:21<00:00,  5.22it/s]  [train] 400/400 files | 1,600,000 events (skipped 0) | elapsed 1.4m | ETA 0.0m
-train: 100%|██████████| 400/400 [01:21<00:00,  4.90it/s]
-  saved → /mnt/ynakagami3/nakagami_data/data_4M/train_hybrid_nakagami4M.npz  (1,600,000 events, Dbar=800,000, Pbar=800,000)
-=== Processing val ===
-val:  49%|████▉     | 49/100 [00:11<00:11,  4.38it/s]  [val] 50/100 files | 200,000 events (skipped 0) | elapsed 0.2m | ETA 0.2m
-val:  98%|█████████▊| 98/100 [00:20<00:00,  6.51it/s]  [val] 100/100 files | 400,000 events (skipped 0) | elapsed 0.4m | ETA 0.0m
-val: 100%|██████████| 100/100 [00:20<00:00,  4.77it/s]
-  saved → /mnt/ynakagami3/nakagami_data/data_4M/val_hybrid_nakagami4M.npz  (400,000 events, Dbar=200,000, Pbar=200,000)
-Done.
-End: 2026年  6月 11日 木曜日 13:30:18 JST
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project/nakagami$ tail -50 ~/HEP_Project/GAPS_Project/nakagami/scripts/train_4M.log
+  → best model saved (val_acc=0.7209)
+Epoch   2/50 | train_loss: 0.5279  train_acc: 0.7310 | val_loss: 0.5044  val_acc: 0.7465 | 3746s
+  → best model saved (val_acc=0.7465)
+Epoch   3/50 | train_loss: 0.4989  train_acc: 0.7499 | val_loss: 0.4879  val_acc: 0.7576 | 3693s
+  → best model saved (val_acc=0.7576)
+Epoch   4/50 | train_loss: 0.4791  train_acc: 0.7623 | val_loss: 0.4661  val_acc: 0.7708 | 3624s
+  → best model saved (val_acc=0.7708)
+Epoch   5/50 | train_loss: 0.4640  train_acc: 0.7716 | val_loss: 0.4839  val_acc: 0.7609 | 3998s
+Epoch   6/50 | train_loss: 0.4511  train_acc: 0.7803 | val_loss: 0.4419  val_acc: 0.7871 | 4247s
+  → best model saved (val_acc=0.7871)
+Epoch   7/50 | train_loss: 0.4391  train_acc: 0.7878 | val_loss: 0.4315  val_acc: 0.7939 | 4296s
+  → best model saved (val_acc=0.7939)
+Epoch   8/50 | train_loss: 0.4271  train_acc: 0.7956 | val_loss: 0.4178  val_acc: 0.8016 | 4311s
+  → best model saved (val_acc=0.8016)
+Epoch   9/50 | train_loss: 0.4137  train_acc: 0.8038 | val_loss: 0.4239  val_acc: 0.7997 | 4189s
+Epoch  10/50 | train_loss: 0.4010  train_acc: 0.8111 | val_loss: 0.3897  val_acc: 0.8184 | 4269s
+  → best model saved (val_acc=0.8184)
+Epoch  11/50 | train_loss: 0.3899  train_acc: 0.8176 | val_loss: 0.4038  val_acc: 0.8116 | 4216s
+Epoch  12/50 | train_loss: 0.3798  train_acc: 0.8235 | val_loss: 0.3834  val_acc: 0.8227 | 4222s
+  → best model saved (val_acc=0.8227)
+Epoch  13/50 | train_loss: 0.3706  train_acc: 0.8283 | val_loss: 0.3878  val_acc: 0.8214 | 4266s
+Epoch  14/50 | train_loss: 0.3623  train_acc: 0.8328 | val_loss: 0.3639  val_acc: 0.8323 | 4192s
+  → best model saved (val_acc=0.8323)
+Epoch  15/50 | train_loss: 0.3555  train_acc: 0.8369 | val_loss: 0.3697  val_acc: 0.8294 | 4211s
+Epoch  16/50 | train_loss: 0.3494  train_acc: 0.8402 | val_loss: 0.3680  val_acc: 0.8302 | 4348s
+Epoch  17/50 | train_loss: 0.3441  train_acc: 0.8427 | val_loss: 0.3570  val_acc: 0.8369 | 4407s
+  → best model saved (val_acc=0.8369)
+Epoch  18/50 | train_loss: 0.3395  train_acc: 0.8453 | val_loss: 0.3580  val_acc: 0.8359 | 4062s
+Epoch  19/50 | train_loss: 0.3349  train_acc: 0.8474 | val_loss: 0.3770  val_acc: 0.8283 | 3594s
+Epoch  20/50 | train_loss: 0.3309  train_acc: 0.8498 | val_loss: 0.3509  val_acc: 0.8403 | 3532s
+  → best model saved (val_acc=0.8403)
+Epoch  21/50 | train_loss: 0.3269  train_acc: 0.8515 | val_loss: 0.3562  val_acc: 0.8378 | 3513s
+Epoch  22/50 | train_loss: 0.3229  train_acc: 0.8533 | val_loss: 0.3495  val_acc: 0.8423 | 3417s
+  → best model saved (val_acc=0.8423)
+Epoch  23/50 | train_loss: 0.3195  train_acc: 0.8549 | val_loss: 0.3741  val_acc: 0.8318 | 3345s
+Epoch  24/50 | train_loss: 0.3158  train_acc: 0.8571 | val_loss: 0.3819  val_acc: 0.8282 | 3356s
+Epoch  25/50 | train_loss: 0.3124  train_acc: 0.8584 | val_loss: 0.3475  val_acc: 0.8431 | 3344s
+  → best model saved (val_acc=0.8431)
+Epoch  26/50 | train_loss: 0.3091  train_acc: 0.8602 | val_loss: 0.3480  val_acc: 0.8443 | 3258s
+  → best model saved (val_acc=0.8443)
+Epoch  27/50 | train_loss: 0.3063  train_acc: 0.8615 | val_loss: 0.3495  val_acc: 0.8433 | 3169s
+Epoch  28/50 | train_loss: 0.3023  train_acc: 0.8633 | val_loss: 0.3516  val_acc: 0.8435 | 3110s
+Epoch  29/50 | train_loss: 0.2993  train_acc: 0.8646 | val_loss: 0.3480  val_acc: 0.8437 | 3058s
+Epoch  30/50 | train_loss: 0.2963  train_acc: 0.8661 | val_loss: 0.3452  val_acc: 0.8471 | 3026s
+  → best model saved (val_acc=0.8471)
+Epoch  31/50 | train_loss: 0.2936  train_acc: 0.8672 | val_loss: 0.3516  val_acc: 0.8444 | 3004s
+Epoch  32/50 | train_loss: 0.2907  train_acc: 0.8685 | val_loss: 0.3783  val_acc: 0.8323 | 2986s
+Epoch  33/50 | train_loss: 0.2877  train_acc: 0.8701 | val_loss: 0.3721  val_acc: 0.8361 | 3248s
+Epoch  34/50 | train_loss: 0.2849  train_acc: 0.8713 | val_loss: 0.3607  val_acc: 0.8425 | 3383s
+  → early stopping at epoch 34 (patience=4)
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project/nakagami$
+
+
+
+
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project/nakagami$ CUDA_VISIBLE_DEVICES=0 python scripts/evaluate_hybrid.py
+使用设备：cuda
+  loaded 397,962 events from /mnt/ynakagami3/nakagami_data/data_4M/val_hybrid_nakagami4M.npz (TOF dim=9, normalized)
+test events: 397962
+/home/m78code/HEP_Project/GAPS_Project/nakagami/scripts/evaluate_hybrid.py:118: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(MODEL_PATH, map_location=DEVICE)
+已加载模型: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/nakagami4M_cnndnn_best.pth
+NakagamiNet eval: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 778/778 [04:13<00:00,  3.07it/s]
+
+==================================================
+模型: Nakagami4M_A1
+  Accuracy : 0.8471
+  Precision: 0.8564
+  Recall   : 0.8336
+  F1 Score : 0.8448
+  ROC AUC  : 0.9289
+  混淆矩阵 : TN=171431  FP=27775  FN=33077  TP=165679
+  背景抑制率: 0.8606
+推理结果已保存至: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/evaluation
+
+============================================================
+各信号效率下的背景抑制率 (Background Rejection = 1/FPR)
+  Signal Eff        Rejection
+------------------------------
+        0.50           5.31e+01
+        0.80           8.66e+00
+        0.90           4.71e+00
+        0.95           3.12e+00
+        0.98           2.12e+00
+        0.99           1.72e+00
+Rejection曲线已保存: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/evaluation/rejection_Nakagami4M_A1.png
