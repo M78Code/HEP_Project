@@ -55,3 +55,86 @@ def inspect_volume_ids(particle):
 if __name__ == '__main__':
     for p in ['antiD', 'antiP']:
         inspect_volume_ids(p)
+
+
+"""
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ python src/data_parse/verify_aohba_volumeid.py 2>&1 | tee ~/aohba_volumeid.log
+
+========== antiD: antiD_2tof_FTFP_BERT_1781253355.root ==========
+total hits in 5000 events: 129,167
+avg hits/event: 25.83
+
+unique volume_ids: 11361
+  most common (top 30):
+    vol_id=   110003000  hits=    1303  mean_dE=9.242e+00
+    vol_id=   110052000  hits=    1275  mean_dE=9.249e+00
+    vol_id=   110053000  hits=    1271  mean_dE=8.805e+00
+    vol_id=   110004000  hits=    1255  mean_dE=9.113e+00
+    vol_id=   110002000  hits=    1253  mean_dE=9.527e+00
+    vol_id=   110054000  hits=    1206  mean_dE=9.216e+00
+    vol_id=   100003000  hits=    1175  mean_dE=9.544e+00
+    vol_id=   110051000  hits=    1172  mean_dE=9.244e+00
+    vol_id=   100052000  hits=    1155  mean_dE=8.604e+00
+    vol_id=   110001000  hits=    1128  mean_dE=1.049e+01
+    vol_id=   110005000  hits=    1074  mean_dE=1.044e+01
+    vol_id=   100053000  hits=    1062  mean_dE=8.919e+00
+    vol_id=   100002000  hits=    1030  mean_dE=9.068e+00
+    vol_id=   110050000  hits=     997  mean_dE=1.029e+01
+    vol_id=   100004000  hits=     962  mean_dE=8.600e+00
+    vol_id=   100051000  hits=     929  mean_dE=8.928e+00
+    vol_id=   115000000  hits=     928  mean_dE=7.689e+00
+    vol_id=   112000000  hits=     919  mean_dE=8.408e+00
+    vol_id=   115001000  hits=     883  mean_dE=6.593e+00
+    vol_id=   114001000  hits=     880  mean_dE=7.566e+00
+    vol_id=   113001000  hits=     871  mean_dE=5.954e+00
+    vol_id=   113000000  hits=     871  mean_dE=8.631e+00
+    vol_id=   114050000  hits=     862  mean_dE=5.867e+00
+    vol_id=   112050000  hits=     858  mean_dE=7.168e+00
+    vol_id=   114000000  hits=     857  mean_dE=7.793e+00
+    vol_id=   115050000  hits=     856  mean_dE=6.744e+00
+    vol_id=   112001000  hits=     839  mean_dE=7.418e+00
+    vol_id=   113050000  hits=     829  mean_dE=6.577e+00
+    vol_id=   112051000  hits=     824  mean_dE=4.823e+00
+    vol_id=   110055000  hits=     807  mean_dE=1.023e+01
+
+volume_id range: [100000000, 209350307]
+
+========== antiP: antiP_2tof_FTFP_BERT_1781424263.root ==========
+total hits in 5000 events: 92,551
+avg hits/event: 18.51
+
+unique volume_ids: 10570
+  most common (top 30):
+    vol_id=   110003000  hits=    1099  mean_dE=7.913e+00
+    vol_id=   110002000  hits=    1091  mean_dE=8.355e+00
+    vol_id=   110051000  hits=    1084  mean_dE=7.668e+00
+    vol_id=   110004000  hits=    1068  mean_dE=8.120e+00
+    vol_id=   100003000  hits=    1061  mean_dE=8.053e+00
+    vol_id=   110052000  hits=    1044  mean_dE=8.371e+00
+    vol_id=   110053000  hits=    1026  mean_dE=8.773e+00
+    vol_id=   100052000  hits=    1004  mean_dE=7.562e+00
+    vol_id=   110001000  hits=     981  mean_dE=8.365e+00
+    vol_id=   110054000  hits=     968  mean_dE=9.046e+00
+    vol_id=   100002000  hits=     938  mean_dE=7.465e+00
+    vol_id=   100053000  hits=     925  mean_dE=7.665e+00
+    vol_id=   110050000  hits=     845  mean_dE=8.436e+00
+    vol_id=   110005000  hits=     828  mean_dE=8.763e+00
+    vol_id=   100004000  hits=     826  mean_dE=7.507e+00
+    vol_id=   100051000  hits=     821  mean_dE=7.795e+00
+    vol_id=   113001000  hits=     705  mean_dE=6.893e+00
+    vol_id=   113000000  hits=     685  mean_dE=7.633e+00
+    vol_id=   115050000  hits=     681  mean_dE=6.483e+00
+    vol_id=   112050000  hits=     681  mean_dE=5.768e+00
+    vol_id=   114000000  hits=     679  mean_dE=8.918e+00
+    vol_id=   113050000  hits=     678  mean_dE=6.913e+00
+    vol_id=   114050000  hits=     677  mean_dE=7.499e+00
+    vol_id=   100001000  hits=     668  mean_dE=7.011e+00
+    vol_id=   112000000  hits=     659  mean_dE=7.502e+00
+    vol_id=   112001000  hits=     648  mean_dE=5.941e+00
+    vol_id=   115001000  hits=     646  mean_dE=6.446e+00
+    vol_id=   114001000  hits=     628  mean_dE=6.789e+00
+    vol_id=   115000000  hits=     627  mean_dE=8.279e+00
+    vol_id=   113051000  hits=     624  mean_dE=5.584e+00
+
+volume_id range: [100000000, 209350306]
+"""
