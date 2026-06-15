@@ -119,7 +119,7 @@ def check_hits(events, particle):
                   f'out_xy={out_xy} ({100 * out_xy / n_sili:.2f}%)')
 
     all_t = np.concatenate([e['times'] for e in events if len(e['times']) > 0])
-    print(f'  hit_time range: [{all_t.min():.3f}, {all_t.max():.3f}]  '
+    print(f'  hit_time range (NaN除く): [{np.nanmin(all_t):.3f}, {np.nanmax(all_t):.3f}]  '
           f'nan_frac={np.isnan(all_t).mean():.3f}')
 
 

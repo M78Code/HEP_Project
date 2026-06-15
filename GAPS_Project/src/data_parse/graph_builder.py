@@ -4,7 +4,10 @@ import numpy as np
 import torch
 from scipy.spatial import cKDTree
 from torch_geometric.data import Data
-from torch_geometric.nn import knn_graph
+try:
+    from torch_cluster import knn_graph
+except ImportError:
+    from torch_geometric.nn import knn_graph
 
 """
   节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
