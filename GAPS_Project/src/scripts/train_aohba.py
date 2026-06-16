@@ -123,20 +123,17 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
                                    shuffle_files=True, shuffle_events=True)
     val_ds   = CachedStreamDataset(get_pt_files('val',   max_val_files),
                                    shuffle_files=False, shuffle_events=False)
-    test_ds  = CachedStreamDataset(get_pt_files('test'),
-                                   shuffle_files=False, shuffle_events=False)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=0)
     val_loader   = DataLoader(val_ds,   batch_size=batch_size, num_workers=0)
-    test_loader  = DataLoader(test_ds,  batch_size=batch_size, num_workers=0)
 
-    return train_loader, val_loader, test_loader, train_ds, val_ds
+    return train_loader, val_loader, train_ds, val_ds
 
 
 # ── 訓練ループ ─────────────────────────────────────────
 def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           max_train_files: int = None, max_val_files: int = None):
-    train_loader, val_loader, _, train_ds, val_ds = make_loaders_from_manifest(
+    train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
         manifest_path, cache_dir, BATCH_SIZE,
         max_train_files=max_train_files, max_val_files=max_val_files)
 
@@ -151,8 +148,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     model = GravNetClassifier(
         in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
         graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
-    print(f'モデル: {exp_name}')
-    print(f'パラメータ数: {sum(p.numel() for p in model.parameters()):,}')
+    print(f'模型: {exp_name}')
+    print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LR)
@@ -255,7 +252,7 @@ if __name__ == '__main__':
     ap.add_argument('--manifest', type=Path,
                     default=Path('/mnt/ynakagami3/aohba_preprocess/split/split_manifest.json'))
     ap.add_argument('--cache-dir', type=Path,
-                    default=Path('/mnt/ynakagami3/aohba_preprocess/graph_cache'))
+                    default=Path('/mnt/ynakagami3/aohba_preprocess/graph_cache_v2'))
     ap.add_argument('--epochs',          type=int, default=EPOCHS)
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
