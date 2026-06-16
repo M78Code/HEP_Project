@@ -227,3 +227,199 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+"""
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ python src/data_parse/preprocess_aohba_chunked.py \
+>     --particle antiD --file-idx 0 \
+>     2>&1 | tee ~/aohba_step2.log
+
+
+output dir : /home/m78code/aohba_preprocess/antiD
+particle   : antiD
+targets    : ['antiD_2tof_FTFP_BERT_1781253355.root']
+chunk_size : 10000
+
+
+=== antiD_2tof_FTFP_BERT_1781253355.root ===
+  [antiD_2tof_FTFP_BERT_1781253355.root] total events = 247,721, chunk = 10000
+    chunk [       0,    10000)  kept  10000/ 10000  inc=0  (7.5s, 1331 ev/s)
+    chunk [   10000,    20000)  kept  10000/ 10000  inc=0  (7.5s, 1334 ev/s)
+    chunk [   20000,    30000)  kept  10000/ 10000  inc=0  (8.1s, 1241 ev/s)
+    chunk [   30000,    40000)  kept  10000/ 10000  inc=0  (7.7s, 1304 ev/s)
+    chunk [   40000,    50000)  kept  10000/ 10000  inc=0  (7.2s, 1382 ev/s)
+    chunk [   50000,    60000)  kept  10000/ 10000  inc=0  (6.7s, 1495 ev/s)
+    chunk [   60000,    70000)  kept  10000/ 10000  inc=0  (6.9s, 1453 ev/s)
+    chunk [   70000,    80000)  kept  10000/ 10000  inc=0  (6.7s, 1487 ev/s)
+    chunk [   80000,    90000)  kept  10000/ 10000  inc=0  (6.9s, 1456 ev/s)
+    chunk [   90000,   100000)  kept  10000/ 10000  inc=0  (6.6s, 1506 ev/s)
+    chunk [  100000,   110000)  kept  10000/ 10000  inc=0  (7.4s, 1360 ev/s)
+    chunk [  110000,   120000)  kept  10000/ 10000  inc=0  (7.3s, 1377 ev/s)
+    chunk [  120000,   130000)  kept  10000/ 10000  inc=0  (6.6s, 1506 ev/s)
+    chunk [  130000,   140000)  kept  10000/ 10000  inc=0  (6.9s, 1447 ev/s)
+    chunk [  140000,   150000)  kept  10000/ 10000  inc=0  (6.7s, 1496 ev/s)
+    chunk [  150000,   160000)  kept  10000/ 10000  inc=0  (6.8s, 1475 ev/s)
+    chunk [  160000,   170000)  kept  10000/ 10000  inc=0  (6.7s, 1487 ev/s)
+    chunk [  170000,   180000)  kept  10000/ 10000  inc=0  (7.0s, 1438 ev/s)
+    chunk [  180000,   190000)  kept  10000/ 10000  inc=0  (6.7s, 1482 ev/s)
+    chunk [  190000,   200000)  kept  10000/ 10000  inc=0  (7.2s, 1395 ev/s)
+    chunk [  200000,   210000)  kept  10000/ 10000  inc=0  (6.9s, 1440 ev/s)
+    chunk [  210000,   220000)  kept  10000/ 10000  inc=0  (6.7s, 1484 ev/s)
+    chunk [  220000,   230000)  kept  10000/ 10000  inc=0  (7.2s, 1392 ev/s)
+    chunk [  230000,   240000)  kept  10000/ 10000  inc=0  (6.8s, 1475 ev/s)
+    chunk [  240000,   247721)  kept   7721/  7721  inc=0  (5.2s, 1484 ev/s)
+  read+convert done: 247,721 events (173.9s)
+  pickle saved: antiD_2tof_FTFP_BERT_1781253355.pkl  (204.5 MB, 4.6s)
+  summary saved: antiD_2tof_FTFP_BERT_1781253355_summary.json
+
+========== overall ==========
+files     : 1
+events    : 247,721
+pickle MB : 204.5
+wall time : 178.8s (1385 ev/s)
+
+--- extrapolation to full 240 files (~5010万 ev) ---
+  estimated wall time : 715.2 min (11.92 h)
+  estimated disk      : 47.9 GB
+  
+  
+
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ python src/data_parse/preprocess_aohba_chunked.py \
+>     --particle antiD --file-idx 0 \
+>     2>&1 | tee ~/aohba_step2.log
+
+
+output dir : /home/m78code/aohba_preprocess/antiD
+particle   : antiD
+targets    : ['antiD_2tof_FTFP_BERT_1781253355.root']
+chunk_size : 10000
+
+
+=== antiD_2tof_FTFP_BERT_1781253355.root ===
+  [antiD_2tof_FTFP_BERT_1781253355.root] total events = 247,721, chunk = 10000
+    chunk [       0,    10000)  kept  10000/ 10000  inc=0  (7.5s, 1331 ev/s)
+    chunk [   10000,    20000)  kept  10000/ 10000  inc=0  (7.5s, 1334 ev/s)
+    chunk [   20000,    30000)  kept  10000/ 10000  inc=0  (8.1s, 1241 ev/s)
+    chunk [   30000,    40000)  kept  10000/ 10000  inc=0  (7.7s, 1304 ev/s)
+    chunk [   40000,    50000)  kept  10000/ 10000  inc=0  (7.2s, 1382 ev/s)
+    chunk [   50000,    60000)  kept  10000/ 10000  inc=0  (6.7s, 1495 ev/s)
+    chunk [   60000,    70000)  kept  10000/ 10000  inc=0  (6.9s, 1453 ev/s)
+    chunk [   70000,    80000)  kept  10000/ 10000  inc=0  (6.7s, 1487 ev/s)
+    chunk [   80000,    90000)  kept  10000/ 10000  inc=0  (6.9s, 1456 ev/s)
+    chunk [   90000,   100000)  kept  10000/ 10000  inc=0  (6.6s, 1506 ev/s)
+    chunk [  100000,   110000)  kept  10000/ 10000  inc=0  (7.4s, 1360 ev/s)
+    chunk [  110000,   120000)  kept  10000/ 10000  inc=0  (7.3s, 1377 ev/s)
+    chunk [  120000,   130000)  kept  10000/ 10000  inc=0  (6.6s, 1506 ev/s)
+    chunk [  130000,   140000)  kept  10000/ 10000  inc=0  (6.9s, 1447 ev/s)
+    chunk [  140000,   150000)  kept  10000/ 10000  inc=0  (6.7s, 1496 ev/s)
+    chunk [  150000,   160000)  kept  10000/ 10000  inc=0  (6.8s, 1475 ev/s)
+    chunk [  160000,   170000)  kept  10000/ 10000  inc=0  (6.7s, 1487 ev/s)
+    chunk [  170000,   180000)  kept  10000/ 10000  inc=0  (7.0s, 1438 ev/s)
+    chunk [  180000,   190000)  kept  10000/ 10000  inc=0  (6.7s, 1482 ev/s)
+    chunk [  190000,   200000)  kept  10000/ 10000  inc=0  (7.2s, 1395 ev/s)
+    chunk [  200000,   210000)  kept  10000/ 10000  inc=0  (6.9s, 1440 ev/s)
+    chunk [  210000,   220000)  kept  10000/ 10000  inc=0  (6.7s, 1484 ev/s)
+    chunk [  220000,   230000)  kept  10000/ 10000  inc=0  (7.2s, 1392 ev/s)
+    chunk [  230000,   240000)  kept  10000/ 10000  inc=0  (6.8s, 1475 ev/s)
+    chunk [  240000,   247721)  kept   7721/  7721  inc=0  (5.2s, 1484 ev/s)
+  read+convert done: 247,721 events (173.9s)
+  pickle saved: antiD_2tof_FTFP_BERT_1781253355.pkl  (204.5 MB, 4.6s)
+  summary saved: antiD_2tof_FTFP_BERT_1781253355_summary.json
+
+========== overall ==========
+files     : 1
+events    : 247,721
+pickle MB : 204.5
+wall time : 178.8s (1385 ev/s)
+
+--- extrapolation to full 240 files (~5010万 ev) ---
+  estimated wall time : 715.2 min (11.92 h)
+  estimated disk      : 47.9 GB
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ df -h /mnt/ynakagami3/ /mnt/aohba/ ~/
+Filesystem                       Size  Used Avail Use% Mounted on
+192.168.9.22:/volume1/ynakagami  104T   56T   49T  54% /mnt/ynakagami3
+192.168.9.22:/volume1/aohba      104T   56T   49T  54% /mnt/aohba
+/dev/sda2                        915G  449G  420G  52% /
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ python src/data_parse/preprocess_aohba_chunked.py \
+>   --particle antiP --file-idx 0 \
+>   2>&1 | tee ~/aohba_step2_antip.log
+output dir : /home/m78code/aohba_preprocess/antiP
+particle   : antiP
+targets    : ['antiP_2tof_FTFP_BERT_1781424263.root']
+chunk_size : 10000
+
+
+=== antiP_2tof_FTFP_BERT_1781424263.root ===
+  [antiP_2tof_FTFP_BERT_1781424263.root] total events = 180,270, chunk = 10000
+    chunk [       0,    10000)  kept  10000/ 10000  inc=0  (15.9s, 630 ev/s)
+    chunk [   10000,    20000)  kept  10000/ 10000  inc=0  (7.3s, 1373 ev/s)
+    chunk [   20000,    30000)  kept  10000/ 10000  inc=0  (8.1s, 1228 ev/s)
+    chunk [   30000,    40000)  kept  10000/ 10000  inc=0  (7.3s, 1374 ev/s)
+    chunk [   40000,    50000)  kept  10000/ 10000  inc=0  (7.3s, 1371 ev/s)
+    chunk [   50000,    60000)  kept  10000/ 10000  inc=0  (6.7s, 1484 ev/s)
+    chunk [   60000,    70000)  kept  10000/ 10000  inc=0  (6.8s, 1481 ev/s)
+    chunk [   70000,    80000)  kept  10000/ 10000  inc=0  (6.7s, 1492 ev/s)
+    chunk [   80000,    90000)  kept  10000/ 10000  inc=0  (6.7s, 1487 ev/s)
+    chunk [   90000,   100000)  kept  10000/ 10000  inc=0  (6.9s, 1444 ev/s)
+    chunk [  100000,   110000)  kept  10000/ 10000  inc=0  (6.8s, 1478 ev/s)
+    chunk [  110000,   120000)  kept  10000/ 10000  inc=0  (6.8s, 1475 ev/s)
+    chunk [  120000,   130000)  kept  10000/ 10000  inc=0  (6.7s, 1493 ev/s)
+    chunk [  130000,   140000)  kept  10000/ 10000  inc=0  (7.0s, 1431 ev/s)
+    chunk [  140000,   150000)  kept  10000/ 10000  inc=0  (6.8s, 1471 ev/s)
+    chunk [  150000,   160000)  kept  10000/ 10000  inc=0  (6.7s, 1488 ev/s)
+    chunk [  160000,   170000)  kept  10000/ 10000  inc=0  (6.7s, 1494 ev/s)
+    chunk [  170000,   180000)  kept  10000/ 10000  inc=0  (6.7s, 1498 ev/s)
+    chunk [  180000,   180270)  kept    270/   270  inc=0  (0.3s, 1018 ev/s)
+  read+convert done: 180,270 events (134.2s)
+  pickle saved: antiP_2tof_FTFP_BERT_1781424263.pkl  (112.7 MB, 3.4s)
+  summary saved: antiP_2tof_FTFP_BERT_1781424263_summary.json
+
+========== overall ==========
+files     : 1
+events    : 180,270
+pickle MB : 112.7
+wall time : 137.9s (1308 ev/s)
+
+--- extrapolation to full 240 files (~5010万 ev) ---
+  estimated wall time : 551.4 min (9.19 h)
+  estimated disk      : 26.4 GB
+  
+  
+
+非常漂亮的结果!所有数字都合理。
+
+  关键数据
+
+  ┌────────────────────────┬──────────────────┬──────────────────────────────────┐
+  │          项目          │        值        │               评价               │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ events                 │ 247,721          │ 与 verify 一致 ✅                │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ skipped (N≤1)          │ 0                │ 数据全保留 ✅                    │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ skipped (inconsistent) │ 0                │ hit 长度全一致 ✅                │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ pkl size               │ 204.5 MB         │ 压缩比 17×(821GB 原始 → 47.9 GB) │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ 速度                   │ 1,385 ev/s       │ 稳定(6.7~8.1 s/10K chunk)        │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ 单文件                 │ 178.8 s ≈ 3 分钟 │                                  │
+  ├────────────────────────┼──────────────────┼──────────────────────────────────┤
+  │ 240 files 外推         │ 11.9 h, 47.9 GB  │                                  │
+  └────────────────────────┴──────────────────┴──────────────────────────────────┘
+  
+  
+antiD: 100 files × 204.5 MB ≈ 20.0 GB
+antiP: 140 files × 112.7 MB ≈ 15.4 GB
+合计: 约 35.4 GB
+
+antiD: 100 × 178.8 s ≈ 5.0 h
+antiP: 140 × 137.9 s ≈ 5.4 h
+合计: 约 10.3 h
+
+总 events: 约 5000万
+总 pkl:    约 35-40 GB
+总耗时:    约 10-12 小时
+"""
