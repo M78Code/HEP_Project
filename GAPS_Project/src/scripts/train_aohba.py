@@ -24,7 +24,6 @@ from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
 import GAPS_Project
-from GAPS_Project.src.data_parse.graph_builder import GraphBuilder
 from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import GravNetClassifier
 
@@ -52,82 +51,90 @@ print(f'使用设备：{DEVICE}')
 
 
 # ── IterableDataset ────────────────────────────────────
-class PklStreamDataset(IterableDataset):
+class CachedStreamDataset(IterableDataset):
     """
-    pkl ファイルリストを1ファイルずつ読み込み、
-    event をストリーミングする IterableDataset。
-    全イベントをメモリに展開しないため大規模データに対応。
+    キャッシュ済み .pt ファイル（PyG Data リスト）を1ファイルずつ読み込む
+    IterableDataset。GraphBuilder の実行が不要で高速。
     """
 
-    def __init__(self, pkl_files: list, builder: GraphBuilder,
-                 shuffle_files: bool = True, shuffle_events: bool = True, seed: int = 42):
-        self.pkl_files     = list(pkl_files)
-        self.builder       = builder
+    def __init__(self, pt_files: list, shuffle_files: bool = True,
+                 shuffle_events: bool = True, seed: int = 42):
+        self.pt_files       = list(pt_files)
         self.shuffle_files  = shuffle_files
         self.shuffle_events = shuffle_events
-        self.seed          = seed
-        self._epoch        = 0
+        self.seed           = seed
+        self._epoch         = 0
 
     def __iter__(self):
-        files = self.pkl_files.copy()
+        files = self.pt_files.copy()
         if self.shuffle_files:
             rng = random.Random(self.seed + self._epoch)
             rng.shuffle(files)
         self._epoch += 1
 
-        for pkl_path in files:
-            with open(pkl_path, 'rb') as f:
-                payload = pickle.load(f)
-            events = payload['events']
+        for pt_path in files:
+            data_list = torch.load(pt_path, weights_only=False)
             if self.shuffle_events:
-                random.Random(self.seed + self._epoch).shuffle(events)
-            for event in events:
-                yield self.builder.build_from_dict(event)
+                random.Random(self.seed + self._epoch).shuffle(data_list)
+            for data in data_list:
+                yield data
 
     def approx_len(self) -> int:
-        """summary.json から event 数を集計（進捗表示用）"""
+        """サマリーJSONからグラフ数を集計（.ptを全ロードせず高速）"""
         total = 0
-        for pkl_path in self.pkl_files:
-            summary = Path(pkl_path).with_suffix('').with_name(
-                Path(pkl_path).stem + '_summary.json')
+        for pt_path in self.pt_files:
+            summary = Path(pt_path).with_suffix('.json')
             if summary.exists():
                 with open(summary) as f:
-                    total += json.load(f).get('total_events', 0)
+                    total += json.load(f).get('n_graphs', 0)
         return total
 
 
 # ── データロード ───────────────────────────────────────
-def make_loaders_from_manifest(manifest_path: Path, builder: GraphBuilder, batch_size: int,
+def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
+    """pkl パスをキャッシュ済み .pt パスに変換する"""
+    p = Path(pkl_path)
+    particle = 'antiD' if 'antiD' in p.stem else 'antiP'
+    return cache_dir / particle / (p.stem + '.pt')
+
+
+def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size: int,
                                max_train_files: int = None, max_val_files: int = None):
     with open(manifest_path) as f:
         manifest = json.load(f)
 
-    def get_files(split: str, max_files: int = None):
-        antiD_files = manifest[split]['antiD']
-        antiP_files = manifest[split]['antiP']
+    def get_pt_files(split: str, max_files: int = None):
+        antiD = manifest[split]['antiD']
+        antiP = manifest[split]['antiP']
         if max_files is not None:
             n_d = max_files // 2
             n_p = max_files - n_d
-            return antiD_files[:n_d] + antiP_files[:n_p]
-        return antiD_files + antiP_files
+            antiD, antiP = antiD[:n_d], antiP[:n_p]
+        files = antiD + antiP
+        pt_files = [pkl_to_pt(f, cache_dir) for f in files]
+        missing = [f for f in pt_files if not f.exists()]
+        if missing:
+            raise FileNotFoundError(
+                f'{len(missing)} キャッシュファイルが見つかりません。'
+                f'先に cache_graphs.py を実行してください。\n例: {missing[0]}')
+        return pt_files
 
-    train_ds = PklStreamDataset(get_files('train', max_train_files), builder, shuffle_files=True,  shuffle_events=True)
-    val_ds   = PklStreamDataset(get_files('val',   max_val_files),   builder, shuffle_files=False, shuffle_events=False)
-    test_ds  = PklStreamDataset(get_files('test'),                   builder, shuffle_files=False, shuffle_events=False)
+    train_ds = CachedStreamDataset(get_pt_files('train', max_train_files),
+                                   shuffle_files=True, shuffle_events=True)
+    val_ds   = CachedStreamDataset(get_pt_files('val',   max_val_files),
+                                   shuffle_files=False, shuffle_events=False)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=0)
     val_loader   = DataLoader(val_ds,   batch_size=batch_size, num_workers=0)
-    test_loader  = DataLoader(test_ds,  batch_size=batch_size, num_workers=0)
 
-    return train_loader, val_loader, test_loader, train_ds, val_ds
+    return train_loader, val_loader, train_ds, val_ds
 
 
 # ── 訓練ループ ─────────────────────────────────────────
-def train(manifest_path: Path, epochs: int = EPOCHS,
+def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           max_train_files: int = None, max_val_files: int = None):
-    builder = GraphBuilder(k=8, normalize=True)
-    train_loader, val_loader, _, train_ds, val_ds = make_loaders_from_manifest(
-        manifest_path, builder, BATCH_SIZE,
+    train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
+        manifest_path, cache_dir, BATCH_SIZE,
         max_train_files=max_train_files, max_val_files=max_val_files)
 
     train_approx = train_ds.approx_len()
@@ -141,8 +148,8 @@ def train(manifest_path: Path, epochs: int = EPOCHS,
     model = GravNetClassifier(
         in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
         graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
-    print(f'モデル: {exp_name}')
-    print(f'パラメータ数: {sum(p.numel() for p in model.parameters()):,}')
+    print(f'模型: {exp_name}')
+    print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LR)
@@ -244,9 +251,11 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--manifest', type=Path,
                     default=Path('/mnt/ynakagami3/aohba_preprocess/split/split_manifest.json'))
+    ap.add_argument('--cache-dir', type=Path,
+                    default=Path('/mnt/ynakagami3/aohba_preprocess/graph_cache_v2'))
     ap.add_argument('--epochs',          type=int, default=EPOCHS)
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
     args = ap.parse_args()
-    train(args.manifest, epochs=args.epochs,
+    train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files, max_val_files=args.max_val_files)
