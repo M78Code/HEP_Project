@@ -43,8 +43,8 @@ def train(args):
     print(f'PyTorch: {torch.__version__}, CUDA: {torch.version.cuda}')
 
     data_dir = Path(args.data_dir)
-    train_set = ThreeInputDataset(data_dir / 'train_onlyprimary_4M.npz', normalize=args.normalize)
-    val_set = ThreeInputDataset(data_dir / 'val_onlyprimary_4M.npz', normalize=args.normalize)
+    train_set = ThreeInputDataset(data_dir / 'train_onlyprimary_4M', normalize=args.normalize)
+    val_set = ThreeInputDataset(data_dir / 'val_onlyprimary_4M', normalize=args.normalize)
 
     train_loader = DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,
