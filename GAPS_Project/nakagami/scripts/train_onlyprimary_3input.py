@@ -47,7 +47,7 @@ def train(args):
     val_set = ThreeInputDataset(data_dir / 'val_onlyprimary_4M', normalize=args.normalize)
 
     train_loader = DataLoader(
-        train_set, batch_size=args.batch_size, shuffle=True,
+        train_set, batch_size=args.batch_size, shuffle=args.shuffle,
         num_workers=args.num_workers, pin_memory=True,
         persistent_workers=(args.num_workers > 0),
     )
@@ -63,7 +63,7 @@ def train(args):
 
     print(f'model: NakagamiThreeInputNet')
     print(f'params: {sum(p.numel() for p in model.parameters()):,}')
-    print(f'batch_size={args.batch_size}, lr={args.lr}, epochs={args.epochs}, patience={args.patience}')
+    print(f'batch_size={args.batch_size}, lr={args.lr}, epochs={args.epochs}, patience={args.patience}, shuffle={args.shuffle}')
 
     save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -127,6 +127,7 @@ def main():
     parser.add_argument('--patience', type=int, default=4)
     parser.add_argument('--num-workers', type=int, default=8)
     parser.add_argument('--normalize', action='store_true', help='not strict reproduction; use only for stability tests')
+    parser.add_argument('--shuffle', action='store_true', help='shuffle training samples in DataLoader; off by default because CSV files are already shuffled')
     args = parser.parse_args()
     train(args)
 
