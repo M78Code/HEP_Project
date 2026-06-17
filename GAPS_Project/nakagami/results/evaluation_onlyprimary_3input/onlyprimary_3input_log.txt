@@ -1,0 +1,100 @@
+train log（训练日志）
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ CUDA_VISIBLE_DEVICES=0 python nakagami/scripts/train_onlyprimary_3input.py   --data-dir /mnt/ynakagami3/nakagami_data/data_4M_onlyprimary   --epochs 5   --batch-size 300   --max-train-events 800000   --max-val-events 200000
+device: cuda
+PyTorch: 2.5.1+cu121, CUDA: 12.1
+GPU count: 1
+  loaded 800,000 events from /mnt/ynakagami3/nakagami_data/data_4M_onlyprimary/train_onlyprimary_4M (voxel=(10, 12, 12), tof_paddles=172, tof_primary=11, raw)
+  loaded 200,000 events from /mnt/ynakagami3/nakagami_data/data_4M_onlyprimary/val_onlyprimary_4M (voxel=(10, 12, 12), tof_paddles=172, tof_primary=11, raw)
+model: NakagamiThreeInputNet
+params: 1,989,955
+batch_size=300, lr=4e-05, epochs=5, patience=4, shuffle=False
+Epoch   1/5 train:   0%|                                                                                                                                 | 0/2667 [00:00<?, ?it/s]/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+Epoch   1/5 train:  52%|████████████████████████████████████████████████████████████████████████████████████████▍                                                                       Epoch   1/5 train:  52%|███████████████████████████████████████████████████████████████████████████████▌                                                                        | 1395/2Epoch   1/5 train:  52%|███████████████████████████████████████████████████████████████████████████████▌                                                                 Epoch   1/5 train:  52%|██████████████████████████████████████████████████████▉                                                  | 1396/2667 [14:19<14:01,  1.51it/s, loss=0.2759] val:   0%|                                                                                                                                                | 0/667 [00:00<?, ?it/s]/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+Epoch   1/5 | train_loss=0.2812 train_acc=0.8814 | val_loss=0.1402 val_acc=0.9506 | 1831s
+  -> best saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth (val_acc=0.9506)
+Epoch   2/5 | train_loss=0.1472 train_acc=0.9463 | val_loss=0.1004 val_acc=0.9660 | 1830s
+  -> best saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth (val_acc=0.9660)
+Epoch   3/5 | train_loss=0.1177 train_acc=0.9582 | val_loss=0.0909 val_acc=0.9688 | 1818s
+  -> best saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth (val_acc=0.9688)
+Epoch   4/5 | train_loss=0.1015 train_acc=0.9644 | val_loss=0.0864 val_acc=0.9710 | 1875s
+  -> best saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth (val_acc=0.9710)
+Epoch   5/5 | train_loss=0.0912 train_acc=0.9682 | val_loss=0.0795 val_acc=0.9733 | 1791s
+  -> best saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth (val_acc=0.9733)
+
+
+
+
+val log（验证日志）
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ CUDA_VISIBLE_DEVICES=0 python nakagami/scripts/evaluate_onlyprimary_3input.py \
+>   --data-dir /mnt/ynakagami3/nakagami_data/data_4M_onlyprimary \
+>   --model-path /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth \
+>   --batch-size 512 \
+>   --num-workers 4
+device: cuda
+  loaded 800,000 events from /mnt/ynakagami3/nakagami_data/data_4M_onlyprimary/val_onlyprimary_4M (voxel=(10, 12, 12), tof_paddles=172, tof_primary=11, raw)
+/home/m78code/HEP_Project/GAPS_Project/nakagami/scripts/evaluate_onlyprimary_3input.py:107: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(args.model_path, map_location=device)
+loaded model: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/onlyprimary_3input/nakagami_onlyprimary_3input_best.pth
+validation events: 800,000
+eval:   0%|                                                                                                 | 0/1563 [00:00<?, ?it/s]/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+/home/m78code/HEP_Project/GAPS_Project/nakagami/data_parse/three_input_dataset.py:63: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at ../torch/csrc/utils/tensor_numpy.cpp:206.)
+  torch.from_numpy(voxel).unsqueeze(0),
+eval: 100%|██████████████████████████████████████████████████████████████████████████████████████| 1563/1563 [09:13<00:00,  2.82it/s]
+inference arrays saved to: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/evaluation_onlyprimary_3input
+
+======================================================================
+Model: Nakagami4M_onlyPrimary_3input_11d
+  Accuracy : 0.973791
+  Precision: 0.987095
+  Recall   : 0.960135
+  F1 Score : 0.973428
+  ROC AUC  : 0.996220
+  Confusion: TN=394,979  FP=5,021  FN=15,946  TP=384,054
+
+======================================================================
+Background Rejection = 1 / FPR
+Background events: 400,000
+  Signal Eff     Threshold           FPR       Rejection
+----------------------------------------------------------
+        0.50       0.99531     2.850e-04       3.509e+03
+        0.80       0.96909     1.540e-03       6.494e+02
+        0.90       0.88716     3.930e-03       2.545e+02
+        0.95       0.63173     9.565e-03       1.045e+02
+        0.98       0.16575     2.984e-02       3.351e+01
+        0.99      0.040926     7.030e-02       1.422e+01
+Curve saved: /home/m78code/HEP_Project/GAPS_Project/nakagami/results/evaluation_onlyprimary_3input/rejection_Nakagami4M_onlyPrimary_3input_11d.png
