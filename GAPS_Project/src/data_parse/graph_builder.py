@@ -159,6 +159,12 @@ class GraphBuilder:
     OUTER_TOF_LAYERS = {100, 101, 102, 103, 104, 105, 106}  # face 0-6
     INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}   # CUBE 6面 + corner paddles
 
+    # 新GAPS volume_id の基本規則:
+    #   digit1 = 1: TOF, 2: Si(Li) tracker
+    #   TOF digit2 = 0: outer, 1: inner
+    # 以前の layer_idx ベースの判定では 116 (inner/corner) が落ちるため、
+    # TOF inner/outer は digit2 で判定する。
+
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
                       positions: np.ndarray, times: np.ndarray) -> np.ndarray:
@@ -167,8 +173,8 @@ class GraphBuilder:
         参考先行研究(Nakagami 2021)的TOF特征构造。
         [0]  outer_energy      外层TOF总能量
         [1]  inner_energy      内层TOF总能量
-        [2]  outer_n_hits      外层TOF hit数
-        [3]  inner_n_hits      内层TOF hit数
+        [2]  outer_n_paddles   外层TOF通過paddle数
+        [3]  inner_n_paddles   内层TOF通過paddle数
         [4]  time_of_flight    飞行时间 = inner最早时间 - outer最早时间
         [5]  outer_entry_x     外层最早hit的x坐标
         [6]  outer_entry_y     外层最早hit的y坐标
@@ -177,16 +183,20 @@ class GraphBuilder:
         [9]  inner_entry_y     内层最早hit的y坐标
         [10] inner_entry_z     内层最早hit的z坐标
         """
-        layer_idx = (volume_ids // 1000000).astype(np.int64)
+        system = (volume_ids // 100000000).astype(np.int64)
+        tof_subsystem = (volume_ids // 10000000).astype(np.int64) % 10
 
-        is_outer = np.isin(layer_idx, list(GraphBuilder.OUTER_TOF_LAYERS))
-        is_inner = np.isin(layer_idx, list(GraphBuilder.INNER_TOF_LAYERS))
+        is_tof = system == 1
+        is_outer = is_tof & (tof_subsystem == 0)
+        is_inner = is_tof & (tof_subsystem == 1)
 
-        # ── 能量和hit数 ──
+        # ── 能量和通過paddle数 ──
+        # Nakagami系のTOF特徴は hit 数ではなく通過paddle数に近い量なので、
+        # unique volume_id 数を用いる。
         outer_energy = float(energies[is_outer].sum()) if is_outer.any() else 0.0
         inner_energy = float(energies[is_inner].sum()) if is_inner.any() else 0.0
-        outer_n_hits = float(is_outer.sum())
-        inner_n_hits = float(is_inner.sum())
+        outer_n_paddles = float(len(np.unique(volume_ids[is_outer]))) if is_outer.any() else 0.0
+        inner_n_paddles = float(len(np.unique(volume_ids[is_inner]))) if is_inner.any() else 0.0
 
         # ── outer最早hit ──
         outer_first_t = 0.0
@@ -220,8 +230,8 @@ class GraphBuilder:
         return np.array([
             outer_energy / 100.0,       # 能量MeV，归一化
             inner_energy / 100.0,
-            outer_n_hits / 20.0,        # hit数，归一化
-            inner_n_hits / 20.0,
+            outer_n_paddles / 20.0,     # 通過paddle数，归一化
+            inner_n_paddles / 20.0,
             tof / 50.0,                 # 飞行时间ns，归一化
             outer_entry[0] / 1000.0,    # 坐标mm → ~1
             outer_entry[1] / 1000.0,
@@ -239,6 +249,9 @@ class GraphBuilder:
         layer_idx = volume_id // 1000000
         Si(Li): layer_idx >= 200,  layer = layer_idx % 100
         TOF   : layer_idx <  200,  layer = layer_idx % 100
+
+        注意: 新GAPS TOF には layer 116 (inner/corner) が存在する。
+        graph_feat_dim=45 を保つため、16番以上のbinは最後のbinに統合する。
         """
         sili = np.zeros(n_layers, dtype=np.float32)
         tof = np.zeros(n_layers, dtype=np.float32)
@@ -246,13 +259,22 @@ class GraphBuilder:
             li = int(vid) // 1000000
             ln = li % 100
             if li >= 200:
-                if 0 <= ln < n_layers:
+               if 0 <= ln < n_layers:
                     sili[ln] += e
             elif 0 <= ln < n_layers:
                 tof[ln] += e
             elif li == 116:
                 # Corner paddles share the final bin of the 16-D TOF profile.
                 tof[-1] += e
+
+            if ln < 0:
+                continue
+            if ln >= n_layers:
+                ln = n_layers - 1
+            if li >= 200:
+                sili[ln] += e
+            else:
+                tof[ln] += e
         return sili, tof
 
     def _normalize(self, x):
