@@ -79,22 +79,26 @@ def fill_arrays(files, n_events):
     return voxels, tof_paddles, tof_primary, labels, bad
 
 
-def save_npz(out_path, voxels, tof_paddles, tof_primary, labels, compressed=False):
-    saver = np.savez_compressed if compressed else np.savez
-    saver(
-        out_path,
-        voxels=voxels,
-        tof_paddles=tof_paddles,
-        tof_primary=tof_primary,
-        labels=labels,
-    )
+def save_arrays(out_dir, voxels, tof_paddles, tof_primary, labels):
+    """Save arrays as separate .npy files.
+
+    A single 20GB+ .npz is a ZIP container and can be fragile on NAS. Separate
+    .npy files are simpler, mmap-friendly, and avoid BadZipFile/CRC issues.
+    """
+    out_dir = pathlib.Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    np.save(out_dir / 'voxels.npy', voxels)
+    np.save(out_dir / 'tof_paddles.npy', tof_paddles)
+    np.save(out_dir / 'tof_primary.npy', tof_primary)
+    np.save(out_dir / 'labels.npy', labels)
+
     n_pbar = int((labels == 0).sum())
     n_dbar = int((labels == 1).sum())
-    size_gb = pathlib.Path(out_path).stat().st_size / 1e9
-    print(f'  saved -> {out_path} ({size_gb:.2f} GB, {len(labels):,} events, Pbar={n_pbar:,}, Dbar={n_dbar:,})')
+    size_gb = sum(p.stat().st_size for p in out_dir.glob('*.npy')) / 1e9
+    print(f'  saved -> {out_dir} ({size_gb:.2f} GB, {len(labels):,} events, Pbar={n_pbar:,}, Dbar={n_dbar:,})')
 
-
-def process_split(split, split_dir, out_path, compressed=False, max_files=None):
+def process_split(split, split_dir, out_dir, max_files=None):
     files = sorted(split_dir.glob('*.csv'))
     if max_files is not None:
         files = files[:max_files]
@@ -108,14 +112,13 @@ def process_split(split, split_dir, out_path, compressed=False, max_files=None):
     voxels, tof_paddles, tof_primary, labels, fill_bad = fill_arrays(files, n_events)
     if fill_bad:
         print(f'WARNING: skipped {fill_bad} bad-column rows during fill')
-    save_npz(out_path, voxels, tof_paddles, tof_primary, labels, compressed=compressed)
+    save_arrays(out_dir, voxels, tof_paddles, tof_primary, labels)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-dir', default='/mnt/ynakagami2/SimulationData/210922_trigger/csvFiles_onlyPrimary/atrest_shuffled')
     parser.add_argument('--out-dir', default='/mnt/ynakagami3/nakagami_data/data_4M_onlyprimary')
-    parser.add_argument('--compressed', action='store_true', help='use savez_compressed; slower and may use more memory')
     parser.add_argument('--split', choices=['train', 'val', 'both'], default='both')
     parser.add_argument('--max-files', type=int, default=None, help='limit files per split for smoke tests')
     args = parser.parse_args()
@@ -125,9 +128,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     if args.split in ('train', 'both'):
-        process_split('train', base / 'train_5cross', out / 'train_onlyprimary_4M.npz', compressed=args.compressed, max_files=args.max_files)
+        process_split('train', base / 'train_5cross', out / 'train_onlyprimary_4M', max_files=args.max_files)
     if args.split in ('val', 'both'):
-        process_split('val', base / 'valid_5cross', out / 'val_onlyprimary_4M.npz', compressed=args.compressed, max_files=args.max_files)
+        process_split('val', base / 'valid_5cross', out / 'val_onlyprimary_4M', max_files=args.max_files)
 
 
 if __name__ == '__main__':
