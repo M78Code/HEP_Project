@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 
 
 class ThreeInputDataset(Dataset):
-    def __init__(self, data_path, normalize=False, mmap=True):
+    def __init__(self, data_path, normalize=False, mmap=True, max_events=None):
         data_path = Path(data_path)
         self.normalize = normalize
 
@@ -25,6 +25,13 @@ class ThreeInputDataset(Dataset):
             self.tof_primary = data['tof_primary']
             self.labels = data['labels']
             source = str(data_path)
+
+        if max_events is not None:
+            max_events = int(max_events)
+            self.voxels = self.voxels[:max_events]
+            self.tof_paddles = self.tof_paddles[:max_events]
+            self.tof_primary = self.tof_primary[:max_events]
+            self.labels = self.labels[:max_events]
 
         if self.tof_paddles.shape[1] != 172:
             raise ValueError(f'tof_paddles dim must be 172, got {self.tof_paddles.shape[1]}')

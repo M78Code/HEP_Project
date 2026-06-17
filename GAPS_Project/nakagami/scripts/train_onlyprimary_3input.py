@@ -46,8 +46,8 @@ def train(args):
     print(f'GPU count: {torch.cuda.device_count()}')
 
     data_dir = Path(args.data_dir)
-    train_set = ThreeInputDataset(data_dir / 'train_onlyprimary_4M', normalize=args.normalize)
-    val_set = ThreeInputDataset(data_dir / 'val_onlyprimary_4M', normalize=args.normalize)
+    train_set = ThreeInputDataset(data_dir / 'train_onlyprimary_4M', normalize=args.normalize, max_events=args.max_train_events)
+    val_set = ThreeInputDataset(data_dir / 'val_onlyprimary_4M', normalize=args.normalize, max_events=args.max_val_events)
 
     train_loader = DataLoader(
         train_set, batch_size=args.batch_size, shuffle=args.shuffle,
@@ -106,22 +106,27 @@ def train(args):
 
         train_loss /= train_total
         train_acc = train_correct / train_total
-        val_loss, val_acc = evaluate(model, val_loader, criterion, device)
-        elapsed = time.time() - t0
-        print(f'Epoch {epoch:3d}/{args.epochs} | train_loss={train_loss:.4f} train_acc={train_acc:.4f} | val_loss={val_loss:.4f} val_acc={val_acc:.4f} | {elapsed:.0f}s')
+        should_eval = (epoch % args.eval_every == 0) or (epoch == args.epochs)
+        if should_eval:
+            val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+            elapsed = time.time() - t0
+            print(f'Epoch {epoch:3d}/{args.epochs} | train_loss={train_loss:.4f} train_acc={train_acc:.4f} | val_loss={val_loss:.4f} val_acc={val_acc:.4f} | {elapsed:.0f}s')
 
-        # Keras original monitors val_accuracy.
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            patience = 0
-            state = model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
-            torch.save(state, save_path)
-            print(f'  -> best saved: {save_path} (val_acc={val_acc:.4f})')
+            # Keras original monitors val_accuracy.
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                patience = 0
+                state = model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
+                torch.save(state, save_path)
+                print(f'  -> best saved: {save_path} (val_acc={val_acc:.4f})')
+            else:
+                patience += 1
+                if patience >= args.patience:
+                    print(f'  -> early stopping at epoch {epoch}')
+                    break
         else:
-            patience += 1
-            if patience >= args.patience:
-                print(f'  -> early stopping at epoch {epoch}')
-                break
+            elapsed = time.time() - t0
+            print(f'Epoch {epoch:3d}/{args.epochs} | train_loss={train_loss:.4f} train_acc={train_acc:.4f} | val skipped | {elapsed:.0f}s')
 
 
 def main():
@@ -136,6 +141,9 @@ def main():
     parser.add_argument('--normalize', action='store_true', help='not strict reproduction; use only for stability tests')
     parser.add_argument('--shuffle', action='store_true', help='shuffle training samples in DataLoader; off by default because CSV files are already shuffled')
     parser.add_argument('--data-parallel', action='store_true', help='use torch.nn.DataParallel when multiple GPUs are available')
+    parser.add_argument('--max-train-events', type=int, default=None, help='use only the first N training events for quick tests')
+    parser.add_argument('--max-val-events', type=int, default=None, help='use only the first N validation events for quick tests')
+    parser.add_argument('--eval-every', type=int, default=1, help='run validation every N epochs')
     args = parser.parse_args()
     train(args)
 
