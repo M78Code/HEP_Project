@@ -39,8 +39,11 @@ def evaluate(model, loader, criterion, device):
 
 def train(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
     print(f'device: {device}')
     print(f'PyTorch: {torch.__version__}, CUDA: {torch.version.cuda}')
+    print(f'GPU count: {torch.cuda.device_count()}')
 
     data_dir = Path(args.data_dir)
     train_set = ThreeInputDataset(data_dir / 'train_onlyprimary_4M', normalize=args.normalize)
@@ -58,6 +61,9 @@ def train(args):
     )
 
     model = NakagamiThreeInputNet(dropout_res=0.1, dropout_dense=0.2).to(device)
+    if args.data_parallel and torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+        print(f'Using DataParallel on {torch.cuda.device_count()} GPUs')
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.BCEWithLogitsLoss()
 
@@ -108,7 +114,8 @@ def train(args):
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             patience = 0
-            torch.save(model.state_dict(), save_path)
+            state = model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
+            torch.save(state, save_path)
             print(f'  -> best saved: {save_path} (val_acc={val_acc:.4f})')
         else:
             patience += 1
@@ -128,6 +135,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=8)
     parser.add_argument('--normalize', action='store_true', help='not strict reproduction; use only for stability tests')
     parser.add_argument('--shuffle', action='store_true', help='shuffle training samples in DataLoader; off by default because CSV files are already shuffled')
+    parser.add_argument('--data-parallel', action='store_true', help='use torch.nn.DataParallel when multiple GPUs are available')
     args = parser.parse_args()
     train(args)
 
