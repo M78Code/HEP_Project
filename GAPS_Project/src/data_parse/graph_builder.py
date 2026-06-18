@@ -145,7 +145,7 @@ class GraphBuilder:
     # TOF layer分组（基于volume_id空间分布分析）
     # 官方volume_id規則: digit2=0→outer, digit2=1→inner
     OUTER_TOF_LAYERS = {100, 101, 102, 103, 104, 105, 106}  # face 0-6
-    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115}        # CUBE 6面
+    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}   # CUBE 6面 + corner paddles
 
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
@@ -233,11 +233,14 @@ class GraphBuilder:
         for e, vid in zip(energy, volume_id):
             li = int(vid) // 1000000
             ln = li % 100
-            if 0 <= ln < n_layers:
-                if li >= 200:
+            if li >= 200:
+                if 0 <= ln < n_layers:
                     sili[ln] += e
-                else:
-                    tof[ln] += e
+            elif 0 <= ln < n_layers:
+                tof[ln] += e
+            elif li == 116:
+                # Corner paddles share the final bin of the 16-D TOF profile.
+                tof[-1] += e
         return sili, tof
 
     def _normalize(self, x):
@@ -258,5 +261,3 @@ class GraphBuilder:
 #     :param positions:   array (N, 3)   hit位置（fX, fY, fZ），hit的三维位置，[[12.3, 5.1, -8.2], [13.0, 4.8, -7.9]]，这是构建graph最核心的信息
 #     :param times:       array (N,)     hit时间（ns），含NaN，[12.5, NaN, 18.2]，NaN表示时间没有测到
 #     :param label:       int            粒子标签（PDF编号），这是监督学习里的真值标签（Ground Truth）
-
-
