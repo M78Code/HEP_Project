@@ -44,9 +44,11 @@ class GraphBuilder:
     节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
     图级特征（45维）：n_hits(1) + total_energy(1) + sili_profile(16) + tof_profile(16) + tof_feat(11)
     """
-    def __init__(self, k: int = 8, normalize: bool = True):
+    def __init__(self, k: int = 8, normalize: bool = True,
+                 tof_paddle_index: dict[int, int] | None = None):
         self.k = k
         self.normalize = normalize
+        self.tof_paddle_index = tof_paddle_index
 
     def build_from_dict(self, event: dict) -> Data:
         """
@@ -116,6 +118,12 @@ class GraphBuilder:
                                           np.where(np.isnan(event['times']), np.nan, event['times']))
         tof_features = np.nan_to_num(tof_features, nan=0.0, posinf=0.0, neginf=0.0)
 
+        tof_paddle_energy = None
+        if self.tof_paddle_index is not None:
+            from GAPS_Project.src.data_parse.tof_paddles import build_tof_paddle_energy
+            tof_paddle_energy = build_tof_paddle_energy(
+                energies, volume_ids, self.tof_paddle_index)
+
         """
         PyG标准图对象：
             包含：
@@ -128,7 +136,7 @@ class GraphBuilder:
         # mc_beta仅用于评估时β窗口分析，不参与训练
         mc_beta = float(event.get('beta', 0.0))
 
-        return Data(
+        data = Data(
             x=torch.tensor(x, dtype=torch.float32),
             edge_index=edge_index,
             pos=pos_tensor,
@@ -141,6 +149,10 @@ class GraphBuilder:
             tof_feat=torch.tensor(tof_features, dtype=torch.float32),       # (11,)
             mc_beta=torch.tensor([mc_beta], dtype=torch.float32),           # 仅元数据
         )
+        if tof_paddle_energy is not None:
+            data.tof_paddle_energy = torch.tensor(
+                tof_paddle_energy, dtype=torch.float32)
+        return data
 
     # TOF layer分组（基于volume_id空间分布分析）
     # 官方volume_id規則: digit2=0→outer, digit2=1→inner

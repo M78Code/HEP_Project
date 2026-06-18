@@ -26,6 +26,7 @@ from tqdm import tqdm
 import GAPS_Project
 from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
@@ -157,7 +158,8 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
 def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           max_train_files: int = None, max_val_files: int = None,
           split_cache_dir: Path = None, batch_size: int = BATCH_SIZE,
-          max_train_batches: int = None, max_val_batches: int = None):
+          max_train_batches: int = None, max_val_batches: int = None,
+          model_name: str = 'gravnet', result_dir: Path = None):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
@@ -179,10 +181,16 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(f'val   events (approx): {val_approx:,}  batches: {val_batches:,}')
 
     dataset_tag = 'local430_atrest' if split_cache_dir is not None else 'aohba'
-    exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
-    model = GravNetClassifier(
-        in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
-        graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
+    if model_name == 'gravnet_tof':
+        exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetTOFClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
+    else:
+        exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
     print(f'模型: {exp_name}')
     print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
 
@@ -191,7 +199,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-    log_dir = PROJECT_ROOT / 'results' / f'{timestamp}_{exp_name}'
+    result_root = result_dir if result_dir is not None else PROJECT_ROOT / 'results'
+    log_dir = result_root / f'{timestamp}_{exp_name}'
     log_dir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(log_dir))
     best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
@@ -219,7 +228,19 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 batch.tof_profile.view(-1, 16),
                 batch.tof_feat.view(-1, 11),
             ], dim=1)
-            logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+            if model_name == 'gravnet_tof':
+                if not hasattr(batch, 'tof_paddle_energy'):
+                    raise ValueError(
+                        'GravNetTOF requires tof_paddle_energy in graph cache')
+                logits = model(
+                    batch.x, batch.edge_index, batch.batch,
+                    graph_feat=graph_feat,
+                    tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
+                )
+            else:
+                logits = model(
+                    batch.x, batch.edge_index, batch.batch,
+                    graph_feat=graph_feat)
             loss = criterion(logits, batch.y.view(-1))
             loss.backward()
             optimizer.step()
@@ -250,7 +271,16 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     batch.tof_profile.view(-1, 16),
                     batch.tof_feat.view(-1, 11),
                 ], dim=1)
-                logits = model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                if model_name == 'gravnet_tof':
+                    logits = model(
+                        batch.x, batch.edge_index, batch.batch,
+                        graph_feat=graph_feat,
+                        tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
+                    )
+                else:
+                    logits = model(
+                        batch.x, batch.edge_index, batch.batch,
+                        graph_feat=graph_feat)
                 loss   = criterion(logits, batch.y.view(-1))
                 val_loss    += loss.item() * batch.num_graphs
                 preds        = logits.argmax(dim=1)
@@ -297,6 +327,9 @@ if __name__ == '__main__':
                     help='train.pt/val.pt direct cache directory')
     ap.add_argument('--epochs',          type=int, default=EPOCHS)
     ap.add_argument('--batch-size',      type=int, default=BATCH_SIZE)
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
+                    default='gravnet')
+    ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
     ap.add_argument('--max-train-batches', type=int, default=None,
@@ -310,4 +343,6 @@ if __name__ == '__main__':
           split_cache_dir=args.split_cache_dir,
           batch_size=args.batch_size,
           max_train_batches=args.max_train_batches,
-          max_val_batches=args.max_val_batches)
+          max_val_batches=args.max_val_batches,
+          model_name=args.model,
+          result_dir=args.result_dir)

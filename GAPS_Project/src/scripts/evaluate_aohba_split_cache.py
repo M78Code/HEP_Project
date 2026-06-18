@@ -14,6 +14,7 @@ from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 
 
 class ShardedGraphDataset(IterableDataset):
@@ -50,7 +51,7 @@ def rejection_at_efficiency(labels, scores, target):
 
 
 @torch.no_grad()
-def infer(model, loader, device, total_batches):
+def infer(model, loader, device, total_batches, model_name):
     labels, scores, betas = [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
@@ -62,8 +63,15 @@ def infer(model, loader, device, total_batches):
             batch.tof_profile.view(-1, 16),
             batch.tof_feat.view(-1, 11),
         ], dim=1)
-        logits = model(
-            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+        if model_name == 'gravnet_tof':
+            logits = model(
+                batch.x, batch.edge_index, batch.batch,
+                graph_feat=graph_feat,
+                tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
+            )
+        else:
+            logits = model(
+                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
         probs = torch.softmax(logits, dim=1)[:, 1]
         labels.append(batch.y.view(-1).cpu().numpy())
         scores.append(probs.cpu().numpy())
@@ -82,6 +90,8 @@ def main():
     parser.add_argument('--model-path', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--batch-size', type=int, default=512)
+    parser.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
+                        default='gravnet')
     args = parser.parse_args()
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
@@ -95,8 +105,12 @@ def main():
     loader = DataLoader(
         dataset, batch_size=args.batch_size, num_workers=0, pin_memory=True)
 
-    model = GravNetClassifier(
-        in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
+    if args.model == 'gravnet_tof':
+        model = GravNetTOFClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
+    else:
+        model = GravNetClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
     state = torch.load(args.model_path, map_location=device, weights_only=True)
     state = {
         key.replace('_orig_mod.', '').replace('module.', ''): value
@@ -110,7 +124,8 @@ def main():
     print(f'test events: {n_events:,}')
     print(f'model      : {args.model_path}')
 
-    labels, scores, betas = infer(model, loader, device, n_batches)
+    labels, scores, betas = infer(
+        model, loader, device, n_batches, args.model)
     predictions = (scores >= 0.5).astype(np.int64)
     metrics = {
         'n_events': int(len(labels)),
