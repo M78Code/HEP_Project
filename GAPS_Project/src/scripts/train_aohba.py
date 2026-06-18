@@ -131,17 +131,21 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
 
 
 def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
-    """Load train.pt and val.pt created by cache_split_pkl_atrest.py."""
-    train_pt = split_cache_dir / 'train.pt'
-    val_pt = split_cache_dir / 'val.pt'
-    missing = [p for p in (train_pt, val_pt) if not p.exists()]
-    if missing:
-        raise FileNotFoundError(f'split cache not found: {missing[0]}')
+    """Load sharded or single-file caches created from split.pkl files."""
+    def find_split_files(split: str):
+        sharded = sorted(split_cache_dir.glob(f'{split}_*.pt'))
+        if sharded:
+            return sharded
+        single = split_cache_dir / f'{split}.pt'
+        if single.exists():
+            return [single]
+        raise FileNotFoundError(
+            f'no {split}_*.pt or {split}.pt found under {split_cache_dir}')
 
     train_ds = CachedStreamDataset(
-        [train_pt], shuffle_files=False, shuffle_events=True)
+        find_split_files('train'), shuffle_files=True, shuffle_events=True)
     val_ds = CachedStreamDataset(
-        [val_pt], shuffle_files=False, shuffle_events=False)
+        find_split_files('val'), shuffle_files=False, shuffle_events=False)
     train_loader = DataLoader(
         train_ds, batch_size=batch_size, num_workers=0)
     val_loader = DataLoader(
