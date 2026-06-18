@@ -130,21 +130,52 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
     return train_loader, val_loader, train_ds, val_ds
 
 
+def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
+    """Load train.pt and val.pt created by cache_split_pkl_atrest.py."""
+    train_pt = split_cache_dir / 'train.pt'
+    val_pt = split_cache_dir / 'val.pt'
+    missing = [p for p in (train_pt, val_pt) if not p.exists()]
+    if missing:
+        raise FileNotFoundError(f'split cache not found: {missing[0]}')
+
+    train_ds = CachedStreamDataset(
+        [train_pt], shuffle_files=False, shuffle_events=True)
+    val_ds = CachedStreamDataset(
+        [val_pt], shuffle_files=False, shuffle_events=False)
+    train_loader = DataLoader(
+        train_ds, batch_size=batch_size, num_workers=0)
+    val_loader = DataLoader(
+        val_ds, batch_size=batch_size, num_workers=0)
+    return train_loader, val_loader, train_ds, val_ds
+
+
 # ── 訓練ループ ─────────────────────────────────────────
 def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
-          max_train_files: int = None, max_val_files: int = None):
-    train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
-        manifest_path, cache_dir, BATCH_SIZE,
-        max_train_files=max_train_files, max_val_files=max_val_files)
+          max_train_files: int = None, max_val_files: int = None,
+          split_cache_dir: Path = None, batch_size: int = BATCH_SIZE,
+          max_train_batches: int = None, max_val_batches: int = None):
+    if split_cache_dir is not None:
+        print(f'split cache: {split_cache_dir}')
+        train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
+            split_cache_dir, batch_size)
+    else:
+        train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
+            manifest_path, cache_dir, batch_size,
+            max_train_files=max_train_files, max_val_files=max_val_files)
 
     train_approx = train_ds.approx_len()
     val_approx   = val_ds.approx_len()
-    train_batches = (train_approx + BATCH_SIZE - 1) // BATCH_SIZE
-    val_batches   = (val_approx   + BATCH_SIZE - 1) // BATCH_SIZE
+    train_batches = (train_approx + batch_size - 1) // batch_size
+    val_batches   = (val_approx   + batch_size - 1) // batch_size
+    if max_train_batches is not None:
+        train_batches = min(train_batches, max_train_batches)
+    if max_val_batches is not None:
+        val_batches = min(val_batches, max_val_batches)
     print(f'train events (approx): {train_approx:,}  batches: {train_batches:,}')
     print(f'val   events (approx): {val_approx:,}  batches: {val_batches:,}')
 
-    exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_aohba'
+    dataset_tag = 'local430_atrest' if split_cache_dir is not None else 'aohba'
+    exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
     model = GravNetClassifier(
         in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
         graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
@@ -172,7 +203,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         total_loss, total_correct, total_samples = 0.0, 0, 0
         train_bar = tqdm(train_loader, desc=f'Epoch {epoch:3d}/{epochs} [train]',
                          total=train_batches, leave=False)
-        for batch in train_bar:
+        for batch_idx, batch in enumerate(train_bar):
+            if max_train_batches is not None and batch_idx >= max_train_batches:
+                break
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
             graph_feat = torch.cat([
@@ -200,8 +233,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         model.eval()
         val_loss, val_correct, val_samples = 0.0, 0, 0
         with torch.no_grad():
-            for batch in tqdm(val_loader, desc=f'Epoch {epoch:3d}/{epochs} [val]  ',
-                              total=val_batches, leave=False):
+            for batch_idx, batch in enumerate(tqdm(
+                    val_loader, desc=f'Epoch {epoch:3d}/{epochs} [val]  ',
+                    total=val_batches, leave=False)):
+                if max_val_batches is not None and batch_idx >= max_val_batches:
+                    break
                 batch = batch.to(DEVICE)
                 graph_feat = torch.cat([
                     batch.n_hits.view(-1, 1),
@@ -253,9 +289,21 @@ if __name__ == '__main__':
                     default=Path('/mnt/ynakagami3/aohba_preprocess/split/split_manifest.json'))
     ap.add_argument('--cache-dir', type=Path,
                     default=Path('/mnt/ynakagami3/aohba_preprocess/graph_cache_v2'))
+    ap.add_argument('--split-cache-dir', type=Path, default=None,
+                    help='train.pt/val.pt direct cache directory')
     ap.add_argument('--epochs',          type=int, default=EPOCHS)
+    ap.add_argument('--batch-size',      type=int, default=BATCH_SIZE)
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
+    ap.add_argument('--max-train-batches', type=int, default=None,
+                    help='训练batch数上限（smoke test用）')
+    ap.add_argument('--max-val-batches', type=int, default=None,
+                    help='验证batch数上限（smoke test用）')
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
-          max_train_files=args.max_train_files, max_val_files=args.max_val_files)
+          max_train_files=args.max_train_files,
+          max_val_files=args.max_val_files,
+          split_cache_dir=args.split_cache_dir,
+          batch_size=args.batch_size,
+          max_train_batches=args.max_train_batches,
+          max_val_batches=args.max_val_batches)
