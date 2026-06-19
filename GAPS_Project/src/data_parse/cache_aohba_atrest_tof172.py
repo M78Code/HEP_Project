@@ -117,6 +117,7 @@ def process_source(
         is_tracker_atrest = np.asarray(
             metadata['is_tracker_atrest'], dtype=np.bool_)
         event_id = np.asarray(metadata['event_id'], dtype=np.uint32)
+        random_seed = np.asarray(metadata['random_seed'], dtype=np.uint32)
 
     if len(events) != len(is_tracker_atrest):
         raise RuntimeError(
@@ -125,6 +126,9 @@ def process_source(
     if len(event_id) != len(events):
         raise RuntimeError(
             f'{pkl_path.name}: event_id length mismatch')
+    if len(random_seed) != len(events):
+        raise RuntimeError(
+            f'{pkl_path.name}: random_seed length mismatch')
 
     total = len(events)
     if max_events is not None:
@@ -137,13 +141,16 @@ def process_source(
     skipped_not_atrest = 0
     skipped_small = 0
     skipped_error = 0
-    first_event_id = None
-    last_event_id = None
+    first_source_event_index = None
+    last_source_event_index = None
+    first_random_seed = None
+    last_random_seed = None
 
     iterator = zip(
         events[:total],
         is_tracker_atrest[:total],
         event_id[:total],
+        random_seed[:total],
     )
     iterator = tqdm(
         iterator,
@@ -151,7 +158,12 @@ def process_source(
         desc=f'{split} {source_index:03d}',
         dynamic_ncols=True,
     )
-    for event, keep_atrest, current_event_id in iterator:
+    for source_event_index, (
+        event,
+        keep_atrest,
+        current_event_id,
+        current_random_seed,
+    ) in enumerate(iterator):
         if not keep_atrest:
             skipped_not_atrest += 1
             continue
@@ -170,11 +182,18 @@ def process_source(
             ) from error
 
         current_event_id = int(current_event_id)
+        current_random_seed = int(current_random_seed)
         graph.event_id = torch.tensor(
             [current_event_id], dtype=torch.long)
-        if first_event_id is None:
-            first_event_id = current_event_id
-        last_event_id = current_event_id
+        graph.random_seed = torch.tensor(
+            [current_random_seed], dtype=torch.long)
+        graph.source_event_index = torch.tensor(
+            [source_event_index], dtype=torch.long)
+        if first_source_event_index is None:
+            first_source_event_index = source_event_index
+            first_random_seed = current_random_seed
+        last_source_event_index = source_event_index
+        last_random_seed = current_random_seed
 
         label = int(graph.y.item())
         label_counts[label] += 1
@@ -237,8 +256,10 @@ def process_source(
         'skipped_not_atrest': skipped_not_atrest,
         'skipped_n_le_min_hits': skipped_small,
         'skipped_error': skipped_error,
-        'first_saved_event_id': first_event_id,
-        'last_saved_event_id': last_event_id,
+        'first_saved_source_event_index': first_source_event_index,
+        'last_saved_source_event_index': last_source_event_index,
+        'first_saved_random_seed': first_random_seed,
+        'last_saved_random_seed': last_random_seed,
         'elapsed_sec': round(time.time() - t0, 1),
     }
     done_path.parent.mkdir(parents=True, exist_ok=True)
