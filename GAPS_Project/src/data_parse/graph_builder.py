@@ -238,35 +238,36 @@ class GraphBuilder:
         ], dtype=np.float32)  # (11,)
 
     @staticmethod
-    def _layer_profile(energy: np.ndarray, volume_id: np.ndarray,
-                       n_layers: int = 16):
+    def _layer_profile(
+            energy: np.ndarray,
+            volume_id: np.ndarray,
+            n_layers: int = 16,
+    ):
         """
-        按探测器层号聚合能量沉积，返回 Si(Li) 和 TOF 各16维能量剖面。
-        layer_idx = volume_id // 1000000
-        Si(Li): layer_idx >= 200,  layer = layer_idx % 100
-        TOF   : layer_idx <  200,  layer = layer_idx % 100
+        按探测器层号聚合能量沉积，返回Si(Li)和TOF各16维能量剖面。
+
+        layer_idx = volume_id // 1_000_000
+        Si(Li): layer_idx >= 200
+        TOF:    layer_idx < 200
+
+        TOF layer 116超出0-15的索引范围，因此合并至最后一个bin。
         """
         sili = np.zeros(n_layers, dtype=np.float32)
         tof = np.zeros(n_layers, dtype=np.float32)
+
         for e, vid in zip(energy, volume_id):
-            li = int(vid) // 1000000
-            ln = li % 100
-            if li >= 200:
-                if 0 <= ln < n_layers:
-                    sili[ln] += e
-            elif 0 <= ln < n_layers:
-                tof[ln] += e
-            elif li == 116:
-                # Corner paddles share the final bin of the 16-D TOF profile.
+            layer_idx = int(vid) // 1_000_000
+            layer_no = layer_idx % 100
+
+            if layer_idx >= 200:
+                if 0 <= layer_no < n_layers:
+                    sili[layer_no] += e
+            elif 0 <= layer_no < n_layers:
+                tof[layer_no] += e
+            elif layer_idx == 116:
+                # Inner TOF corner paddles use the final TOF profile bin.
                 tof[-1] += e
-            if ln < 0:
-                continue
-            if ln >= n_layers:
-                ln = n_layers - 1
-            if li >= 200:
-                sili[ln] += e
-            else:
-                tof[ln] += e
+
         return sili, tof
 
     def _normalize(self, x):
