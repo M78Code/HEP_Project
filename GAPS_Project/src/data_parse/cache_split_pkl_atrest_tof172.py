@@ -23,7 +23,7 @@ from GAPS_Project.src.data_parse.tof_paddles import (
 
 def is_atrest_in_tracker(event: dict) -> bool:
     stopping_vol = int(event.get('stopping_vol', 0))
-    return (stopping_vol // 1_000_000) >= 200
+    return (stopping_vol // 100_000_000) == 2
 
 
 def load_events(path: Path):

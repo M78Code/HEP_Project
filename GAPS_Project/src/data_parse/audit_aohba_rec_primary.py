@@ -197,8 +197,8 @@ def audit_file(path, max_events):
     rec_stop_int = np.zeros(n_events, dtype=np.int64)
     rec_stop_int[stop_mask] = rec_stop[stop_mask].astype(np.int64)
 
-    mc_tracker = (mc_stop // 1_000_000) >= 200
-    rec_tracker = (rec_stop_int // 1_000_000) >= 200
+    mc_tracker = (mc_stop // 100_000_000) == 2
+    rec_tracker = (rec_stop_int // 100_000_000) == 2
     stop_system_match = (
         (mc_stop // 100_000_000)
         == (rec_stop_int // 100_000_000)
@@ -206,6 +206,17 @@ def audit_file(path, max_events):
 
     hit_counts = np.asarray(
         [len(value) for value in arrays['hit_volume_id']], dtype=np.int64)
+    hit_volume_ids = np.concatenate([
+        to_numeric_array(value, dtype=np.int64)
+        for value in arrays['hit_volume_id']
+        if len(value) > 0
+    ]) if np.any(hit_counts > 0) else np.asarray([], dtype=np.int64)
+    hit_system_values, hit_system_counts = np.unique(
+        hit_volume_ids // 100_000_000, return_counts=True)
+    hit_system_distribution = {
+        str(int(key)): int(value)
+        for key, value in zip(hit_system_values, hit_system_counts)
+    }
     track_index_counts = np.asarray(
         [len(value) for value in arrays['rec_hit_track_index']], dtype=np.int64)
     track_index_values = np.concatenate([
@@ -259,6 +270,7 @@ def audit_file(path, max_events):
         'hit_track_index': {
             'multiplicity': multiplicity_summary(track_index_counts),
             'hit_count': finite_summary(hit_counts),
+            'hit_detector_system_distribution': hit_system_distribution,
             'same_length_as_hitseries_fraction': float(
                 (track_index_counts == hit_counts).mean()),
             'values': finite_summary(track_index_values),
