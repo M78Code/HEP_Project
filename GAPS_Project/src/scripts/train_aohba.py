@@ -159,7 +159,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           max_train_files: int = None, max_val_files: int = None,
           split_cache_dir: Path = None, batch_size: int = BATCH_SIZE,
           max_train_batches: int = None, max_val_batches: int = None,
-          model_name: str = 'gravnet', result_dir: Path = None):
+          model_name: str = 'gravnet', result_dir: Path = None,
+          dataset_tag: str = None):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
@@ -180,7 +181,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(f'train events (approx): {train_approx:,}  batches: {train_batches:,}')
     print(f'val   events (approx): {val_approx:,}  batches: {val_batches:,}')
 
-    dataset_tag = 'local430_atrest' if split_cache_dir is not None else 'aohba'
+    if dataset_tag is None:
+        dataset_tag = split_cache_dir.name if split_cache_dir is not None else 'aohba'
     if model_name == 'gravnet_tof':
         exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetTOFClassifier(
@@ -330,6 +332,11 @@ if __name__ == '__main__':
     ap.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
+    ap.add_argument(
+        '--dataset-tag',
+        default=None,
+        help='name used in the experiment/result directory',
+    )
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
     ap.add_argument('--max-train-batches', type=int, default=None,
@@ -345,4 +352,5 @@ if __name__ == '__main__':
           max_train_batches=args.max_train_batches,
           max_val_batches=args.max_val_batches,
           model_name=args.model,
-          result_dir=args.result_dir)
+          result_dir=args.result_dir,
+          dataset_tag=args.dataset_tag)
