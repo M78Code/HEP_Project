@@ -163,13 +163,11 @@ def process_source(
             graph = builder.build_from_dict(event)
         except Exception as error:
             skipped_error += 1
-            if skipped_error <= 5:
-                print(
-                    f'\n    build error #{skipped_error}: '
-                    f'{type(error).__name__}: {error}',
-                    flush=True,
-                )
-            continue
+            raise RuntimeError(
+                f'{pkl_path.name}: graph build failed at '
+                f'event_id={int(current_event_id)}: '
+                f'{type(error).__name__}: {error}'
+            ) from error
 
         current_event_id = int(current_event_id)
         graph.event_id = torch.tensor(
@@ -220,6 +218,12 @@ def process_source(
             },
         ))
 
+    n_graphs = sum(row['n_graphs'] for row in shard_summaries)
+    if n_graphs == 0:
+        raise RuntimeError(
+            f'{pkl_path.name}: no graphs were produced; '
+            'completion marker will not be written')
+
     summary = {
         'split': split,
         'particle': particle,
@@ -227,7 +231,7 @@ def process_source(
         'source_pkl': str(pkl_path),
         'source_metadata': str(metadata_path),
         'source_events': total,
-        'n_graphs': sum(row['n_graphs'] for row in shard_summaries),
+        'n_graphs': n_graphs,
         'n_shards': len(shard_summaries),
         'label_counts': {str(key): value for key, value in label_counts.items()},
         'skipped_not_atrest': skipped_not_atrest,
