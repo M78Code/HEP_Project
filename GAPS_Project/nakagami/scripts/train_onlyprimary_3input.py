@@ -61,6 +61,12 @@ def train(args):
     )
 
     model = NakagamiThreeInputNet(dropout_res=0.1, dropout_dense=0.2).to(device)
+    if args.resume:
+        state = torch.load(args.resume, map_location=device)
+        clean_state = {k.replace('_orig_mod.', '').replace('module.', ''): v for k, v in state.items()}
+        model.load_state_dict(clean_state)
+        print(f'resumed model weights from: {args.resume}')
+
     if args.data_parallel and torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
         print(f'Using DataParallel on {torch.cuda.device_count()} GPUs')
@@ -144,6 +150,7 @@ def main():
     parser.add_argument('--max-train-events', type=int, default=None, help='use only the first N training events for quick tests')
     parser.add_argument('--max-val-events', type=int, default=None, help='use only the first N validation events for quick tests')
     parser.add_argument('--eval-every', type=int, default=1, help='run validation every N epochs')
+    parser.add_argument('--resume', default=None, help='load model weights from a previous best .pth file')
     args = parser.parse_args()
     train(args)
 

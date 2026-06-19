@@ -44,9 +44,11 @@ class GraphBuilder:
     节点特征（8维）：[fX, fY, fZ, energy, time, dE/dx, det_type, layer_norm]
     图级特征（45维）：n_hits(1) + total_energy(1) + sili_profile(16) + tof_profile(16) + tof_feat(11)
     """
-    def __init__(self, k: int = 8, normalize: bool = True):
+    def __init__(self, k: int = 8, normalize: bool = True,
+                 tof_paddle_index: dict[int, int] | None = None):
         self.k = k
         self.normalize = normalize
+        self.tof_paddle_index = tof_paddle_index
 
     def build_from_dict(self, event: dict) -> Data:
         """
@@ -116,6 +118,12 @@ class GraphBuilder:
                                           np.where(np.isnan(event['times']), np.nan, event['times']))
         tof_features = np.nan_to_num(tof_features, nan=0.0, posinf=0.0, neginf=0.0)
 
+        tof_paddle_energy = None
+        if self.tof_paddle_index is not None:
+            from GAPS_Project.src.data_parse.tof_paddles import build_tof_paddle_energy
+            tof_paddle_energy = build_tof_paddle_energy(
+                energies, volume_ids, self.tof_paddle_index)
+
         """
         PyG标准图对象：
             包含：
@@ -128,7 +136,7 @@ class GraphBuilder:
         # mc_beta仅用于评估时β窗口分析，不参与训练
         mc_beta = float(event.get('beta', 0.0))
 
-        return Data(
+        data = Data(
             x=torch.tensor(x, dtype=torch.float32),
             edge_index=edge_index,
             pos=pos_tensor,
@@ -141,11 +149,24 @@ class GraphBuilder:
             tof_feat=torch.tensor(tof_features, dtype=torch.float32),       # (11,)
             mc_beta=torch.tensor([mc_beta], dtype=torch.float32),           # 仅元数据
         )
+        if tof_paddle_energy is not None:
+            data.tof_paddle_energy = torch.tensor(
+                tof_paddle_energy, dtype=torch.float32)
+        return data
 
     # TOF layer分组（基于volume_id空间分布分析）
     # 官方volume_id規則: digit2=0→outer, digit2=1→inner
     OUTER_TOF_LAYERS = {100, 101, 102, 103, 104, 105, 106}  # face 0-6
-    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115}        # CUBE 6面
+    INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}   # CUBE 6面 + corner paddles
+<<<<<<< HEAD
+
+    # 新GAPS volume_id の基本規則:
+    #   digit1 = 1: TOF, 2: Si(Li) tracker
+    #   TOF digit2 = 0: outer, 1: inner
+    # 以前の layer_idx ベースの判定では 116 (inner/corner) が落ちるため、
+    # TOF inner/outer は digit2 で判定する。
+=======
+>>>>>>> atrest和tof结果查看
 
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
@@ -233,11 +254,30 @@ class GraphBuilder:
         for e, vid in zip(energy, volume_id):
             li = int(vid) // 1000000
             ln = li % 100
-            if 0 <= ln < n_layers:
-                if li >= 200:
+            if li >= 200:
+<<<<<<< HEAD
+               if 0 <= ln < n_layers:
+=======
+                if 0 <= ln < n_layers:
+>>>>>>> atrest和tof结果查看
                     sili[ln] += e
-                else:
-                    tof[ln] += e
+            elif 0 <= ln < n_layers:
+                tof[ln] += e
+            elif li == 116:
+                # Corner paddles share the final bin of the 16-D TOF profile.
+                tof[-1] += e
+<<<<<<< HEAD
+
+            if ln < 0:
+                continue
+            if ln >= n_layers:
+                ln = n_layers - 1
+            if li >= 200:
+                sili[ln] += e
+            else:
+                tof[ln] += e
+=======
+>>>>>>> atrest和tof结果查看
         return sili, tof
 
     def _normalize(self, x):
@@ -258,5 +298,3 @@ class GraphBuilder:
 #     :param positions:   array (N, 3)   hit位置（fX, fY, fZ），hit的三维位置，[[12.3, 5.1, -8.2], [13.0, 4.8, -7.9]]，这是构建graph最核心的信息
 #     :param times:       array (N,)     hit时间（ns），含NaN，[12.5, NaN, 18.2]，NaN表示时间没有测到
 #     :param label:       int            粒子标签（PDF编号），这是监督学习里的真值标签（Ground Truth）
-
-
