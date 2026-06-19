@@ -51,7 +51,7 @@ def rejection_at_efficiency(labels, scores, target):
 
 
 @torch.no_grad()
-def infer(model, loader, device, total_batches, model_name):
+def infer(model, loader, device, total_batches, model_name, tof_mode='normal'):
     labels, scores, betas = [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
@@ -64,10 +64,23 @@ def infer(model, loader, device, total_batches, model_name):
             batch.tof_feat.view(-1, 11),
         ], dim=1)
         if model_name == 'gravnet_tof':
+            tof_paddle_energy = batch.tof_paddle_energy.view(-1, 172)
+
+            if tof_mode == 'zero':
+                tof_paddle_energy = torch.zeros_like(tof_paddle_energy)
+            elif tof_mode == 'shuffle':
+                permutation = torch.randperm(
+                    tof_paddle_energy.size(0),
+                    device=tof_paddle_energy.device,
+                )
+                tof_paddle_energy = tof_paddle_energy[permutation]
+
             logits = model(
-                batch.x, batch.edge_index, batch.batch,
+                batch.x,
+                batch.edge_index,
+                batch.batch,
                 graph_feat=graph_feat,
-                tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
+                tof_paddle_energy=tof_paddle_energy,
             )
         else:
             logits = model(
@@ -92,7 +105,23 @@ def main():
     parser.add_argument('--batch-size', type=int, default=512)
     parser.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
                         default='gravnet')
+    parser.add_argument(
+        '--tof-mode',
+        choices=['normal', 'zero', 'shuffle'],
+        default='normal',
+        help='TOF172 ablation mode',
+    )
+    parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
+
+    if args.model != 'gravnet_tof' and args.tof_mode != 'normal':
+        raise ValueError(
+            '--tof-mode zero/shuffle is only valid with --model gravnet_tof'
+        )
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -123,9 +152,17 @@ def main():
     print(f'test files : {len(files)}')
     print(f'test events: {n_events:,}')
     print(f'model      : {args.model_path}')
+    print(f'TOF mode   : {args.tof_mode}')
 
     labels, scores, betas = infer(
-        model, loader, device, n_batches, args.model)
+        model,
+        loader,
+        device,
+        n_batches,
+        args.model,
+        tof_mode=args.tof_mode,
+    )
+
     predictions = (scores >= 0.5).astype(np.int64)
     metrics = {
         'n_events': int(len(labels)),
@@ -138,6 +175,7 @@ def main():
             rejection_at_efficiency(labels, scores, target)
             for target in (0.50, 0.80, 0.90, 0.95, 0.98, 0.99)
         ],
+        'tof_mode': args.tof_mode,
     }
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -151,7 +189,10 @@ def main():
     fpr, tpr, _ = roc_curve(labels, scores)
     plt.figure(figsize=(7, 6))
     plt.plot(tpr, 1.0 / np.maximum(fpr, 1.0 / (labels == 0).sum()),
-             label=f'GravNet at-rest (AUC={metrics["auc"]:.4f})')
+             label=(
+                 f'GravNetTOF ({args.tof_mode}, '
+                 f'AUC={metrics["auc"]:.4f})'
+             ))
     plt.yscale('log')
     plt.xlim(0.5, 1.0)
     plt.xlabel('Signal Efficiency (antiD recall)')
