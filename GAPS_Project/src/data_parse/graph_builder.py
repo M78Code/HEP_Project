@@ -158,16 +158,13 @@ class GraphBuilder:
     # 官方volume_id規則: digit2=0→outer, digit2=1→inner
     OUTER_TOF_LAYERS = {100, 101, 102, 103, 104, 105, 106}  # face 0-6
     INNER_TOF_LAYERS = {110, 111, 112, 113, 114, 115, 116}   # CUBE 6面 + corner paddles
-<<<<<<< HEAD
+
 
     # 新GAPS volume_id の基本規則:
     #   digit1 = 1: TOF, 2: Si(Li) tracker
     #   TOF digit2 = 0: outer, 1: inner
     # 以前の layer_idx ベースの判定では 116 (inner/corner) が落ちるため、
     # TOF inner/outer は digit2 で判定する。
-=======
->>>>>>> atrest和tof结果查看
-
     @staticmethod
     def _tof_features(energies: np.ndarray, volume_ids: np.ndarray,
                       positions: np.ndarray, times: np.ndarray) -> np.ndarray:
@@ -255,19 +252,13 @@ class GraphBuilder:
             li = int(vid) // 1000000
             ln = li % 100
             if li >= 200:
-<<<<<<< HEAD
-               if 0 <= ln < n_layers:
-=======
                 if 0 <= ln < n_layers:
->>>>>>> atrest和tof结果查看
                     sili[ln] += e
             elif 0 <= ln < n_layers:
                 tof[ln] += e
             elif li == 116:
                 # Corner paddles share the final bin of the 16-D TOF profile.
                 tof[-1] += e
-<<<<<<< HEAD
-
             if ln < 0:
                 continue
             if ln >= n_layers:
@@ -276,8 +267,6 @@ class GraphBuilder:
                 sili[ln] += e
             else:
                 tof[ln] += e
-=======
->>>>>>> atrest和tof结果查看
         return sili, tof
 
     def _normalize(self, x):
