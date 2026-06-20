@@ -69,6 +69,22 @@ class CachedStreamDataset(IterableDataset):
         self.balance_tagged_classes = balance_tagged_classes
         self._epoch         = 0
 
+    @staticmethod
+    def _load_shard(pt_path: Path):
+        try:
+            data_list = torch.load(pt_path, weights_only=False)
+        except Exception as error:
+            raise RuntimeError(
+                f'failed to load graph-cache shard: {pt_path} '
+                f'({type(error).__name__}: {error})'
+            ) from error
+        if not isinstance(data_list, list) or not data_list:
+            raise RuntimeError(
+                f'invalid graph-cache shard: {pt_path} '
+                f'(expected a non-empty list, got {type(data_list).__name__})'
+            )
+        return data_list
+
     def __iter__(self):
         epoch = self._epoch
         self._epoch += 1
@@ -89,7 +105,7 @@ class CachedStreamDataset(IterableDataset):
             rng.shuffle(files)
 
         for file_index, pt_path in enumerate(files):
-            data_list = torch.load(pt_path, weights_only=False)
+            data_list = self._load_shard(pt_path)
             if self.shuffle_events:
                 random.Random(
                     self.seed + epoch * 1_000_003 + file_index
@@ -107,7 +123,7 @@ class CachedStreamDataset(IterableDataset):
 
         def class_stream(files, class_offset):
             for file_index, pt_path in enumerate(files):
-                data_list = torch.load(pt_path, weights_only=False)
+                data_list = self._load_shard(pt_path)
                 if self.shuffle_events:
                     random.Random(
                         self.seed
