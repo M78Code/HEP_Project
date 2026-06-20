@@ -60,36 +60,92 @@ class CachedStreamDataset(IterableDataset):
     """
 
     def __init__(self, pt_files: list, shuffle_files: bool = True,
-                 shuffle_events: bool = True, seed: int = 42):
+                 shuffle_events: bool = True, seed: int = 42,
+                 balance_tagged_classes: bool = False):
         self.pt_files       = list(pt_files)
         self.shuffle_files  = shuffle_files
         self.shuffle_events = shuffle_events
         self.seed           = seed
+        self.balance_tagged_classes = balance_tagged_classes
         self._epoch         = 0
 
     def __iter__(self):
-        files = self.pt_files.copy()
-        if self.shuffle_files:
-            rng = random.Random(self.seed + self._epoch)
-            rng.shuffle(files)
+        epoch = self._epoch
         self._epoch += 1
 
-        for pt_path in files:
+        if self.balance_tagged_classes:
+            antiD_files = [
+                path for path in self.pt_files if '_antiD_' in path.name]
+            antiP_files = [
+                path for path in self.pt_files if '_antiP_' in path.name]
+            if antiD_files and antiP_files:
+                yield from self._iter_balanced(
+                    antiD_files, antiP_files, epoch)
+                return
+
+        files = self.pt_files.copy()
+        if self.shuffle_files:
+            rng = random.Random(self.seed + epoch)
+            rng.shuffle(files)
+
+        for file_index, pt_path in enumerate(files):
             data_list = torch.load(pt_path, weights_only=False)
             if self.shuffle_events:
-                random.Random(self.seed + self._epoch).shuffle(data_list)
+                random.Random(
+                    self.seed + epoch * 1_000_003 + file_index
+                ).shuffle(data_list)
             for data in data_list:
                 yield data
 
+    def _iter_balanced(self, antiD_files, antiP_files, epoch):
+        """Interleave class-pure shards so every batch is class balanced."""
+        antiD_files = antiD_files.copy()
+        antiP_files = antiP_files.copy()
+        if self.shuffle_files:
+            random.Random(self.seed + epoch).shuffle(antiD_files)
+            random.Random(self.seed + epoch + 10_000).shuffle(antiP_files)
+
+        def class_stream(files, class_offset):
+            for file_index, pt_path in enumerate(files):
+                data_list = torch.load(pt_path, weights_only=False)
+                if self.shuffle_events:
+                    random.Random(
+                        self.seed
+                        + epoch * 1_000_003
+                        + class_offset
+                        + file_index
+                    ).shuffle(data_list)
+                yield from data_list
+
+        antiD_stream = class_stream(antiD_files, 100_000)
+        antiP_stream = class_stream(antiP_files, 200_000)
+        for antiD_graph, antiP_graph in zip(antiD_stream, antiP_stream):
+            yield antiD_graph
+            yield antiP_graph
+
     def approx_len(self) -> int:
         """サマリーJSONからグラフ数を集計（.ptを全ロードせず高速）"""
-        total = 0
-        for pt_path in self.pt_files:
-            summary = Path(pt_path).with_suffix('.json')
-            if summary.exists():
-                with open(summary) as f:
-                    total += json.load(f).get('n_graphs', 0)
-        return total
+        def count_files(files):
+            total = 0
+            for pt_path in files:
+                summary = Path(pt_path).with_suffix('.json')
+                if summary.exists():
+                    with open(summary) as f:
+                        total += json.load(f).get('n_graphs', 0)
+            return total
+
+        if self.balance_tagged_classes:
+            antiD_files = [
+                path for path in self.pt_files if '_antiD_' in path.name]
+            antiP_files = [
+                path for path in self.pt_files if '_antiP_' in path.name]
+            if antiD_files and antiP_files:
+                return 2 * min(
+                    count_files(antiD_files),
+                    count_files(antiP_files),
+                )
+
+        return count_files(self.pt_files)
 
 
 # ── データロード ───────────────────────────────────────
@@ -145,7 +201,11 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
             f'no {split}_*.pt or {split}.pt found under {split_cache_dir}')
 
     train_ds = CachedStreamDataset(
-        find_split_files('train'), shuffle_files=True, shuffle_events=True)
+        find_split_files('train'),
+        shuffle_files=True,
+        shuffle_events=True,
+        balance_tagged_classes=True,
+    )
     val_ds = CachedStreamDataset(
         find_split_files('val'), shuffle_files=False, shuffle_events=False)
     train_loader = DataLoader(
