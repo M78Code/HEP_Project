@@ -38,6 +38,7 @@ STEP_SIZE    = 15
 GAMMA        = 0.5
 FOCAL_GAMMA  = 1.5
 PATIENCE     = 10
+MIN_EPOCHS   = 20
 IN_CHANNEL   = 8
 NUM_BLOCKS   = 6
 HIDDEN_DIM   = 128
@@ -160,7 +161,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           split_cache_dir: Path = None, batch_size: int = BATCH_SIZE,
           max_train_batches: int = None, max_val_batches: int = None,
           model_name: str = 'gravnet', result_dir: Path = None,
-          dataset_tag: str = None):
+          dataset_tag: str = None, resume_checkpoint: Path = None):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
@@ -195,22 +196,59 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
     print(f'模型: {exp_name}')
     print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
+    print(
+        f'early stopping: min_epochs={MIN_EPOCHS}, '
+        f'patience={PATIENCE}, monitor=val_loss')
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     optimizer = Adam(model.parameters(), lr=LR)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
-    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-    result_root = result_dir if result_dir is not None else PROJECT_ROOT / 'results'
-    log_dir = result_root / f'{timestamp}_{exp_name}'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    writer = SummaryWriter(log_dir=str(log_dir))
-    best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
-
     best_val_loss   = float('inf')
     patience_counter = 0
+    start_epoch = 1
 
-    for epoch in range(1, epochs + 1):
+    if resume_checkpoint is not None:
+        checkpoint = torch.load(
+            resume_checkpoint, map_location=DEVICE, weights_only=False)
+        if checkpoint['model_name'] != model_name:
+            raise ValueError(
+                f'checkpoint model={checkpoint["model_name"]}, '
+                f'requested model={model_name}')
+        model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        scheduler.load_state_dict(checkpoint['scheduler_state'])
+        best_val_loss = float(checkpoint['best_val_loss'])
+        patience_counter = int(checkpoint['patience_counter'])
+        start_epoch = int(checkpoint['epoch']) + 1
+        log_dir = resume_checkpoint.parent
+        best_model_path = Path(checkpoint['best_model_path'])
+        latest_checkpoint_path = resume_checkpoint
+        writer = SummaryWriter(
+            log_dir=str(log_dir), purge_step=start_epoch)
+        print(
+            f'resumed checkpoint: {resume_checkpoint} '
+            f'(next epoch={start_epoch}, best_val_loss={best_val_loss:.4f})')
+    else:
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        result_root = (
+            result_dir if result_dir is not None
+            else PROJECT_ROOT / 'results'
+        )
+        log_dir = result_root / f'{timestamp}_{exp_name}'
+        log_dir.mkdir(parents=True, exist_ok=True)
+        writer = SummaryWriter(log_dir=str(log_dir))
+        best_model_path = log_dir / f'{timestamp}_{exp_name}_best.pth'
+        latest_checkpoint_path = (
+            log_dir / f'{timestamp}_{exp_name}_last_checkpoint.pth'
+        )
+
+    if start_epoch > epochs:
+        raise ValueError(
+            f'checkpoint already reached epoch {start_epoch - 1}, '
+            f'but --epochs={epochs}')
+
+    for epoch in range(start_epoch, epochs + 1):
         epoch_start = time.time()
 
         # ── Train ────────────────────────────────────
@@ -304,6 +342,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         writer.add_scalar('Acc/train',  train_acc,  epoch)
         writer.add_scalar('Acc/val',    val_acc,    epoch)
 
+        should_stop = False
         if val_loss < best_val_loss:
             best_val_loss    = val_loss
             patience_counter = 0
@@ -311,9 +350,25 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             print(f'  → best model saved (val_loss={best_val_loss:.4f})')
         else:
             patience_counter += 1
-            if patience_counter >= PATIENCE and epoch > PATIENCE:
-                print(f'  → early stopping: val_loss未改善已达{PATIENCE}个epoch')
-                break
+            if patience_counter >= PATIENCE and epoch >= MIN_EPOCHS:
+                should_stop = True
+
+        torch.save({
+            'epoch': epoch,
+            'model_name': model_name,
+            'dataset_tag': dataset_tag,
+            'model_state': model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'scheduler_state': scheduler.state_dict(),
+            'best_val_loss': best_val_loss,
+            'patience_counter': patience_counter,
+            'best_model_path': str(best_model_path),
+        }, latest_checkpoint_path)
+        print(f'  → latest checkpoint saved: {latest_checkpoint_path}')
+
+        if should_stop:
+            print(f'  → early stopping: val_loss未改善已达{PATIENCE}个epoch')
+            break
 
     writer.close()
     print(f'\n训练完成，最优模型: {best_model_path}')
@@ -337,6 +392,12 @@ if __name__ == '__main__':
         default=None,
         help='name used in the experiment/result directory',
     )
+    ap.add_argument(
+        '--resume-checkpoint',
+        type=Path,
+        default=None,
+        help='resume model, optimizer and scheduler from a last checkpoint',
+    )
     ap.add_argument('--max-train-files', type=int, default=None, help='训练文件数上限（smoke test用）')
     ap.add_argument('--max-val-files',   type=int, default=None, help='验证文件数上限（smoke test用）')
     ap.add_argument('--max-train-batches', type=int, default=None,
@@ -353,4 +414,5 @@ if __name__ == '__main__':
           max_val_batches=args.max_val_batches,
           model_name=args.model,
           result_dir=args.result_dir,
-          dataset_tag=args.dataset_tag)
+          dataset_tag=args.dataset_tag,
+          resume_checkpoint=args.resume_checkpoint)
