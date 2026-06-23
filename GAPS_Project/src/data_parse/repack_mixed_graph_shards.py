@@ -19,15 +19,11 @@ import torch
 
 
 SPLITS = ("train", "val", "test")
+FORMAT_VERSION = 2
 
 
 def load_graphs(path: Path) -> list:
-    graphs = torch.load(
-        path,
-        map_location="cpu",
-        weights_only=False,
-        mmap=True,
-    )
+    graphs = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(graphs, list) or not graphs:
         raise RuntimeError(
             f"invalid shard {path}: expected a non-empty list, "
@@ -49,10 +45,13 @@ def worker(args):
         random.Random(args.seed).shuffle(anti_d)
         random.Random(args.seed + 10_000).shuffle(anti_p)
 
+    # Do not preserve storages inherited from the source archives. In
+    # particular, tensors loaded through mmap-backed serialization can retain
+    # non-resizable storages and fail when the repacked file is loaded later.
     mixed = []
     for graph_d, graph_p in zip(anti_d, anti_p):
-        mixed.append(graph_d)
-        mixed.append(graph_p)
+        mixed.append(graph_d.clone())
+        mixed.append(graph_p.clone())
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_suffix(".pt.tmp")
@@ -66,6 +65,8 @@ def worker(args):
         "source_antiP": str(args.antiP.resolve()),
         "seed": args.seed,
         "interleaved": True,
+        "format_version": FORMAT_VERSION,
+        "independent_tensor_storage": True,
     }
     with open(args.output.with_suffix(".json"), "w", encoding="utf-8") as file:
         json.dump(summary, file, indent=2)
@@ -98,7 +99,11 @@ def output_is_complete(path: Path) -> bool:
         return False
     with open(summary_path, encoding="utf-8") as file:
         summary = json.load(file)
-    return int(summary.get("n_graphs", 0)) > 0
+    return (
+        int(summary.get("n_graphs", 0)) > 0
+        and int(summary.get("format_version", 0)) == FORMAT_VERSION
+        and summary.get("independent_tensor_storage") is True
+    )
 
 
 def main(args):
@@ -114,6 +119,7 @@ def main(args):
         "output_dir": str(args.output_dir.resolve()),
         "seed": args.seed,
         "format": "alternating antiD/antiP graphs in each shard",
+        "format_version": FORMAT_VERSION,
         "splits": {},
     }
 
