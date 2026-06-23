@@ -6,7 +6,6 @@ avoids retaining two class streams throughout training.
 """
 
 import argparse
-import gc
 import json
 import os
 import random
@@ -70,8 +69,12 @@ def worker(args):
         f"({len(anti_d):,} per class)",
         flush=True,
     )
-    del mixed, anti_d, anti_p
-    gc.collect()
+    # Large PyG object lists can crash while Python/C++ destructors run.
+    # The worker has already atomically saved both output files, so terminate
+    # the disposable subprocess without invoking interpreter cleanup.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
 
 
 def source_files(source_dir: Path, split: str, particle: str) -> list[Path]:
@@ -141,7 +144,17 @@ def main(args):
                 ]
                 if split == "train":
                     command.append("--shuffle")
-                subprocess.run(command, check=True)
+                try:
+                    subprocess.run(command, check=True)
+                except subprocess.CalledProcessError:
+                    if output_is_complete(output):
+                        print(
+                            f"worker exited abnormally after completing "
+                            f"{output.name}; keeping verified output",
+                            flush=True,
+                        )
+                    else:
+                        raise
 
             with open(output.with_suffix(".json"), encoding="utf-8") as file:
                 rows.append(json.load(file))
