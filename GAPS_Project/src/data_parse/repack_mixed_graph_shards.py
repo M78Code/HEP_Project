@@ -12,6 +12,7 @@ import random
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import torch
@@ -21,7 +22,12 @@ SPLITS = ("train", "val", "test")
 
 
 def load_graphs(path: Path) -> list:
-    graphs = torch.load(path, map_location="cpu", weights_only=False)
+    graphs = torch.load(
+        path,
+        map_location="cpu",
+        weights_only=False,
+        mmap=True,
+    )
     if not isinstance(graphs, list) or not graphs:
         raise RuntimeError(
             f"invalid shard {path}: expected a non-empty list, "
@@ -144,17 +150,33 @@ def main(args):
                 ]
                 if split == "train":
                     command.append("--shuffle")
-                try:
-                    subprocess.run(command, check=True)
-                except subprocess.CalledProcessError:
-                    if output_is_complete(output):
+                for attempt in range(1, args.max_retries + 1):
+                    temporary = output.with_suffix(".pt.tmp")
+                    temporary.unlink(missing_ok=True)
+                    try:
+                        subprocess.run(command, check=True)
+                    except subprocess.CalledProcessError as error:
+                        if output_is_complete(output):
+                            print(
+                                f"worker exited abnormally after completing "
+                                f"{output.name}; keeping verified output",
+                                flush=True,
+                            )
+                            break
+                        if attempt == args.max_retries:
+                            raise RuntimeError(
+                                f"failed to create {output.name} after "
+                                f"{args.max_retries} attempts"
+                            ) from error
                         print(
-                            f"worker exited abnormally after completing "
-                            f"{output.name}; keeping verified output",
+                            f"worker failed for {output.name} "
+                            f"(attempt {attempt}/{args.max_retries}); "
+                            f"retrying in {args.retry_delay:.0f}s",
                             flush=True,
                         )
+                        time.sleep(args.retry_delay)
                     else:
-                        raise
+                        break
 
             with open(output.with_suffix(".json"), encoding="utf-8") as file:
                 rows.append(json.load(file))
@@ -190,6 +212,8 @@ def parse_args():
         "--splits", nargs="+", choices=SPLITS, default=list(SPLITS)
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--max-retries", type=int, default=10)
+    parser.add_argument("--retry-delay", type=float, default=5.0)
 
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--antiD", type=Path, help=argparse.SUPPRESS)
