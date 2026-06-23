@@ -1,0 +1,54 @@
+{
+  "n_events": 301857,
+  "label_counts": {
+    "0": 135843,
+    "1": 166014
+  },
+  "accuracy": 0.8149355489519872,
+  "auc": 0.8932298713701194,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.5,
+      "fpr": 0.03138917721192848,
+      "rejection": 31.85811444652908,
+      "threshold": 0.8416191339492798
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.8000048188706976,
+      "fpr": 0.1679291535080939,
+      "rejection": 5.9548921620199895,
+      "threshold": 0.5334367156028748
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.9000024094353488,
+      "fpr": 0.3401205803758751,
+      "rejection": 2.940133757548211,
+      "threshold": 0.3849986493587494
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9500042165118604,
+      "fpr": 0.5071369154097009,
+      "rejection": 1.9718540883424542,
+      "threshold": 0.2668350040912628
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.9800016866047442,
+      "fpr": 0.6903557783617853,
+      "rejection": 1.4485284708893154,
+      "threshold": 0.1554797738790512
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.990000843302372,
+      "fpr": 0.7820056977540248,
+      "rejection": 1.2787630612821237,
+      "threshold": 0.10937242954969406
+    }
+  ],
+  "tof_mode": "shuffle"
+}
