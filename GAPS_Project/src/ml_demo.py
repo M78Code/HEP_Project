@@ -149,12 +149,6 @@ def train_log():
             print(f"{tag}: last step = {last.step}, value = {last.value}")
 
 
-def vec3_array(raw):
-
-
-
-
-
 if __name__ == '__main__':
     # clustering_demo()
     # cuda_knn_ok()
