@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import GravNetClassifier
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
+from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 
 
 class ShardedGraphDataset(IterableDataset):
@@ -103,7 +104,8 @@ def main():
     parser.add_argument('--model-path', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--batch-size', type=int, default=512)
-    parser.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
+    parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
+    parser.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -137,6 +139,9 @@ def main():
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
+    elif args.model == 'dgcnn':
+        model = DGCNNClassifier(
+            in_channels=8, hidden_dim=args.hidden_dim, k=8, graph_feat_dim=45)
     else:
         model = GravNetClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
