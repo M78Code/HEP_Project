@@ -47,6 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-train-batches", type=int, default=None)
     parser.add_argument("--max-val-batches", type=int, default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--resume", type=Path, default=None, help="resume from a last checkpoint")
     return parser.parse_args()
 
 
@@ -315,7 +316,10 @@ def train(args: argparse.Namespace) -> None:
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.lr_gamma)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_dir = PROJECT_ROOT / "results" / f"{timestamp}_{model_name}"
+    if args.resume is not None:
+        log_dir = args.resume.parent
+    else:
+        log_dir = PROJECT_ROOT / "results" / f"{timestamp}_{model_name}"
     log_dir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(log_dir))
 
@@ -323,8 +327,30 @@ def train(args: argparse.Namespace) -> None:
     best_model_path = log_dir / f"{timestamp}_{model_name}_best.pth"
     latest_path = log_dir / f"{timestamp}_{model_name}_last_checkpoint.pth"
     patience_counter = 0
+    start_epoch = 1
 
-    for epoch in range(1, args.epochs + 1):
+    if args.resume is not None:
+        checkpoint = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint["model_state"])
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+        scheduler.load_state_dict(checkpoint["scheduler_state"])
+        if "scaler_state" in checkpoint and checkpoint["scaler_state"] is not None:
+            scaler.load_state_dict(checkpoint["scaler_state"])
+        best_val_loss = float(checkpoint.get("best_val_loss", best_val_loss))
+        patience_counter = int(checkpoint.get("patience_counter", 0))
+        start_epoch = int(checkpoint["epoch"]) + 1
+        latest_path = args.resume
+        best_matches = sorted(log_dir.glob("*_best.pth"))
+        if best_matches:
+            best_model_path = best_matches[0]
+        print(
+            f"resumed checkpoint: {args.resume} "
+            f"(next epoch={start_epoch}, best_val_loss={best_val_loss:.4f}, "
+            f"patience_counter={patience_counter})",
+            flush=True,
+        )
+
+    for epoch in range(start_epoch, args.epochs + 1):
         started = time.time()
         train_loss, train_acc, _ = run_epoch(
             model,
@@ -378,6 +404,7 @@ def train(args: argparse.Namespace) -> None:
             "args": vars(args),
             "amp_enabled": amp_enabled,
             "amp_dtype": args.amp_dtype if amp_enabled else None,
+            "scaler_state": scaler.state_dict() if scaler is not None else None,
         }
 
         if val_loss < best_val_loss:
