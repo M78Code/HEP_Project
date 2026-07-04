@@ -1,0 +1,55 @@
+{
+  "n_events": 600000,
+  "label_counts": {
+    "0": 300000,
+    "1": 300000
+  },
+  "accuracy": 0.9348983333333334,
+  "auc": 0.9842390923222223,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.5000166666666667,
+      "fpr": 0.00010666666666666667,
+      "rejection": 9375.0,
+      "threshold": 0.970703125
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.8000933333333333,
+      "fpr": 0.005583333333333333,
+      "rejection": 179.1044776119403,
+      "threshold": 0.70166015625
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.90008,
+      "fpr": 0.03267,
+      "rejection": 30.60912151821243,
+      "threshold": 0.517578125
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9500933333333333,
+      "fpr": 0.09616333333333334,
+      "rejection": 10.398973967901833,
+      "threshold": 0.40673828125
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.9800366666666667,
+      "fpr": 0.20139,
+      "rejection": 4.9654898455732654,
+      "threshold": 0.299560546875
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.9900066666666667,
+      "fpr": 0.29550333333333334,
+      "rejection": 3.3840565814260413,
+      "threshold": 0.228759765625
+    }
+  ],
+  "use_tof172": false,
+  "model_path": "results/20260625-181541_FusedGravNetAMP_6b_h128_aohba4M_fused_amp/20260625-181541_FusedGravNetAMP_6b_h128_aohba4M_fused_amp_best.pth"
+}
