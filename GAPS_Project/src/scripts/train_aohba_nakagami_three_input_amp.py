@@ -77,9 +77,9 @@ class NakagamiStyle3InputDataset(Dataset):
 
     def __getitem__(self, idx: int):
         idx = int(idx)
-        voxel = np.asarray(self.voxels[idx], dtype=np.float32)
-        tof_paddle = np.asarray(self.tof_paddles[idx], dtype=np.float32)
-        tof_feature = np.asarray(self.tof_features[idx], dtype=np.float32)
+        voxel = np.asarray(self.voxels[idx], dtype=np.float32).copy()
+        tof_paddle = np.asarray(self.tof_paddles[idx], dtype=np.float32).copy()
+        tof_feature = np.asarray(self.tof_features[idx], dtype=np.float32).copy()
         label = int(self.labels[idx])
         return (
             torch.from_numpy(voxel).unsqueeze(0),
