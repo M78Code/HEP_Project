@@ -1,0 +1,61 @@
+{
+  "n_events": 600000,
+  "label_counts": {
+    "0": 300000,
+    "1": 300000
+  },
+  "accuracy": 0.9030333333333334,
+  "auc": 0.9671634101555556,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.5001533333333333,
+      "fpr": 0.00068,
+      "rejection": 1470.5882352941176,
+      "threshold": 0.98828125
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.7000666666666666,
+      "fpr": 0.00814,
+      "rejection": 122.85012285012286,
+      "threshold": 0.89990234375
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.80007,
+      "fpr": 0.02632,
+      "rejection": 37.993920972644375,
+      "threshold": 0.7255859375
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.90003,
+      "fpr": 0.09699666666666666,
+      "rejection": 10.30963263342383,
+      "threshold": 0.389404296875
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9500066666666667,
+      "fpr": 0.20535,
+      "rejection": 4.869734599464329,
+      "threshold": 0.2012939453125
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.9800533333333333,
+      "fpr": 0.36003666666666667,
+      "rejection": 2.777494884780254,
+      "threshold": 0.09234619140625
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.99,
+      "fpr": 0.4705566666666667,
+      "rejection": 2.1251425616468436,
+      "threshold": 0.055511474609375
+    }
+  ],
+  "model_path": "results/20260704-135922_NakagamiThreeInputAMP_10x12x12_aohba4M_nakagami3input_amp_bs256/20260704-135922_NakagamiThreeInputAMP_10x12x12_aohba4M_nakagami3input_amp_bs256_best.pth"
+}
