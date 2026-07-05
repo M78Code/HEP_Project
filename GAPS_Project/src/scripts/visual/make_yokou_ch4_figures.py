@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score, roc_curve
 
 
 MODEL_SPECS = [
-    ("CNN+DNN", "results/evaluation", "CNN_DNN_20x20"),
+    ("CNN+DNN", "results/evaluation_aohba4M_nakagami3input_amp_bs256", None),
     ("GravNet", "results/evaluation_aohba4M_atrest_gravnet_mc1", None),
     ("GravNet+TOF", "results/evaluation_aohba4M_atrest_tof172_balanced", None),
     ("DGCNN", "results/evaluation_aohba4M_dgcnn", None),
