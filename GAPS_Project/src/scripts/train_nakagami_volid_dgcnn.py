@@ -29,6 +29,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--device", default="cuda")
     p.add_argument("--amp", action="store_true")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument(
+        "--feature-mode",
+        default="full",
+        choices=["full", "edep_only", "no_edep", "pos_only", "edep_pos"],
+        help="Ablation for node inputs. full uses x+pos; edep_only uses only log hit energy; "
+        "no_edep drops log hit energy; pos_only uses only positions; edep_pos uses log hit energy + positions.",
+    )
     return p.parse_args()
 
 
@@ -51,8 +58,9 @@ def load_split(data_dir: Path, split: str) -> list[Data]:
 
 
 class SmallDGCNN(nn.Module):
-    def __init__(self, in_dim: int, hidden: int):
+    def __init__(self, in_dim: int, hidden: int, feature_mode: str):
         super().__init__()
+        self.feature_mode = feature_mode
         self.input = nn.Sequential(
             nn.Linear(in_dim, hidden),
             nn.BatchNorm1d(hidden),
@@ -86,8 +94,21 @@ class SmallDGCNN(nn.Module):
             nn.Linear(hidden, 1),
         )
 
+    def node_features(self, data: Data) -> torch.Tensor:
+        if self.feature_mode == "full":
+            return torch.cat([data.x, data.pos], dim=1)
+        if self.feature_mode == "edep_only":
+            return data.x[:, :1]
+        if self.feature_mode == "no_edep":
+            return torch.cat([data.x[:, 1:], data.pos], dim=1)
+        if self.feature_mode == "pos_only":
+            return data.pos
+        if self.feature_mode == "edep_pos":
+            return torch.cat([data.x[:, :1], data.pos], dim=1)
+        raise ValueError(f"unknown feature_mode: {self.feature_mode}")
+
     def forward(self, data: Data) -> torch.Tensor:
-        node = torch.cat([data.x, data.pos], dim=1)
+        node = self.node_features(data)
         h = self.input(node)
         h = self.conv1(h, data.edge_index)
         h = self.conv2(h, data.edge_index)
@@ -161,14 +182,28 @@ def train(args: argparse.Namespace) -> None:
     val_loader = DataLoader(val_graphs, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     test_loader = DataLoader(test_graphs, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
-    in_dim = int(train_graphs[0].x.size(1) + train_graphs[0].pos.size(1))
-    model = SmallDGCNN(in_dim=in_dim, hidden=args.hidden).to(device)
+    probe = Data(x=train_graphs[0].x, pos=train_graphs[0].pos)
+    if args.feature_mode == "full":
+        in_dim = int(probe.x.size(1) + probe.pos.size(1))
+    elif args.feature_mode == "edep_only":
+        in_dim = 1
+    elif args.feature_mode == "no_edep":
+        in_dim = int(probe.x.size(1) - 1 + probe.pos.size(1))
+    elif args.feature_mode == "pos_only":
+        in_dim = int(probe.pos.size(1))
+    elif args.feature_mode == "edep_pos":
+        in_dim = int(1 + probe.pos.size(1))
+    else:
+        raise ValueError(args.feature_mode)
+
+    model = SmallDGCNN(in_dim=in_dim, hidden=args.hidden, feature_mode=args.feature_mode).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     loss_fn = nn.BCEWithLogitsLoss()
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
     print("device    :", device)
     print("data dir  :", args.data_dir)
+    print("feature   :", args.feature_mode, f"(in_dim={in_dim})")
     print("train/val/test:", len(train_graphs), len(val_graphs), len(test_graphs))
     print("parameters:", sum(p.numel() for p in model.parameters()))
     print("AMP       :", args.amp and device.type == "cuda")
