@@ -23,7 +23,7 @@ MODEL_SPECS = [
 DATA_AMOUNT_SPECS = [
     ("4M", "results/evaluation_aohba4M_atrest_gravnet_mc1", None),
     ("50M", "results/evaluation_aohba50M_gravnet_on_4Mtest", None),
-    ("50M_latest", "results/evaluation_aohba50M_gravnet_on_4Mtest_latest", None),
+    ("50M_latest", "results/evaluation_aohba50M_gravnet_on_4Mtest_epoch62", None),
 ]
 
 
@@ -177,12 +177,15 @@ def main():
         print(f"{name}, {r['auc']:.4f}, {r['rej@0.50']:.2f}, {r['rej@0.70']:.2f}, {r['rej@0.90']:.2f}")
 
     amount_rows = {}
+    amount_loaded = {}
     for name, directory, prefix in DATA_AMOUNT_SPECS:
         data = load_eval(repo, directory, prefix)
         if data is None:
+            print(f"[missing] {name}: {directory}")
             continue
         labels, scores, _ = data
         amount_rows[name] = metrics_for(labels, scores)
+        amount_loaded[name] = (labels, scores)
     (out_dir / "metrics_data_amount_rej70.json").write_text(json.dumps(amount_rows, indent=2), encoding="utf-8")
 
     print("\nTable 3 candidates")
@@ -209,6 +212,9 @@ def main():
             print("[missing] GravNet eval for score histogram")
 
         evals = [(name, loaded[name][0], loaded[name][1]) for name in ["CNN+DNN", "GravNet", "GravNet+TOF", "DGCNN", "FusedGravNet"] if name in loaded]
+        if "50M_latest" in amount_loaded:
+            labels_50m, scores_50m = amount_loaded["50M_latest"]
+            evals.append(("GravNet 50M", labels_50m, scores_50m))
         if len(evals) >= 2:
             plot_rejection_curve(evals, out_dir / "fig4_rejection_curve.png")
             print("saved", out_dir / "fig4_rejection_curve.png")
