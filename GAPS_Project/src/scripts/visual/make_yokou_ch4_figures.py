@@ -23,7 +23,7 @@ MODEL_SPECS = [
 DATA_AMOUNT_SPECS = [
     ("4M", "results/evaluation_aohba4M_atrest_gravnet_mc1", None),
     ("50M", "results/evaluation_aohba50M_gravnet_on_4Mtest", None),
-    ("50M_latest", "results/evaluation_aohba50M_gravnet_on_4Mtest_epoch62", None),
+    ("50M_latest", "results/evaluation_aohba50M_gravnet_on_4Mtest_epoch64", None),
 ]
 
 
