@@ -1,7 +1,53 @@
 """
-新GAPS 5000万データ用GravNet訓練スクリプト。
-split_manifest.json からpklファイルリストを読み込み、
-IterableDataset で1ファイルずつストリーミングしてメモリを節約する。
+新GAPS 5000万データ用 GravNet 訓練スクリプト。
+
+【中文说明】
+这个脚本对应日志 `train_aohba50M_atrest_gravnet_full.log`。
+它不是从 root/pkl 原始文件现场构图训练，而是读取已经由 GraphBuilder
+预先转换好的 PyTorch Geometric graph cache（.pt 文件）。
+
+数据输入有两种形式：
+1. `--manifest` + `--cache-dir`
+   - `split_manifest.json` 记录 train/val 中使用哪些原始 pkl 文件。
+   - `--cache-dir` 指向这些 pkl 已经转换出的 graph cache。
+   - 代码通过 manifest 中的 pkl 路径推导对应的 `.pt` graph cache 路径。
+2. `--split-cache-dir`
+   - 直接读取 `train.pt` / `val.pt`，或 `train_*.pt` / `val_*.pt` shard。
+
+每个 graph 使用的输入信息来自 `src/data_parse/graph_builder.py`：
+  节点特征 8维:
+    [x, y, z, energy, time, dE/dx, det_type, layer_norm]
+  图级特征 45维:
+    n_hits(1) + total_energy(1)
+    + tracker/Si(Li) layer energy profile(16)
+    + TOF layer energy profile(16)
+    + TOF feature(11)
+
+`mc_beta` 只作为评估时的 beta 分层 metadata，不参与训练。
+如果 `--model gravnet_tof`，还会额外使用 `tof_paddle_energy` 172维。
+
+训练中每个 epoch 都保存 latest checkpoint，包含 model / optimizer /
+scheduler 状态，因此可以用 `--resume-checkpoint` 从中断位置继续训练。
+注意：resume 时 `--epochs` 表示“目标总 epoch 数”，不是额外追加的 epoch 数。
+例如 checkpoint 已到 epoch 80，想继续训练到 120，就写 `--epochs 120`。
+
+当前 50M full 训练对应关系：
+  训练日志:
+    ~/train_aohba50M_atrest_gravnet_full.log
+  训练输入:
+    --manifest /mnt/ynakagami3/aohba_preprocess/split/split_manifest.json
+    --cache-dir /mnt/ynakagami3/aohba_preprocess/graph_cache_v2
+  训练结果目录:
+    results/20260625-110900_GravNet_6b_h128_aohba50M_atrest_gravnet_full
+  latest checkpoint:
+    results/20260625-110900_GravNet_6b_h128_aohba50M_atrest_gravnet_full/
+    20260625-110900_GravNet_6b_h128_aohba50M_atrest_gravnet_full_last_checkpoint.pth
+  評価:
+    best checkpoint を dataset/aohba4M_atrest_tof172_balanced の
+    4M test split で評価し、50M training の効果を見る。
+
+通常の 50M full は `--model gravnet` であり、TOF172 は使っていない。
+TOF172 を追加する場合だけ `--model gravnet_tof` を指定する。
 
 使い方:
   python src/scripts/train_aohba.py \
@@ -57,6 +103,11 @@ class CachedStreamDataset(IterableDataset):
     """
     キャッシュ済み .pt ファイル（PyG Data リスト）を1ファイルずつ読み込む
     IterableDataset。GraphBuilder の実行が不要で高速。
+
+    中文说明:
+    这里读入的 `.pt` 文件已经是 graph list。也就是说，训练时不会再读取
+    root，也不会重新计算 hit->graph，只是逐个 shard 加载已经缓存好的
+    PyG Data 对象来节省内存。
     """
 
     def __init__(self, pt_files: list, shuffle_files: bool = True,
@@ -166,7 +217,12 @@ class CachedStreamDataset(IterableDataset):
 
 # ── データロード ───────────────────────────────────────
 def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
-    """pkl パスをキャッシュ済み .pt パスに変換する"""
+    """pkl パスをキャッシュ済み .pt パスに変換する。
+
+    中文说明:
+    manifest 里保存的是原始 pkl 路径；真正训练读取的是 cache_dir 下
+    antiD/antiP 子目录中的 `.pt` graph cache。
+    """
     p = Path(pkl_path)
     particle = 'antiD' if 'antiD' in p.stem else 'antiP'
     return cache_dir / particle / (p.stem + '.pt')
@@ -205,7 +261,13 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
 
 
 def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
-    """Load sharded or single-file caches created from split.pkl files."""
+    """Load sharded or single-file caches created from split.pkl files.
+
+    中文说明:
+    这个模式直接读取 split-cache-dir 下的 train.pt/val.pt，或者
+    train_*.pt/val_*.pt 分片文件。50M full 训练若使用预先分片的 graph
+    cache，也会走这里。
+    """
     def find_split_files(split: str):
         sharded = sorted(split_cache_dir.glob(f'{split}_*.pt'))
         if sharded:
@@ -337,6 +399,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 break
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
+            # 图级特征 45维。节点特征 batch.x 已经在 graph cache 中，
+            # 这里把 event-level summary 拼成 graph_feat 后交给 GravNet。
             graph_feat = torch.cat([
                 batch.n_hits.view(-1, 1),
                 batch.total_energy.view(-1, 1),
@@ -380,6 +444,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 if max_val_batches is not None and batch_idx >= max_val_batches:
                     break
                 batch = batch.to(DEVICE)
+                # 验证阶段使用同样的 45维图级特征。
                 graph_feat = torch.cat([
                     batch.n_hits.view(-1, 1),
                     batch.total_energy.view(-1, 1),

@@ -8,6 +8,14 @@ The local430 pkl files do not contain Nakagami's stoplayer column, so this
 script uses a detector-layer-like value derived from volume_id as the third
 node feature. This keeps the representation close in shape while avoiding use
 of unavailable old-simulation metadata.
+
+Important time-feature note:
+  The original `tof/50` scaling was chosen for Nakagami's old CSV, where the
+  TOF-like column is typically O(10). local430 `times` are not on the same
+  numerical scale and can contain very large values, so directly using
+  `time/50` can produce features of O(1e5-1e6) and destabilize AMP training.
+  Here we use log compression instead:
+      time_feature = log1p(max(time, 0)) / 20
 """
 
 from __future__ import annotations
@@ -26,6 +34,19 @@ from torch_geometric.nn import knn_graph
 
 NO_ANTIPROTON = -2212
 NO_ANTIDEUTERON = -1000010020
+
+
+def make_time_feature(times: np.ndarray) -> np.ndarray:
+    """Return a bounded local430 time feature.
+
+    Old Nakagami VolID CSV used a TOF-like value with a small range, so the
+    previous `time / 50` scaling was only a rough attempt to match that scale.
+    local430 times can be orders of magnitude larger; log compression keeps
+    the ordering information without letting rare extreme values dominate.
+    """
+    finite = np.nan_to_num(times, nan=0.0, posinf=0.0, neginf=0.0)
+    non_negative = np.clip(finite, 0.0, None)
+    return (np.log1p(non_negative) / 20.0).astype(np.float32)
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,10 +97,9 @@ def graph_from_event(event: dict, knn_k: int, third_feature: str) -> Data | None
     if y is None or len(energies) < 2:
         return None
 
-    times = np.nan_to_num(times, nan=0.0, posinf=0.0, neginf=0.0)
     pos = torch.tensor(positions / 1000.0, dtype=torch.float32)
     edep = torch.tensor(np.log1p(np.clip(energies, 0.0, None)), dtype=torch.float32).view(-1, 1)
-    tof = torch.tensor(times / 50.0, dtype=torch.float32).view(-1, 1)
+    tof = torch.tensor(make_time_feature(times), dtype=torch.float32).view(-1, 1)
     vol = torch.tensor(volume_ids, dtype=torch.long)
 
     if third_feature == "layer":
@@ -171,6 +191,7 @@ def main() -> None:
         "knn_k": args.knn_k,
         "max_per_class_per_split": args.max_per_class_per_split,
         "third_feature": args.third_feature,
+        "time_feature": "log1p(max(time,0))/20",
         "splits": [],
     }
     for split in ["train", "val", "test"]:
