@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--device", default="cuda")
     p.add_argument("--amp", action="store_true")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--resume", type=Path, default=None)
     p.add_argument(
         "--feature-mode",
         default="full",
@@ -210,8 +211,23 @@ def train(args: argparse.Namespace) -> None:
 
     best_auc = -1.0
     best_path = args.output_dir / "best.pt"
+    last_path = args.output_dir / "last.pt"
+    start_epoch = 1
 
-    for epoch in range(1, args.epochs + 1):
+    if args.resume is not None:
+        ckpt = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model"])
+        opt.load_state_dict(ckpt["optimizer"])
+        if "scaler" in ckpt:
+            scaler.load_state_dict(ckpt["scaler"])
+        best_auc = float(ckpt.get("best_auc", -1.0))
+        start_epoch = int(ckpt["epoch"]) + 1
+        print(
+            f"resumed: {args.resume} "
+            f"(next epoch={start_epoch}, best_auc={best_auc:.6f})"
+        )
+
+    for epoch in range(start_epoch, args.epochs + 1):
         t0 = time.time()
         model.train()
         losses = []
@@ -246,8 +262,31 @@ def train(args: argparse.Namespace) -> None:
 
         if float(val["auc"]) > best_auc:
             best_auc = float(val["auc"])
-            torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch, "best_auc": best_auc}, best_path)
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "optimizer": opt.state_dict(),
+                    "scaler": scaler.state_dict(),
+                    "args": vars(args),
+                    "epoch": epoch,
+                    "best_auc": best_auc,
+                },
+                best_path
+            )
             print("  -> best saved:", best_path)
+
+        torch.save(
+            {
+                "model": model.state_dict(),
+                "optimizer": opt.state_dict(),
+                "scaler": scaler.state_dict(),
+                "args": vars(args),
+                "epoch": epoch,
+                "best_auc": best_auc,
+            },
+            last_path,
+        )
+        print("  -> last saved:", last_path)
 
     state = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(state["model"])
