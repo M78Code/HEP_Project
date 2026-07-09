@@ -72,9 +72,10 @@ int stoplayer_from_track(CTrackBase* track, bool& stopped_in_tracker) {
 int main(int argc, char** argv) {
   if (argc < 5) {
     std::cerr << "usage: " << argv[0]
-              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED\n"
+              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED [META_CSV]\n"
               << "  MAX_ENTRIES=0 means all entries\n"
-              << "  REQUIRE_STOPPED=1 keeps only events stopped in tracker\n";
+              << "  REQUIRE_STOPPED=1 keeps only events stopped in tracker\n"
+              << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps\n";
     return 1;
   }
 
@@ -82,6 +83,7 @@ int main(int argc, char** argv) {
   const std::string output_path = argv[2];
   const Long64_t max_entries = std::stoll(argv[3]);
   const bool require_stopped = std::stoi(argv[4]) != 0;
+  const std::string meta_path = argc >= 6 ? argv[5] : "";
   const std::string file_id = file_id_from_path(root_path);
 
   TChain tree("TreeMc");
@@ -96,6 +98,15 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  std::ofstream meta_output;
+  if (!meta_path.empty()) {
+    meta_output.open(meta_path);
+    if (!meta_output) {
+      std::cerr << "cannot open meta output: " << meta_path << "\n";
+      return 1;
+    }
+  }
+
   const Long64_t total_entries = tree.GetEntries();
   const Long64_t entries_to_loop =
       (max_entries > 0 && max_entries < total_entries) ? max_entries : total_entries;
@@ -108,6 +119,7 @@ int main(int argc, char** argv) {
   Long64_t rows = 0;
 
   output << std::setprecision(12);
+  meta_output << std::setprecision(12);
 
   for (Long64_t entry = 0; entry < entries_to_loop; ++entry) {
     tree.GetEntry(entry);
@@ -163,6 +175,12 @@ int main(int argc, char** argv) {
     const double tof = top_cube_time - top_umbrella_time;
     ++used_events;
 
+    if (meta_output) {
+      meta_output << file_id << "," << entry << "," << label << "," << stoplayer << ","
+                  << event->GetPrimaryBeta() << "," << primary_track->GetPdg() << ","
+                  << volume_ids.size() << "\n";
+    }
+
     for (size_t i = 0;
          i < volume_ids.size() && i < positions.size() && i < energy_depositions.size();
          ++i) {
@@ -176,6 +194,9 @@ int main(int argc, char** argv) {
 
   std::cerr << "root: " << root_path << "\n";
   std::cerr << "output: " << output_path << "\n";
+  if (!meta_path.empty()) {
+    std::cerr << "meta_output: " << meta_path << "\n";
+  }
   std::cerr << "entries_total: " << total_entries << "\n";
   std::cerr << "entries_looped: " << entries_to_loop << "\n";
   std::cerr << "used_events: " << used_events << "\n";

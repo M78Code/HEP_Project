@@ -7,9 +7,9 @@ same 10-column VolID layout used in Nakagami's old CSV:
   file_id,entry,label,stoplayer,volume_id,x,y,z,tof,hit_edep
 
 Unlike export_nakagami_volid_graphs.py, this converter does not require an
-Atrest metadata CSV. Labels are read directly from the VolID rows. Beta is not
-available in this CSV format, so a dummy beta=-1 is stored until a separate
-event-level metadata export is added.
+Atrest metadata CSV. Labels are read directly from the VolID rows. If optional
+Meta CSV files are provided, event beta is read from them; otherwise dummy
+beta=-1 is stored.
 """
 
 from __future__ import annotations
@@ -32,6 +32,8 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--anti-p-csv", required=True, type=Path)
     p.add_argument("--anti-d-csv", required=True, type=Path)
+    p.add_argument("--anti-p-meta", default=None, type=Path)
+    p.add_argument("--anti-d-meta", default=None, type=Path)
     p.add_argument("--output-dir", required=True, type=Path)
     p.add_argument("--knn-k", type=int, default=8)
     p.add_argument("--seed", type=int, default=42)
@@ -41,6 +43,24 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--test-per-class", type=int, default=0)
     p.add_argument("--split-fracs", default="0.8,0.1,0.1", help="train,val,test fractions")
     return p.parse_args()
+
+
+def load_meta(meta_path: Path | None) -> dict[tuple[str, str], float]:
+    if meta_path is None:
+        return {}
+    if not meta_path.exists():
+        raise FileNotFoundError(meta_path)
+
+    beta_by_key: dict[tuple[str, str], float] = {}
+    with meta_path.open() as f:
+        for row in csv.reader(f):
+            if not row:
+                continue
+            if len(row) < 5:
+                raise ValueError(f"{meta_path}: expected at least 5 columns, got {len(row)}: {row}")
+            beta_by_key[(row[0], row[1])] = float(row[4])
+    print(f"{meta_path.name}: meta events={len(beta_by_key):,}")
+    return beta_by_key
 
 
 def load_hits(csv_path: Path, expected_label: int) -> dict[tuple[str, str], list[HitRow]]:
@@ -76,7 +96,13 @@ def load_hits(csv_path: Path, expected_label: int) -> dict[tuple[str, str], list
     return hits
 
 
-def graph_from_rows(key: tuple[str, str], label: int, rows: list[HitRow], knn_k: int) -> Data | None:
+def graph_from_rows(
+    key: tuple[str, str],
+    label: int,
+    beta: float,
+    rows: list[HitRow],
+    knn_k: int,
+) -> Data | None:
     if len(rows) < 2:
         return None
 
@@ -105,19 +131,30 @@ def graph_from_rows(key: tuple[str, str], label: int, rows: list[HitRow], knn_k:
         edge_index=edge_index,
         volume_id=volume_id,
         y=torch.tensor(label, dtype=torch.long),
-        beta=torch.tensor(-1.0, dtype=torch.float32),
+        beta=torch.tensor(beta, dtype=torch.float32),
         file_id=key[0],
         event_id=key[1],
     )
 
 
-def build_graphs(csv_path: Path, label: int, knn_k: int, max_events: int) -> list[Data]:
+def build_graphs(
+    csv_path: Path,
+    meta_path: Path | None,
+    label: int,
+    knn_k: int,
+    max_events: int,
+) -> list[Data]:
     grouped = load_hits(csv_path, expected_label=label)
+    beta_by_key = load_meta(meta_path)
     graphs: list[Data] = []
     too_small = 0
+    missing_meta = 0
 
     for key in sorted(grouped):
-        graph = graph_from_rows(key, label, grouped[key], knn_k)
+        beta = beta_by_key.get(key, -1.0)
+        if beta < 0:
+            missing_meta += 1
+        graph = graph_from_rows(key, label, beta, grouped[key], knn_k)
         if graph is None:
             too_small += 1
             continue
@@ -127,7 +164,7 @@ def build_graphs(csv_path: Path, label: int, knn_k: int, max_events: int) -> lis
 
     print(
         f"{csv_path.name}: events={len(grouped):,} graphs={len(graphs):,} "
-        f"too_small={too_small:,} label={label}"
+        f"too_small={too_small:,} missing_meta={missing_meta:,} label={label}"
     )
     return graphs
 
@@ -189,8 +226,20 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    anti_p = build_graphs(args.anti_p_csv, label=0, knn_k=args.knn_k, max_events=args.max_per_class)
-    anti_d = build_graphs(args.anti_d_csv, label=1, knn_k=args.knn_k, max_events=args.max_per_class)
+    anti_p = build_graphs(
+        args.anti_p_csv,
+        args.anti_p_meta,
+        label=0,
+        knn_k=args.knn_k,
+        max_events=args.max_per_class,
+    )
+    anti_d = build_graphs(
+        args.anti_d_csv,
+        args.anti_d_meta,
+        label=1,
+        knn_k=args.knn_k,
+        max_events=args.max_per_class,
+    )
 
     splits = split_balanced(args, anti_p=anti_p, anti_d=anti_d)
     for name, graphs in splits.items():
