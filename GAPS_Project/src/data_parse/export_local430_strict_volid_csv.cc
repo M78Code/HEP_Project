@@ -46,18 +46,21 @@ int stoplayer_from_track(CTrackBase* track, bool& stopped_in_tracker) {
   const auto& kinetic_energies = track->GetKineticEnergy();
   const auto& step_lengths = track->GetStepLength();
 
-  for (size_t i = 0; i < kinetic_energies.size() && i < volume_ids.size(); ++i) {
-    const int volume_id = volume_ids.at(i);
-    if (kinetic_energies.at(i) == 0 && GGeometryObject::IsTrackerVolume(volume_id)) {
-      stoplayer = (volume_id % 10000000) / 1000000;
-      stopped_in_tracker = true;
-      return stoplayer;
+  bool has_zero_step_length = false;
+  for (double step_length : step_lengths) {
+    if (step_length == 0) {
+      has_zero_step_length = true;
+      break;
     }
   }
 
-  for (size_t i = 0; i < step_lengths.size() && i < volume_ids.size(); ++i) {
+  if (!has_zero_step_length) {
+    return stoplayer;
+  }
+
+  for (size_t i = 0; i < kinetic_energies.size() && i < volume_ids.size(); ++i) {
     const int volume_id = volume_ids.at(i);
-    if (step_lengths.at(i) == 0 && GGeometryObject::IsTrackerVolume(volume_id)) {
+    if (kinetic_energies.at(i) == 0 && GGeometryObject::IsTrackerVolume(volume_id)) {
       stoplayer = (volume_id % 10000000) / 1000000;
       stopped_in_tracker = true;
       return stoplayer;
@@ -72,10 +75,11 @@ int stoplayer_from_track(CTrackBase* track, bool& stopped_in_tracker) {
 int main(int argc, char** argv) {
   if (argc < 5) {
     std::cerr << "usage: " << argv[0]
-              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED [META_CSV]\n"
+              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED [META_CSV] [EXPECTED_LABEL]\n"
               << "  MAX_ENTRIES=0 means all entries\n"
               << "  REQUIRE_STOPPED=1 keeps only events stopped in tracker\n"
-              << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps,primary_beta,generated_beta\n";
+              << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps,primary_beta,generated_beta\n"
+              << "  EXPECTED_LABEL optionally filters target class: 0=anti-proton, 1=anti-deuteron\n";
     return 1;
   }
 
@@ -84,6 +88,7 @@ int main(int argc, char** argv) {
   const Long64_t max_entries = std::stoll(argv[3]);
   const bool require_stopped = std::stoi(argv[4]) != 0;
   const std::string meta_path = argc >= 6 ? argv[5] : "";
+  const int expected_label = argc >= 7 ? std::stoi(argv[6]) : -1;
   const std::string file_id = file_id_from_path(root_path);
 
   TChain tree("TreeMc");
@@ -131,7 +136,7 @@ int main(int argc, char** argv) {
 
     CTrackBase* primary_track = event->GetTrack(0);
     const int label = label_from_pdg(primary_track->GetPdg());
-    if (label < 0) {
+    if (label < 0 || (expected_label >= 0 && label != expected_label)) {
       ++skipped_label;
       continue;
     }
@@ -150,24 +155,28 @@ int main(int argc, char** argv) {
 
     bool hit_top_umbrella = false;
     bool hit_top_cube = false;
-    double top_umbrella_time = 0.0;
-    double top_cube_time = 0.0;
+    double top_umbrella_time = 1e99;
+    double top_cube_time = 1e99;
 
     for (size_t i = 0; i < volume_ids.size() && i < times.size(); ++i) {
       const int volume_id = volume_ids.at(i);
 
-      if (!hit_top_umbrella && GGeometryObject::IsUmbrellaVolume(volume_id)) {
+      if (GGeometryObject::IsUmbrellaVolume(volume_id) && volume_id / 1000000 == 100) {
         hit_top_umbrella = true;
-        top_umbrella_time = times.at(i);
+        if (times.at(i) < top_umbrella_time) {
+          top_umbrella_time = times.at(i);
+        }
       }
 
-      if (!hit_top_cube && GGeometryObject::IsCubeVolume(volume_id)) {
+      if (GGeometryObject::IsCubeVolume(volume_id) && volume_id / 1000000 == 110) {
         hit_top_cube = true;
-        top_cube_time = times.at(i);
+        if (times.at(i) < top_cube_time) {
+          top_cube_time = times.at(i);
+        }
       }
     }
 
-    if (!hit_top_umbrella || !hit_top_cube) {
+    if (!hit_top_umbrella || !hit_top_cube || !(top_umbrella_time < top_cube_time)) {
       ++skipped_no_top;
       continue;
     }
