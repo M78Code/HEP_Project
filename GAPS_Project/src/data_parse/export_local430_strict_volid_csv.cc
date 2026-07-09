@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 #include "TChain.h"
@@ -11,6 +12,12 @@
 #include "GGeometry.hh"
 
 namespace {
+
+enum class SelectionMode {
+  Stopped,
+  TopTrigger,
+  LabelOnly,
+};
 
 std::string file_id_from_path(const std::string& path) {
   std::string name = path;
@@ -36,6 +43,33 @@ int label_from_pdg(const int pdg) {
     return 1;
   }
   return -1;
+}
+
+SelectionMode parse_selection_mode(const std::string& text) {
+  if (text == "1" || text == "stopped") {
+    return SelectionMode::Stopped;
+  }
+  if (text == "0" || text == "toptrigger" || text == "top_trigger") {
+    return SelectionMode::TopTrigger;
+  }
+  if (text == "label_only" || text == "label-only" || text == "label") {
+    return SelectionMode::LabelOnly;
+  }
+  throw std::invalid_argument(
+      "unknown selection mode: " + text +
+      " (expected stopped, toptrigger, label_only, or legacy 1/0)");
+}
+
+std::string selection_mode_name(const SelectionMode mode) {
+  switch (mode) {
+    case SelectionMode::Stopped:
+      return "stopped";
+    case SelectionMode::TopTrigger:
+      return "toptrigger";
+    case SelectionMode::LabelOnly:
+      return "label_only";
+  }
+  return "unknown";
 }
 
 int stoplayer_from_track(CTrackBase* track, bool& stopped_in_tracker) {
@@ -75,9 +109,13 @@ int stoplayer_from_track(CTrackBase* track, bool& stopped_in_tracker) {
 int main(int argc, char** argv) {
   if (argc < 5) {
     std::cerr << "usage: " << argv[0]
-              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED [META_CSV] [EXPECTED_LABEL]\n"
+              << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES SELECTION_MODE [META_CSV] [EXPECTED_LABEL]\n"
               << "  MAX_ENTRIES=0 means all entries\n"
-              << "  REQUIRE_STOPPED=1 keeps only events stopped in tracker\n"
+              << "  SELECTION_MODE: stopped, toptrigger, label_only\n"
+              << "    stopped: keeps expected-label events with toptrigger and stopped in tracker\n"
+              << "    toptrigger: keeps expected-label events with toptrigger; no stopped requirement\n"
+              << "    label_only: keeps expected-label events; no toptrigger/stopped requirement\n"
+              << "  legacy SELECTION_MODE values are also accepted: 1=stopped, 0=toptrigger\n"
               << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps,primary_beta,generated_beta\n"
               << "  EXPECTED_LABEL optionally filters target class: 0=anti-proton, 1=anti-deuteron\n";
     return 1;
@@ -86,7 +124,7 @@ int main(int argc, char** argv) {
   const std::string root_path = argv[1];
   const std::string output_path = argv[2];
   const Long64_t max_entries = std::stoll(argv[3]);
-  const bool require_stopped = std::stoi(argv[4]) != 0;
+  const SelectionMode selection_mode = parse_selection_mode(argv[4]);
   const std::string meta_path = argc >= 6 ? argv[5] : "";
   const int expected_label = argc >= 7 ? std::stoi(argv[6]) : -1;
   const std::string file_id = file_id_from_path(root_path);
@@ -143,7 +181,7 @@ int main(int argc, char** argv) {
 
     bool stopped_in_tracker = false;
     const int stoplayer = stoplayer_from_track(primary_track, stopped_in_tracker);
-    if (require_stopped && !stopped_in_tracker) {
+    if (selection_mode == SelectionMode::Stopped && !stopped_in_tracker) {
       ++skipped_not_stopped;
       continue;
     }
@@ -176,12 +214,14 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (!hit_top_umbrella || !hit_top_cube || !(top_umbrella_time < top_cube_time)) {
+    const bool toptrigger =
+        hit_top_umbrella && hit_top_cube && (top_umbrella_time < top_cube_time);
+    if (selection_mode != SelectionMode::LabelOnly && !toptrigger) {
       ++skipped_no_top;
       continue;
     }
 
-    const double tof = top_cube_time - top_umbrella_time;
+    const double tof = toptrigger ? (top_cube_time - top_umbrella_time) : -1.0;
     ++used_events;
 
     if (meta_output) {
@@ -205,6 +245,7 @@ int main(int argc, char** argv) {
   }
 
   std::cerr << "root: " << root_path << "\n";
+  std::cerr << "selection_mode: " << selection_mode_name(selection_mode) << "\n";
   std::cerr << "output: " << output_path << "\n";
   if (!meta_path.empty()) {
     std::cerr << "meta_output: " << meta_path << "\n";
