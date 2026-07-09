@@ -1,0 +1,495 @@
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$ for mode in edep_only no_edep pos_only edep_pos; do
+>   CUDA_VISIBLE_DEVICES=1 PYTHONFAULTHANDLER=1 MALLOC_ARENA_MAX=2 \
+>   python -u src/scripts/train_nakagami_volid_dgcnn.py \
+>     --data-dir dataset/local430_strict_volid_stopped_full_nakagami \
+>     --output-dir results/local430_strict_volid_dgcnn_stopped_full_nakagami_${mode} \
+>     --epochs 80 \
+>     --batch-size 512 \
+>     --hidden 64 \
+>     --feature-mode ${mode} \
+>     --amp \
+>     2>&1 | tee ~/train_local430_strict_volid_dgcnn_stopped_full_nakagami_${mode}.log
+> done
+device    : cuda
+data dir  : dataset/local430_strict_volid_stopped_full_nakagami
+feature   : edep_only (in_dim=1)
+train/val/test: 221234 27654 27656
+parameters: 33793
+AMP       : True
+early stopping: monitor=val_auc patience=10  min_epochs=10  min_delta=0.0
+Epoch   1/80 | train_loss: 0.0430 train_acc: 0.9927 | val_acc: 0.9983 val_auc: 0.99998 | 14.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   2/80 | train_loss: 0.0079 train_acc: 0.9978 | val_acc: 0.9929 val_auc: 0.99997 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   3/80 | train_loss: 0.0066 train_acc: 0.9979 | val_acc: 0.9971 val_auc: 0.99998 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   4/80 | train_loss: 0.0059 train_acc: 0.9980 | val_acc: 0.9975 val_auc: 0.99998 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   5/80 | train_loss: 0.0056 train_acc: 0.9981 | val_acc: 0.9974 val_auc: 0.99999 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   6/80 | train_loss: 0.0052 train_acc: 0.9981 | val_acc: 0.9983 val_auc: 0.99999 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   7/80 | train_loss: 0.0050 train_acc: 0.9982 | val_acc: 0.9981 val_auc: 0.99999 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   8/80 | train_loss: 0.0049 train_acc: 0.9983 | val_acc: 0.9986 val_auc: 0.99999 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch   9/80 | train_loss: 0.0048 train_acc: 0.9983 | val_acc: 0.9980 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  10/80 | train_loss: 0.0048 train_acc: 0.9984 | val_acc: 0.9975 val_auc: 0.99998 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  11/80 | train_loss: 0.0042 train_acc: 0.9985 | val_acc: 0.9982 val_auc: 0.99999 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  12/80 | train_loss: 0.0044 train_acc: 0.9983 | val_acc: 0.9981 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  13/80 | train_loss: 0.0042 train_acc: 0.9984 | val_acc: 0.9984 val_auc: 0.99999 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  14/80 | train_loss: 0.0043 train_acc: 0.9984 | val_acc: 0.9984 val_auc: 0.99992 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  15/80 | train_loss: 0.0042 train_acc: 0.9984 | val_acc: 0.9984 val_auc: 0.99999 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  16/80 | train_loss: 0.0041 train_acc: 0.9986 | val_acc: 0.9989 val_auc: 0.99999 | 14.2s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  17/80 | train_loss: 0.0039 train_acc: 0.9986 | val_acc: 0.9983 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  18/80 | train_loss: 0.0040 train_acc: 0.9984 | val_acc: 0.9986 val_auc: 0.99999 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  19/80 | train_loss: 0.0039 train_acc: 0.9985 | val_acc: 0.9986 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  20/80 | train_loss: 0.0039 train_acc: 0.9986 | val_acc: 0.9987 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  21/80 | train_loss: 0.0038 train_acc: 0.9986 | val_acc: 0.9985 val_auc: 0.99999 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  22/80 | train_loss: 0.0035 train_acc: 0.9987 | val_acc: 0.9987 val_auc: 0.99999 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  23/80 | train_loss: 0.0036 train_acc: 0.9988 | val_acc: 0.9971 val_auc: 0.99998 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  24/80 | train_loss: 0.0037 train_acc: 0.9986 | val_acc: 0.9987 val_auc: 0.99999 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  25/80 | train_loss: 0.0036 train_acc: 0.9987 | val_acc: 0.9981 val_auc: 0.99999 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+Epoch  26/80 | train_loss: 0.0034 train_acc: 0.9987 | val_acc: 0.9986 val_auc: 0.99999 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only/last.pt
+  -> early stopping: val_auc no improvement for 10 epochs (best_val_auc=0.999994)
+
+test accuracy: 0.998590
+test AUC     : 0.999991
+Rej@0.50: inf  FPR=0
+Rej@0.70: inf  FPR=0
+Rej@0.80: inf  FPR=0
+Rej@0.90: inf  FPR=0
+Rej@0.95: inf  FPR=0
+Rej@0.98: inf  FPR=0
+output: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only
+device    : cuda
+data dir  : dataset/local430_strict_volid_stopped_full_nakagami
+feature   : no_edep (in_dim=6)
+train/val/test: 221234 27654 27656
+parameters: 34113
+AMP       : True
+early stopping: monitor=val_auc patience=10  min_epochs=10  min_delta=0.0
+Epoch   1/80 | train_loss: 0.1173 train_acc: 0.9548 | val_acc: 0.9825 val_auc: 0.99768 | 14.7s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   2/80 | train_loss: 0.0343 train_acc: 0.9903 | val_acc: 0.9949 val_auc: 0.99894 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   3/80 | train_loss: 0.0249 train_acc: 0.9934 | val_acc: 0.9933 val_auc: 0.99901 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   4/80 | train_loss: 0.0234 train_acc: 0.9936 | val_acc: 0.9850 val_auc: 0.99892 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   5/80 | train_loss: 0.0203 train_acc: 0.9945 | val_acc: 0.9784 val_auc: 0.99857 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   6/80 | train_loss: 0.0187 train_acc: 0.9950 | val_acc: 0.9956 val_auc: 0.99941 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   7/80 | train_loss: 0.0178 train_acc: 0.9952 | val_acc: 0.9958 val_auc: 0.99941 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   8/80 | train_loss: 0.0185 train_acc: 0.9948 | val_acc: 0.9955 val_auc: 0.99936 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch   9/80 | train_loss: 0.0172 train_acc: 0.9953 | val_acc: 0.9952 val_auc: 0.99937 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  10/80 | train_loss: 0.0162 train_acc: 0.9955 | val_acc: 0.9920 val_auc: 0.99930 | 14.6s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  11/80 | train_loss: 0.0160 train_acc: 0.9957 | val_acc: 0.9914 val_auc: 0.99940 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  12/80 | train_loss: 0.0158 train_acc: 0.9959 | val_acc: 0.9952 val_auc: 0.99947 | 14.5s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  13/80 | train_loss: 0.0163 train_acc: 0.9955 | val_acc: 0.9941 val_auc: 0.99944 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  14/80 | train_loss: 0.0152 train_acc: 0.9959 | val_acc: 0.9965 val_auc: 0.99956 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  15/80 | train_loss: 0.0151 train_acc: 0.9959 | val_acc: 0.9956 val_auc: 0.99956 | 14.2s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  16/80 | train_loss: 0.0144 train_acc: 0.9961 | val_acc: 0.9959 val_auc: 0.99955 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  17/80 | train_loss: 0.0158 train_acc: 0.9956 | val_acc: 0.9958 val_auc: 0.99954 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  18/80 | train_loss: 0.0141 train_acc: 0.9962 | val_acc: 0.9962 val_auc: 0.99958 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  19/80 | train_loss: 0.0139 train_acc: 0.9962 | val_acc: 0.9939 val_auc: 0.99939 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  20/80 | train_loss: 0.0137 train_acc: 0.9964 | val_acc: 0.9954 val_auc: 0.99957 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  21/80 | train_loss: 0.0142 train_acc: 0.9961 | val_acc: 0.9957 val_auc: 0.99941 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  22/80 | train_loss: 0.0131 train_acc: 0.9965 | val_acc: 0.9965 val_auc: 0.99951 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  23/80 | train_loss: 0.0130 train_acc: 0.9964 | val_acc: 0.9952 val_auc: 0.99954 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  24/80 | train_loss: 0.0125 train_acc: 0.9965 | val_acc: 0.9962 val_auc: 0.99958 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  25/80 | train_loss: 0.0127 train_acc: 0.9966 | val_acc: 0.9967 val_auc: 0.99959 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  26/80 | train_loss: 0.0124 train_acc: 0.9966 | val_acc: 0.9958 val_auc: 0.99963 | 14.4s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  27/80 | train_loss: 0.0122 train_acc: 0.9966 | val_acc: 0.9958 val_auc: 0.99960 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  28/80 | train_loss: 0.0127 train_acc: 0.9964 | val_acc: 0.9952 val_auc: 0.99965 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  29/80 | train_loss: 0.0119 train_acc: 0.9967 | val_acc: 0.9959 val_auc: 0.99955 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  30/80 | train_loss: 0.0114 train_acc: 0.9968 | val_acc: 0.9968 val_auc: 0.99958 | 14.5s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  31/80 | train_loss: 0.0109 train_acc: 0.9970 | val_acc: 0.9967 val_auc: 0.99971 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  32/80 | train_loss: 0.0104 train_acc: 0.9970 | val_acc: 0.9974 val_auc: 0.99965 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  33/80 | train_loss: 0.0100 train_acc: 0.9971 | val_acc: 0.9974 val_auc: 0.99948 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  34/80 | train_loss: 0.0096 train_acc: 0.9974 | val_acc: 0.9970 val_auc: 0.99973 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  35/80 | train_loss: 0.0085 train_acc: 0.9976 | val_acc: 0.9976 val_auc: 0.99976 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  36/80 | train_loss: 0.0082 train_acc: 0.9977 | val_acc: 0.9978 val_auc: 0.99981 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  37/80 | train_loss: 0.0080 train_acc: 0.9977 | val_acc: 0.9971 val_auc: 0.99975 | 14.5s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  38/80 | train_loss: 0.0078 train_acc: 0.9979 | val_acc: 0.9972 val_auc: 0.99968 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  39/80 | train_loss: 0.0078 train_acc: 0.9978 | val_acc: 0.9977 val_auc: 0.99970 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  40/80 | train_loss: 0.0074 train_acc: 0.9979 | val_acc: 0.9977 val_auc: 0.99978 | 14.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  41/80 | train_loss: 0.0073 train_acc: 0.9980 | val_acc: 0.9971 val_auc: 0.99982 | 16.4s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  42/80 | train_loss: 0.0074 train_acc: 0.9980 | val_acc: 0.9969 val_auc: 0.99969 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  43/80 | train_loss: 0.0074 train_acc: 0.9979 | val_acc: 0.9973 val_auc: 0.99978 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  44/80 | train_loss: 0.0078 train_acc: 0.9980 | val_acc: 0.9946 val_auc: 0.99953 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  45/80 | train_loss: 0.0102 train_acc: 0.9973 | val_acc: 0.9976 val_auc: 0.99980 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  46/80 | train_loss: 0.0063 train_acc: 0.9983 | val_acc: 0.9974 val_auc: 0.99984 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  47/80 | train_loss: 0.0059 train_acc: 0.9984 | val_acc: 0.9975 val_auc: 0.99981 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  48/80 | train_loss: 0.0072 train_acc: 0.9980 | val_acc: 0.9980 val_auc: 0.99984 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  49/80 | train_loss: 0.0057 train_acc: 0.9985 | val_acc: 0.9974 val_auc: 0.99977 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  50/80 | train_loss: 0.0063 train_acc: 0.9984 | val_acc: 0.9972 val_auc: 0.99974 | 14.6s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  51/80 | train_loss: 0.0073 train_acc: 0.9979 | val_acc: 0.9982 val_auc: 0.99983 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  52/80 | train_loss: 0.0054 train_acc: 0.9985 | val_acc: 0.9976 val_auc: 0.99983 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  53/80 | train_loss: 0.0052 train_acc: 0.9986 | val_acc: 0.9975 val_auc: 0.99977 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  54/80 | train_loss: 0.0057 train_acc: 0.9984 | val_acc: 0.9979 val_auc: 0.99982 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  55/80 | train_loss: 0.0057 train_acc: 0.9983 | val_acc: 0.9979 val_auc: 0.99980 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+Epoch  56/80 | train_loss: 0.0049 train_acc: 0.9986 | val_acc: 0.9972 val_auc: 0.99984 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep/last.pt
+  -> early stopping: val_auc no improvement for 10 epochs (best_val_auc=0.999839)
+
+test accuracy: 0.997794
+test AUC     : 0.999612
+Rej@0.50: 13828.000  FPR=7.2317038e-05
+Rej@0.70: 13828.000  FPR=7.2317038e-05
+Rej@0.80: 13828.000  FPR=7.2317038e-05
+Rej@0.90: 13828.000  FPR=7.2317038e-05
+Rej@0.95: 13828.000  FPR=7.2317038e-05
+Rej@0.98: 6914.000  FPR=0.00014463408
+output: results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep
+device    : cuda
+data dir  : dataset/local430_strict_volid_stopped_full_nakagami
+feature   : pos_only (in_dim=3)
+train/val/test: 221234 27654 27656
+parameters: 33921
+AMP       : True
+early stopping: monitor=val_auc patience=10  min_epochs=10  min_delta=0.0
+Epoch   1/80 | train_loss: 0.6742 train_acc: 0.5495 | val_acc: 0.5585 val_auc: 0.59121 | 14.6s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   2/80 | train_loss: 0.6636 train_acc: 0.5662 | val_acc: 0.5655 val_auc: 0.60289 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   3/80 | train_loss: 0.6614 train_acc: 0.5712 | val_acc: 0.5626 val_auc: 0.59595 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   4/80 | train_loss: 0.6603 train_acc: 0.5721 | val_acc: 0.5701 val_auc: 0.60458 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   5/80 | train_loss: 0.6596 train_acc: 0.5747 | val_acc: 0.5775 val_auc: 0.60914 | 13.6s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   6/80 | train_loss: 0.6588 train_acc: 0.5754 | val_acc: 0.5762 val_auc: 0.60739 | 13.7s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   7/80 | train_loss: 0.6583 train_acc: 0.5758 | val_acc: 0.5771 val_auc: 0.61383 | 13.7s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   8/80 | train_loss: 0.6579 train_acc: 0.5765 | val_acc: 0.5771 val_auc: 0.60983 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch   9/80 | train_loss: 0.6577 train_acc: 0.5768 | val_acc: 0.5761 val_auc: 0.61325 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  10/80 | train_loss: 0.6574 train_acc: 0.5784 | val_acc: 0.5780 val_auc: 0.60990 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  11/80 | train_loss: 0.6571 train_acc: 0.5777 | val_acc: 0.5800 val_auc: 0.61404 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  12/80 | train_loss: 0.6568 train_acc: 0.5778 | val_acc: 0.5793 val_auc: 0.61147 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  13/80 | train_loss: 0.6563 train_acc: 0.5786 | val_acc: 0.5633 val_auc: 0.61121 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  14/80 | train_loss: 0.6560 train_acc: 0.5800 | val_acc: 0.5787 val_auc: 0.61077 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  15/80 | train_loss: 0.6555 train_acc: 0.5804 | val_acc: 0.5749 val_auc: 0.61311 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  16/80 | train_loss: 0.6549 train_acc: 0.5820 | val_acc: 0.5755 val_auc: 0.61502 | 13.9s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  17/80 | train_loss: 0.6546 train_acc: 0.5816 | val_acc: 0.5821 val_auc: 0.61753 | 14.2s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  18/80 | train_loss: 0.6542 train_acc: 0.5822 | val_acc: 0.5829 val_auc: 0.62073 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  19/80 | train_loss: 0.6536 train_acc: 0.5849 | val_acc: 0.5838 val_auc: 0.61842 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  20/80 | train_loss: 0.6533 train_acc: 0.5848 | val_acc: 0.5852 val_auc: 0.62408 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  21/80 | train_loss: 0.6528 train_acc: 0.5872 | val_acc: 0.5868 val_auc: 0.62385 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  22/80 | train_loss: 0.6521 train_acc: 0.5880 | val_acc: 0.5776 val_auc: 0.62226 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  23/80 | train_loss: 0.6520 train_acc: 0.5889 | val_acc: 0.5886 val_auc: 0.62609 | 14.2s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  24/80 | train_loss: 0.6516 train_acc: 0.5891 | val_acc: 0.5903 val_auc: 0.62628 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  25/80 | train_loss: 0.6508 train_acc: 0.5913 | val_acc: 0.5850 val_auc: 0.62743 | 14.5s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  26/80 | train_loss: 0.6501 train_acc: 0.5944 | val_acc: 0.5878 val_auc: 0.63069 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  27/80 | train_loss: 0.6488 train_acc: 0.5974 | val_acc: 0.5957 val_auc: 0.63523 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  28/80 | train_loss: 0.6445 train_acc: 0.6077 | val_acc: 0.5988 val_auc: 0.64395 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  29/80 | train_loss: 0.6319 train_acc: 0.6284 | val_acc: 0.6240 val_auc: 0.67655 | 14.4s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  30/80 | train_loss: 0.6200 train_acc: 0.6445 | val_acc: 0.6503 val_auc: 0.69090 | 14.2s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  31/80 | train_loss: 0.6150 train_acc: 0.6499 | val_acc: 0.5828 val_auc: 0.68738 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  32/80 | train_loss: 0.6118 train_acc: 0.6535 | val_acc: 0.6504 val_auc: 0.69722 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  33/80 | train_loss: 0.6087 train_acc: 0.6559 | val_acc: 0.6474 val_auc: 0.69729 | 14.0s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  34/80 | train_loss: 0.6077 train_acc: 0.6567 | val_acc: 0.6429 val_auc: 0.69014 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  35/80 | train_loss: 0.6056 train_acc: 0.6589 | val_acc: 0.6582 val_auc: 0.70336 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  36/80 | train_loss: 0.6034 train_acc: 0.6606 | val_acc: 0.6450 val_auc: 0.69827 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  37/80 | train_loss: 0.6037 train_acc: 0.6611 | val_acc: 0.6603 val_auc: 0.70172 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  38/80 | train_loss: 0.6026 train_acc: 0.6611 | val_acc: 0.6592 val_auc: 0.70220 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  39/80 | train_loss: 0.6015 train_acc: 0.6615 | val_acc: 0.6474 val_auc: 0.70053 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  40/80 | train_loss: 0.6002 train_acc: 0.6641 | val_acc: 0.6098 val_auc: 0.69113 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  41/80 | train_loss: 0.6000 train_acc: 0.6630 | val_acc: 0.6582 val_auc: 0.70543 | 16.4s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  42/80 | train_loss: 0.5997 train_acc: 0.6635 | val_acc: 0.6619 val_auc: 0.70436 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  43/80 | train_loss: 0.5983 train_acc: 0.6645 | val_acc: 0.6565 val_auc: 0.70334 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  44/80 | train_loss: 0.5983 train_acc: 0.6651 | val_acc: 0.6561 val_auc: 0.70318 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  45/80 | train_loss: 0.5980 train_acc: 0.6647 | val_acc: 0.6466 val_auc: 0.70224 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  46/80 | train_loss: 0.5976 train_acc: 0.6644 | val_acc: 0.6270 val_auc: 0.69864 | 14.2s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  47/80 | train_loss: 0.5966 train_acc: 0.6669 | val_acc: 0.6380 val_auc: 0.70051 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  48/80 | train_loss: 0.5972 train_acc: 0.6655 | val_acc: 0.6538 val_auc: 0.70348 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  49/80 | train_loss: 0.5946 train_acc: 0.6669 | val_acc: 0.6628 val_auc: 0.70535 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  50/80 | train_loss: 0.5953 train_acc: 0.6667 | val_acc: 0.6348 val_auc: 0.69906 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+Epoch  51/80 | train_loss: 0.5938 train_acc: 0.6679 | val_acc: 0.6484 val_auc: 0.70253 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only/last.pt
+  -> early stopping: val_auc no improvement for 10 epochs (best_val_auc=0.705433)
+
+test accuracy: 0.660942
+test AUC     : 0.708169
+Rej@0.50: 3.698  FPR=0.2703934
+Rej@0.70: 2.520  FPR=0.3968759
+Rej@0.80: 2.100  FPR=0.47620769
+Rej@0.90: 1.760  FPR=0.56819497
+Rej@0.95: 1.561  FPR=0.640512
+Rej@0.98: 1.387  FPR=0.72107318
+output: results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only
+device    : cuda
+data dir  : dataset/local430_strict_volid_stopped_full_nakagami
+feature   : edep_pos (in_dim=4)
+train/val/test: 221234 27654 27656
+parameters: 33985
+AMP       : True
+early stopping: monitor=val_auc patience=10  min_epochs=10  min_delta=0.0
+Epoch   1/80 | train_loss: 0.0343 train_acc: 0.9929 | val_acc: 0.9993 val_auc: 1.00000 | 14.6s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   2/80 | train_loss: 0.0029 train_acc: 0.9993 | val_acc: 0.9991 val_auc: 1.00000 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   3/80 | train_loss: 0.0018 train_acc: 0.9995 | val_acc: 0.9996 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   4/80 | train_loss: 0.0009 train_acc: 0.9998 | val_acc: 0.9997 val_auc: 1.00000 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   5/80 | train_loss: 0.0010 train_acc: 0.9997 | val_acc: 0.9996 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   6/80 | train_loss: 0.0009 train_acc: 0.9998 | val_acc: 0.9995 val_auc: 1.00000 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   7/80 | train_loss: 0.0011 train_acc: 0.9996 | val_acc: 0.9997 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   8/80 | train_loss: 0.0006 train_acc: 0.9998 | val_acc: 0.9996 val_auc: 1.00000 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch   9/80 | train_loss: 0.0006 train_acc: 0.9998 | val_acc: 0.9997 val_auc: 1.00000 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  10/80 | train_loss: 0.0006 train_acc: 0.9998 | val_acc: 0.9996 val_auc: 1.00000 | 14.4s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  11/80 | train_loss: 0.0006 train_acc: 0.9998 | val_acc: 0.9997 val_auc: 0.99996 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  12/80 | train_loss: 0.0007 train_acc: 0.9998 | val_acc: 0.9994 val_auc: 1.00000 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  13/80 | train_loss: 0.0004 train_acc: 0.9999 | val_acc: 0.9999 val_auc: 1.00000 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  14/80 | train_loss: 0.0006 train_acc: 0.9998 | val_acc: 0.9996 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  15/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9999 val_auc: 1.00000 | 14.1s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  16/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9997 val_auc: 1.00000 | 14.3s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  17/80 | train_loss: 0.0005 train_acc: 0.9998 | val_acc: 0.9996 val_auc: 0.99996 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  18/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9996 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  19/80 | train_loss: 0.0004 train_acc: 0.9998 | val_acc: 0.9998 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  20/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9996 val_auc: 1.00000 | 14.1s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  21/80 | train_loss: 0.0005 train_acc: 0.9999 | val_acc: 0.9997 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  22/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9998 val_auc: 1.00000 | 13.8s
+  -> best saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/best.pt
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  23/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9997 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  24/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9993 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  25/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9997 val_auc: 1.00000 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  26/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9998 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  27/80 | train_loss: 0.0002 train_acc: 0.9999 | val_acc: 0.9995 val_auc: 1.00000 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  28/80 | train_loss: 0.0005 train_acc: 0.9998 | val_acc: 0.9997 val_auc: 1.00000 | 14.0s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  29/80 | train_loss: 0.0001 train_acc: 0.9999 | val_acc: 0.9999 val_auc: 1.00000 | 14.3s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  30/80 | train_loss: 0.0001 train_acc: 1.0000 | val_acc: 0.9997 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  31/80 | train_loss: 0.0003 train_acc: 0.9999 | val_acc: 0.9997 val_auc: 1.00000 | 13.9s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+Epoch  32/80 | train_loss: 0.0002 train_acc: 0.9999 | val_acc: 0.9996 val_auc: 1.00000 | 13.8s
+  -> last saved: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos/last.pt
+  -> early stopping: val_auc no improvement for 10 epochs (best_val_auc=1.000000)
+
+test accuracy: 0.999964
+test AUC     : 1.000000
+Rej@0.50: inf  FPR=0
+Rej@0.70: inf  FPR=0
+Rej@0.80: inf  FPR=0
+Rej@0.90: inf  FPR=0
+Rej@0.95: inf  FPR=0
+Rej@0.98: inf  FPR=0
+output: results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos
+(naka) m78code@gp1:~/HEP_Project/GAPS_Project$
+这组结果非常有说服力，结论比刚才更清楚了。
+结果整理
+input	Accuracy	AUC	Rej@0.90	解释
+full	0.999819	1.000000	inf	全部输入，几乎完美
+edep only	0.998590	0.999991	inf	只用能量损失也几乎完美
+no edep	0.997794	0.999612	13828	不用能量损失仍然非常强
+pos only	0.660942	0.708169	1.760	只用位置明显不够
+edep + pos	0.999964	1.000000	inf	几乎最强
+
+我已经更新到 [nakagami_csv_to_gnn_notes.md](/Users/lind/Desktop/papers/nakagami_csv_to_gnn_notes.md)。
+核心解释
+这说明高性能主要不是“GNN 学到了很神秘的结构”，而是：
+Nakagami-aligned 条件下，hit-level energy loss pattern 本身就极强。
+尤其是：
+edep_mean AUC = 0.99335
+edep_only DGCNN AUC = 0.999991
+所以，只用每个 hit 的能量损失，已经接近完全区分 antiP / antiD。
+加上位置后 edep_pos 直接达到 full 同级别。
+但 no_edep 也很高这一点也重要
+no_edep 没有能量损失，仍然：
+AUC = 0.999612
+Rej@0.90 = 13828
+这说明 TOF + stoplayer + VolID + position 里也有很强的信息。
+也就是说，中上式的 stopped / toptrigger / primary-track selection 后，事件几何路径、停止层、TOF 分布本身也已经带有很强的粒子差异。
