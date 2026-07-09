@@ -1,0 +1,7 @@
+selection,feature,n_events,n_background,n_signal,accuracy,auc,rej50,rej70,rej80,rej90,rej95,rej98,result_dir
+label_only,edep_only,39064,19532,19532,0.914627,0.981256,19532.0,976.6,102.8,14.17,7.41,5.02,results/local430_selection_ablation_dgcnn_label_only_subset_edep_only
+label_only,edep_pos,39064,19532,19532,0.944885,0.991985,9766.0,9766.0,3906.4,39.78,16.39,9.14,results/local430_selection_ablation_dgcnn_label_only_subset_edep_pos
+toptrigger,edep_only,34566,17283,17283,0.909911,0.979688,>17283,2160.4,87.29,12.20,6.87,4.92,results/local430_selection_ablation_dgcnn_toptrigger_subset_edep_only
+toptrigger,edep_pos,34566,17283,17283,0.938842,0.990939,>17283,>17283,>17283,33.30,13.72,8.67,results/local430_selection_ablation_dgcnn_toptrigger_subset_edep_pos
+stopped,edep_only,2528,1264,1264,0.995649,0.999979,>1264,>1264,>1264,>1264,>1264,>1264,results/local430_selection_ablation_dgcnn_stopped_subset_edep_only
+stopped,edep_pos,2528,1264,1264,0.998813,0.999968,>1264,>1264,>1264,>1264,>1264,1264.0,results/local430_selection_ablation_dgcnn_stopped_subset_edep_pos
