@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--dpi", type=int, default=220)
     parser.add_argument("--title", default="Selection ablation")
+    parser.add_argument(
+        "--auc-y-min",
+        type=float,
+        default=None,
+        help="Lower y-axis limit for the AUC panel. Default: min(AUC)-0.02.",
+    )
     return parser.parse_args()
 
 
@@ -150,35 +156,38 @@ def write_csv(rows: list[dict], path: Path) -> None:
             )
 
 
-def make_bar_plot(rows: list[dict], path: Path, title: str, dpi: int) -> None:
+def make_bar_plot(rows: list[dict], path: Path, title: str, dpi: int, auc_y_min: float | None) -> None:
     labels = [f"{row['selection']}\n{row['feature']}" for row in rows]
     aucs = [row["auc"] for row in rows]
     rej90 = [finite_rejection_for_plot(row, 0.90) for row in rows]
 
-    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.2), dpi=dpi)
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8), dpi=dpi, constrained_layout=True)
 
     x = np.arange(len(rows))
     axes[0].bar(x, aucs, color="#4c78a8")
-    axes[0].set_ylim(max(0.95, min(aucs) - 0.01), 1.001)
+    y_min = max(0.0, min(aucs) - 0.02) if auc_y_min is None else auc_y_min
+    y_max = 1.003
+    axes[0].set_ylim(y_min, y_max)
     axes[0].set_ylabel("AUC")
     axes[0].set_title("Classification AUC")
-    axes[0].set_xticks(x, labels, rotation=30, ha="right")
+    axes[0].set_xticks(x, labels, rotation=25, ha="right")
     axes[0].grid(True, axis="y", linestyle=":", alpha=0.5)
     for idx, value in enumerate(aucs):
-        axes[0].text(idx, value + 0.0005, f"{value:.4f}", ha="center", va="bottom", fontsize=8)
+        y_text = min(value + 0.0006, y_max - 0.0005)
+        axes[0].text(idx, y_text, f"{value:.4f}", ha="center", va="bottom", fontsize=8)
 
     axes[1].bar(x, rej90, color="#f58518")
     axes[1].set_yscale("log")
+    axes[1].set_ylim(max(1.0, min(rej90) * 0.6), max(rej90) * 2.2)
     axes[1].set_ylabel("Background rejection at 0.90 signal efficiency")
     axes[1].set_title("Rej@0.90")
-    axes[1].set_xticks(x, labels, rotation=30, ha="right")
+    axes[1].set_xticks(x, labels, rotation=25, ha="right")
     axes[1].grid(True, axis="y", which="both", linestyle=":", alpha=0.5)
     for idx, row in enumerate(rows):
         value = rej90[idx]
         axes[1].text(idx, value * 1.08, rejection_text(row, 0.90), ha="center", va="bottom", fontsize=8)
 
     fig.suptitle(title)
-    fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)
 
@@ -228,7 +237,7 @@ def main() -> None:
         encoding="utf-8",
     )
     write_csv(rows, args.out_dir / "selection_ablation_summary.csv")
-    make_bar_plot(rows, args.out_dir / "selection_ablation_auc_rej90.png", args.title, args.dpi)
+    make_bar_plot(rows, args.out_dir / "selection_ablation_auc_rej90.png", args.title, args.dpi, args.auc_y_min)
     make_table_plot(rows, args.out_dir / "selection_ablation_table.png", args.dpi)
 
     print("selection, feature, auc, rej90, rej95, result_dir")
