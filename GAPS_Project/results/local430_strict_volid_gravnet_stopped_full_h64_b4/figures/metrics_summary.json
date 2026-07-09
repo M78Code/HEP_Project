@@ -1,0 +1,64 @@
+{
+  "n_events": 31326,
+  "label_counts": {
+    "0": 15663,
+    "1": 15663
+  },
+  "accuracy_at_0.5": 0.9693545297835664,
+  "auc": 0.9974608727250486,
+  "score_min": 0.0,
+  "score_max": 1.0,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.8339398582647003,
+      "fpr": 6.384472961757006e-05,
+      "rejection": 15663.000000000002,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.8339398582647003,
+      "fpr": 6.384472961757006e-05,
+      "rejection": 15663.000000000002,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.8339398582647003,
+      "fpr": 6.384472961757006e-05,
+      "rejection": 15663.000000000002,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.9000829981485028,
+      "fpr": 0.001915341888527102,
+      "rejection": 522.1,
+      "threshold": 0.919921875
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9500095767094426,
+      "fpr": 0.021260294962650833,
+      "rejection": 47.03603603603604,
+      "threshold": 0.68359375
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.9800165996297006,
+      "fpr": 0.041626763710655684,
+      "rejection": 24.023006134969325,
+      "threshold": 0.59423828125
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.990040222179659,
+      "fpr": 0.05094809423482092,
+      "rejection": 19.62781954887218,
+      "threshold": 0.5146484375
+    }
+  ],
+  "labels_path": "/home/m78code/HEP_Project/GAPS_Project/results/local430_strict_volid_gravnet_stopped_full_h64_b4/labels.npy",
+  "scores_path": "/home/m78code/HEP_Project/GAPS_Project/results/local430_strict_volid_gravnet_stopped_full_h64_b4/scores.npy"
+}
