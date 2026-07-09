@@ -38,6 +38,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dpi", type=int, default=220)
     p.add_argument("--x-min", type=float, default=0.45)
     p.add_argument("--y-max", type=float, default=1e5)
+    p.add_argument(
+        "--zero-fpr-mode",
+        choices=["cap", "drop"],
+        default="cap",
+        help=(
+            "How to draw ROC points with FPR=0. "
+            "'cap' uses 1/N_background as a finite-statistics upper limit; "
+            "'drop' omits those points."
+        ),
+    )
     return p.parse_args()
 
 
@@ -187,11 +197,31 @@ def plot_score_distribution(labels, scores, out: Path, title: str, dpi: int):
     plt.close()
 
 
-def plot_rejection_curve(labels, scores, out: Path, label: str, x_min: float, y_max: float, dpi: int):
+def plot_rejection_curve(
+    labels,
+    scores,
+    out: Path,
+    label: str,
+    x_min: float,
+    y_max: float,
+    dpi: int,
+    zero_fpr_mode: str,
+):
     fpr, tpr, _ = roc_curve(labels, scores, drop_intermediate=True)
-    mask = fpr > 0
+    if zero_fpr_mode == "cap":
+        n_background = int((labels == 0).sum())
+        fpr_floor = 1.0 / n_background
+        rejection = 1.0 / np.maximum(fpr, fpr_floor)
+        y_max = max(y_max, rejection.max() * 1.2)
+        note = f"{label} (FPR=0 shown as >{n_background:g})"
+    else:
+        mask = fpr > 0
+        tpr = tpr[mask]
+        rejection = 1.0 / fpr[mask]
+        note = label
+
     plt.figure(figsize=(7.0, 5.0), dpi=dpi)
-    plt.plot(tpr[mask], 1.0 / fpr[mask], linewidth=2.0, label=label)
+    plt.plot(tpr, rejection, linewidth=2.0, label=note)
     plt.yscale("log")
     plt.xlim(x_min, 1.0)
     plt.ylim(1, y_max)
@@ -255,6 +285,7 @@ def main() -> None:
         args.x_min,
         args.y_max,
         args.dpi,
+        args.zero_fpr_mode,
     )
 
     rows = parse_training_log(args.train_log)
