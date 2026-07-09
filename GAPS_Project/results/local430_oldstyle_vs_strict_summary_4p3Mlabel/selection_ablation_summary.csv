@@ -1,0 +1,8 @@
+selection,feature,n_events,n_background,n_signal,accuracy,auc,rej50,rej70,rej80,rej90,rej95,rej98,result_dir
+4.3M,edep,200000,100000,100000,0.799520,0.883758,30.85,8.81,4.94,2.67,1.89,1.45,results/local430_oldstyle_dgcnn_balanced_timelog_subset_edep_only
+4.3M,edep+pos,200000,100000,100000,0.859730,0.941627,175.1,28.32,12.30,5.19,3.17,2.13,results/local430_oldstyle_dgcnn_balanced_timelog_subset_edep_pos
+4.3M,full,200000,100000,100000,0.912835,0.976090,1960.8,255.1,61.01,13.96,6.66,3.83,results/local430_oldstyle_dgcnn_balanced_timelog_subset_full
+strict,edep,39064,19532,19532,0.914627,0.981256,19532.0,976.6,102.8,14.17,7.41,5.02,results/local430_selection_ablation_dgcnn_label_only_subset_edep_only
+strict,edep+pos,39064,19532,19532,0.944885,0.991985,9766.0,9766.0,3906.4,39.78,16.39,9.14,results/local430_selection_ablation_dgcnn_label_only_subset_edep_pos
+stopped,edep,2528,1264,1264,0.995649,0.999979,>1264,>1264,>1264,>1264,>1264,>1264,results/local430_selection_ablation_dgcnn_stopped_subset_edep_only
+stopped,edep+pos,2528,1264,1264,0.998813,0.999968,>1264,>1264,>1264,>1264,>1264,1264.0,results/local430_selection_ablation_dgcnn_stopped_subset_edep_pos
