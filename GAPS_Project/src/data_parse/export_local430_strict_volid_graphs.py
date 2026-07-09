@@ -30,10 +30,14 @@ HitRow = tuple[int, int, float, float, float, float, float]
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--anti-p-csv", required=True, type=Path)
-    p.add_argument("--anti-d-csv", required=True, type=Path)
+    p.add_argument("--anti-p-csv", default=None, type=Path)
+    p.add_argument("--anti-d-csv", default=None, type=Path)
+    p.add_argument("--anti-p-csv-dir", default=None, type=Path)
+    p.add_argument("--anti-d-csv-dir", default=None, type=Path)
     p.add_argument("--anti-p-meta", default=None, type=Path)
     p.add_argument("--anti-d-meta", default=None, type=Path)
+    p.add_argument("--anti-p-meta-dir", default=None, type=Path)
+    p.add_argument("--anti-d-meta-dir", default=None, type=Path)
     p.add_argument("--output-dir", required=True, type=Path)
     p.add_argument("--knn-k", type=int, default=8)
     p.add_argument("--seed", type=int, default=42)
@@ -45,54 +49,81 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def load_meta(meta_path: Path | None) -> dict[tuple[str, str], float]:
-    if meta_path is None:
+def resolve_inputs(single: Path | None, directory: Path | None, pattern: str) -> list[Path]:
+    if single is not None and directory is not None:
+        raise ValueError("provide either a single file or a directory, not both")
+    if single is not None:
+        if not single.exists():
+            raise FileNotFoundError(single)
+        return [single]
+    if directory is not None:
+        if not directory.exists():
+            raise FileNotFoundError(directory)
+        paths = sorted(directory.glob(pattern))
+        if not paths:
+            raise FileNotFoundError(f"no files matching {pattern} in {directory}")
+        return paths
+    raise ValueError("missing required input file or directory")
+
+
+def load_meta(meta_paths: list[Path]) -> dict[tuple[str, str], float]:
+    if not meta_paths:
         return {}
-    if not meta_path.exists():
-        raise FileNotFoundError(meta_path)
 
     beta_by_key: dict[tuple[str, str], float] = {}
-    with meta_path.open() as f:
-        for row in csv.reader(f):
-            if not row:
-                continue
-            if len(row) < 5:
-                raise ValueError(f"{meta_path}: expected at least 5 columns, got {len(row)}: {row}")
-            beta_by_key[(row[0], row[1])] = float(row[4])
-    print(f"{meta_path.name}: meta events={len(beta_by_key):,}")
+    for meta_path in meta_paths:
+        if not meta_path.exists():
+            raise FileNotFoundError(meta_path)
+        before = len(beta_by_key)
+        with meta_path.open() as f:
+            for row in csv.reader(f):
+                if not row:
+                    continue
+                if len(row) < 5:
+                    raise ValueError(f"{meta_path}: expected at least 5 columns, got {len(row)}: {row}")
+                beta_by_key[(row[0], row[1])] = float(row[4])
+        print(f"{meta_path.name}: meta events added={len(beta_by_key) - before:,}")
+    print(f"meta total events={len(beta_by_key):,}")
     return beta_by_key
 
 
-def load_hits(csv_path: Path, expected_label: int) -> dict[tuple[str, str], list[HitRow]]:
-    if not csv_path.exists():
-        raise FileNotFoundError(csv_path)
-
+def load_hits(csv_paths: list[Path], expected_label: int) -> dict[tuple[str, str], list[HitRow]]:
     hits: dict[tuple[str, str], list[HitRow]] = defaultdict(list)
-    mismatched = 0
-    with csv_path.open() as f:
-        for row in csv.reader(f):
-            if not row:
-                continue
-            if len(row) < 10:
-                raise ValueError(f"{csv_path}: expected 10 columns, got {len(row)}: {row}")
+    total_mismatched = 0
+    for csv_path in csv_paths:
+        if not csv_path.exists():
+            raise FileNotFoundError(csv_path)
+        before = len(hits)
+        mismatched = 0
+        with csv_path.open() as f:
+            for row in csv.reader(f):
+                if not row:
+                    continue
+                if len(row) < 10:
+                    raise ValueError(f"{csv_path}: expected 10 columns, got {len(row)}: {row}")
 
-            label = int(float(row[2]))
-            if label != expected_label:
-                mismatched += 1
-                continue
+                label = int(float(row[2]))
+                if label != expected_label:
+                    mismatched += 1
+                    continue
 
-            key = (row[0], row[1])
-            stoplayer = int(float(row[3]))
-            volume_id = int(float(row[4]))
-            x = float(row[5])
-            y = float(row[6])
-            z = float(row[7])
-            tof = float(row[8])
-            hit_edep = float(row[9])
-            hits[key].append((stoplayer, volume_id, x, y, z, tof, hit_edep))
+                key = (row[0], row[1])
+                stoplayer = int(float(row[3]))
+                volume_id = int(float(row[4]))
+                x = float(row[5])
+                y = float(row[6])
+                z = float(row[7])
+                tof = float(row[8])
+                hit_edep = float(row[9])
+                hits[key].append((stoplayer, volume_id, x, y, z, tof, hit_edep))
 
-    if mismatched:
-        print(f"warning: skipped {mismatched:,} rows with labels not equal to {expected_label} in {csv_path}")
+        total_mismatched += mismatched
+        print(f"{csv_path.name}: events added={len(hits) - before:,}")
+        if mismatched:
+            print(f"warning: skipped {mismatched:,} rows with labels not equal to {expected_label} in {csv_path}")
+
+    if total_mismatched:
+        print(f"warning: total mismatched rows skipped={total_mismatched:,}")
     return hits
 
 
@@ -138,14 +169,14 @@ def graph_from_rows(
 
 
 def build_graphs(
-    csv_path: Path,
-    meta_path: Path | None,
+    csv_paths: list[Path],
+    meta_paths: list[Path],
     label: int,
     knn_k: int,
     max_events: int,
 ) -> list[Data]:
-    grouped = load_hits(csv_path, expected_label=label)
-    beta_by_key = load_meta(meta_path)
+    grouped = load_hits(csv_paths, expected_label=label)
+    beta_by_key = load_meta(meta_paths)
     graphs: list[Data] = []
     too_small = 0
     missing_meta = 0
@@ -165,7 +196,7 @@ def build_graphs(
             break
 
     print(
-        f"{csv_path.name}: events={len(grouped):,} graphs={len(graphs):,} "
+        f"label={label}: events={len(grouped):,} graphs={len(graphs):,} "
         f"too_small={too_small:,} missing_meta={missing_meta:,} label={label}"
     )
     return graphs
@@ -228,16 +259,26 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    anti_p_csvs = resolve_inputs(args.anti_p_csv, args.anti_p_csv_dir, "*VolID*.csv")
+    anti_d_csvs = resolve_inputs(args.anti_d_csv, args.anti_d_csv_dir, "*VolID*.csv")
+    anti_p_metas = resolve_inputs(args.anti_p_meta, args.anti_p_meta_dir, "*Meta*.csv") if args.anti_p_meta or args.anti_p_meta_dir else []
+    anti_d_metas = resolve_inputs(args.anti_d_meta, args.anti_d_meta_dir, "*Meta*.csv") if args.anti_d_meta or args.anti_d_meta_dir else []
+
+    print(f"antiP csv files: {len(anti_p_csvs)}")
+    print(f"antiD csv files: {len(anti_d_csvs)}")
+    print(f"antiP meta files: {len(anti_p_metas)}")
+    print(f"antiD meta files: {len(anti_d_metas)}")
+
     anti_p = build_graphs(
-        args.anti_p_csv,
-        args.anti_p_meta,
+        anti_p_csvs,
+        anti_p_metas,
         label=0,
         knn_k=args.knn_k,
         max_events=args.max_per_class,
     )
     anti_d = build_graphs(
-        args.anti_d_csv,
-        args.anti_d_meta,
+        anti_d_csvs,
+        anti_d_metas,
         label=1,
         knn_k=args.knn_k,
         max_events=args.max_per_class,
