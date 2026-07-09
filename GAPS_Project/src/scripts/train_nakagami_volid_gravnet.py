@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Train a small DGCNN-style GNN on Nakagami old VolID graph caches."""
+"""Train GravNet on Nakagami/local430 strict VolID graph caches.
+
+This script intentionally mirrors train_nakagami_volid_dgcnn.py so DGCNN and
+GravNet can be compared on the same train/val/test .pt graph caches.
+"""
 
 from __future__ import annotations
 
@@ -14,17 +18,23 @@ from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
 from torch import nn
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
-from torch_geometric.nn import EdgeConv, global_max_pool, global_mean_pool
+
+from GAPS_Project.src.models.gravnet import GravNetClassifier
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--data-dir", required=True, type=Path)
-    p.add_argument("--output-dir", default="results/nakagami_old_volid_dgcnn_100k", type=Path)
-    p.add_argument("--epochs", type=int, default=30)
-    p.add_argument("--batch-size", type=int, default=512)
+    p.add_argument("--output-dir", default="results/nakagami_old_volid_gravnet_100k", type=Path)
+    p.add_argument("--epochs", type=int, default=50)
+    p.add_argument("--batch-size", type=int, default=256)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--hidden", type=int, default=64)
+    p.add_argument("--num-blocks", type=int, default=4)
+    p.add_argument("--space-dim", type=int, default=4)
+    p.add_argument("--propagate-dim", type=int, default=22)
+    p.add_argument("--gravnet-k", type=int, default=8)
+    p.add_argument("--dropout", type=float, default=0.15)
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--device", default="cuda")
     p.add_argument("--amp", action="store_true")
@@ -61,41 +71,44 @@ def load_split(data_dir: Path, split: str) -> list[Data]:
     return [sanitize_graph(g) for g in graphs]
 
 
-class SmallDGCNN(nn.Module):
-    def __init__(self, in_dim: int, hidden: int, feature_mode: str):
+def infer_input_dim(probe: Data, feature_mode: str) -> int:
+    if feature_mode == "full":
+        return int(probe.x.size(1) + probe.pos.size(1))
+    if feature_mode == "edep_only":
+        return 1
+    if feature_mode == "no_edep":
+        return int(probe.x.size(1) - 1 + probe.pos.size(1))
+    if feature_mode == "pos_only":
+        return int(probe.pos.size(1))
+    if feature_mode == "edep_pos":
+        return int(1 + probe.pos.size(1))
+    raise ValueError(feature_mode)
+
+
+class VolIDGravNet(nn.Module):
+    def __init__(
+        self,
+        in_dim: int,
+        hidden: int,
+        feature_mode: str,
+        num_blocks: int,
+        space_dim: int,
+        propagate_dim: int,
+        gravnet_k: int,
+        dropout: float,
+    ):
         super().__init__()
         self.feature_mode = feature_mode
-        self.input = nn.Sequential(
-            nn.Linear(in_dim, hidden),
-            nn.BatchNorm1d(hidden),
-            nn.ReLU(),
-        )
-        self.conv1 = EdgeConv(
-            nn.Sequential(
-                nn.Linear(2 * hidden, hidden),
-                nn.BatchNorm1d(hidden),
-                nn.ReLU(),
-                nn.Linear(hidden, hidden),
-                nn.ReLU(),
-            ),
-            aggr="max",
-        )
-        self.conv2 = EdgeConv(
-            nn.Sequential(
-                nn.Linear(2 * hidden, hidden),
-                nn.BatchNorm1d(hidden),
-                nn.ReLU(),
-                nn.Linear(hidden, hidden),
-                nn.ReLU(),
-            ),
-            aggr="max",
-        )
-        self.head = nn.Sequential(
-            nn.Linear(2 * hidden, hidden),
-            nn.BatchNorm1d(hidden),
-            nn.ReLU(),
-            nn.Dropout(0.15),
-            nn.Linear(hidden, 1),
+        self.model = GravNetClassifier(
+            in_channels=in_dim,
+            hidden_dim=hidden,
+            space_dimensions=space_dim,
+            propagate_dimensions=propagate_dim,
+            k=gravnet_k,
+            num_classes=2,
+            dropout=dropout,
+            graph_feat_dim=0,
+            num_blocks=num_blocks,
         )
 
     def node_features(self, data: Data) -> torch.Tensor:
@@ -113,17 +126,7 @@ class SmallDGCNN(nn.Module):
 
     def forward(self, data: Data) -> torch.Tensor:
         node = self.node_features(data)
-        h = self.input(node)
-        h = self.conv1(h, data.edge_index)
-        h = self.conv2(h, data.edge_index)
-        pooled = torch.cat(
-            [
-                global_mean_pool(h, data.batch),
-                global_max_pool(h, data.batch),
-            ],
-            dim=1,
-        )
-        return self.head(pooled).view(-1)
+        return self.model(node, data.edge_index, data.batch)
 
 
 def rejection_at(labels: np.ndarray, scores: np.ndarray, targets: list[float]) -> list[dict[str, float]]:
@@ -154,7 +157,8 @@ def evaluate(model: nn.Module, loader: DataLoader, device: torch.device, amp: bo
         batch = batch.to(device)
         with torch.amp.autocast("cuda", enabled=amp and device.type == "cuda"):
             logits = model(batch)
-        scores = torch.sigmoid(logits).detach().cpu().numpy()
+        probs = torch.softmax(logits, dim=1)
+        scores = probs[:, 1].detach().cpu().numpy()
         labels = batch.y.detach().cpu().numpy()
         scores_all.append(scores)
         labels_all.append(labels)
@@ -187,28 +191,29 @@ def train(args: argparse.Namespace) -> None:
     test_loader = DataLoader(test_graphs, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     probe = Data(x=train_graphs[0].x, pos=train_graphs[0].pos)
-    if args.feature_mode == "full":
-        in_dim = int(probe.x.size(1) + probe.pos.size(1))
-    elif args.feature_mode == "edep_only":
-        in_dim = 1
-    elif args.feature_mode == "no_edep":
-        in_dim = int(probe.x.size(1) - 1 + probe.pos.size(1))
-    elif args.feature_mode == "pos_only":
-        in_dim = int(probe.pos.size(1))
-    elif args.feature_mode == "edep_pos":
-        in_dim = int(1 + probe.pos.size(1))
-    else:
-        raise ValueError(args.feature_mode)
+    in_dim = infer_input_dim(probe, args.feature_mode)
 
-    model = SmallDGCNN(in_dim=in_dim, hidden=args.hidden, feature_mode=args.feature_mode).to(device)
+    model = VolIDGravNet(
+        in_dim=in_dim,
+        hidden=args.hidden,
+        feature_mode=args.feature_mode,
+        num_blocks=args.num_blocks,
+        space_dim=args.space_dim,
+        propagate_dim=args.propagate_dim,
+        gravnet_k=args.gravnet_k,
+        dropout=args.dropout,
+    ).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.CrossEntropyLoss()
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
     print("device    :", device)
     print("data dir  :", args.data_dir)
     print("feature   :", args.feature_mode, f"(in_dim={in_dim})")
     print("train/val/test:", len(train_graphs), len(val_graphs), len(test_graphs))
+    print("hidden    :", args.hidden)
+    print("blocks    :", args.num_blocks)
+    print("gravnet k :", args.gravnet_k)
     print("parameters:", sum(p.numel() for p in model.parameters()))
     print("AMP       :", args.amp and device.type == "cuda")
     print(
@@ -247,7 +252,7 @@ def train(args: argparse.Namespace) -> None:
         total = 0
         for batch in train_loader:
             batch = batch.to(device)
-            target = batch.y.float()
+            target = batch.y.long().view(-1)
             opt.zero_grad(set_to_none=True)
             with torch.amp.autocast("cuda", enabled=args.amp and device.type == "cuda"):
                 logits = model(batch)
@@ -257,9 +262,9 @@ def train(args: argparse.Namespace) -> None:
             scaler.update()
 
             losses.append(float(loss.detach().cpu()))
-            pred = (torch.sigmoid(logits) >= 0.5).long()
-            correct += int((pred.cpu() == batch.y.cpu()).sum())
-            total += int(batch.y.numel())
+            pred = logits.argmax(dim=1)
+            correct += int((pred.cpu() == target.cpu()).sum())
+            total += int(target.numel())
 
         val = evaluate(model, val_loader, device, args.amp)
         train_acc = correct / max(total, 1)
@@ -287,7 +292,7 @@ def train(args: argparse.Namespace) -> None:
                     "best_auc": best_auc,
                     "patience_counter": patience_counter,
                 },
-                best_path
+                best_path,
             )
             print("  -> best saved:", best_path)
         else:
