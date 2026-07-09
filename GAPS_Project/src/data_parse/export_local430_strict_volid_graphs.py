@@ -151,8 +151,10 @@ def build_graphs(
     missing_meta = 0
 
     for key in sorted(grouped):
-        beta = beta_by_key.get(key, -1.0)
-        if beta < 0:
+        if key in beta_by_key:
+            beta = beta_by_key[key]
+        else:
+            beta = -1.0
             missing_meta += 1
         graph = graph_from_rows(key, label, beta, grouped[key], knn_k)
         if graph is None:

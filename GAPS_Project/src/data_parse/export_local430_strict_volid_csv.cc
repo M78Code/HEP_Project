@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
               << " ROOT_PATH OUTPUT_CSV MAX_ENTRIES REQUIRE_STOPPED [META_CSV]\n"
               << "  MAX_ENTRIES=0 means all entries\n"
               << "  REQUIRE_STOPPED=1 keeps only events stopped in tracker\n"
-              << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps\n";
+              << "  META_CSV optionally writes: file_id,entry,label,stoplayer,beta,pdg,n_steps,primary_beta,generated_beta\n";
     return 1;
   }
 
@@ -176,9 +176,12 @@ int main(int argc, char** argv) {
     ++used_events;
 
     if (meta_output) {
+      const double primary_beta = event->GetPrimaryBeta();
+      const double generated_beta = event->GetPrimaryBetaGenerated();
+      const double beta = primary_beta > 0.0 ? primary_beta : generated_beta;
       meta_output << file_id << "," << entry << "," << label << "," << stoplayer << ","
-                  << event->GetPrimaryBeta() << "," << primary_track->GetPdg() << ","
-                  << volume_ids.size() << "\n";
+                  << beta << "," << primary_track->GetPdg() << "," << volume_ids.size()
+                  << "," << primary_beta << "," << generated_beta << "\n";
     }
 
     for (size_t i = 0;
