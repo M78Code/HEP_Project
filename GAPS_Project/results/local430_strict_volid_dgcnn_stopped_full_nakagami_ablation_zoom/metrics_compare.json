@@ -1,0 +1,312 @@
+[
+  {
+    "label": "full",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami",
+    "n_events": 27656,
+    "label_counts": {
+      "0": 13828,
+      "1": 13828
+    },
+    "accuracy_at_0.5": 0.9998192074052646,
+    "auc": 0.9999999320131985,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9817037894127857,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9906711021116575,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.99951171875
+      }
+    ]
+  },
+  {
+    "label": "edep only",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only",
+    "n_events": 27656,
+    "label_counts": {
+      "0": 13828,
+      "1": 13828
+    },
+    "accuracy_at_0.5": 0.9985898177610645,
+    "auc": 0.9999912610811166,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9806913508822679,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.99853515625
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9901648828463986,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.99072265625
+      }
+    ]
+  },
+  {
+    "label": "no edep",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_no_edep",
+    "n_events": 27656,
+    "label_counts": {
+      "0": 13828,
+      "1": 13828
+    },
+    "accuracy_at_0.5": 0.9977943303442292,
+    "auc": 0.9996121039183073,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9614550188024299,
+        "fpr": 7.231703789412785e-05,
+        "rejection": 13828.000000000002,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9614550188024299,
+        "fpr": 7.231703789412785e-05,
+        "rejection": 13828.000000000002,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9614550188024299,
+        "fpr": 7.231703789412785e-05,
+        "rejection": 13828.000000000002,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9614550188024299,
+        "fpr": 7.231703789412785e-05,
+        "rejection": 13828.000000000002,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9614550188024299,
+        "fpr": 7.231703789412785e-05,
+        "rejection": 13828.000000000002,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9801851316170089,
+        "fpr": 0.0001446340757882557,
+        "rejection": 6914.000000000001,
+        "threshold": 0.9970703125
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9900202487706103,
+        "fpr": 0.0002892681515765114,
+        "rejection": 3457.0000000000005,
+        "threshold": 0.96044921875
+      }
+    ]
+  },
+  {
+    "label": "pos only",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_pos_only",
+    "n_events": 27656,
+    "label_counts": {
+      "0": 13828,
+      "1": 13828
+    },
+    "accuracy_at_0.5": 0.6609415678333815,
+    "auc": 0.708168573421018,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5018802429852474,
+        "fpr": 0.27039340468614403,
+        "rejection": 3.6983150575020063,
+        "threshold": 0.58837890625
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.700824414231993,
+        "fpr": 0.3968759039629737,
+        "rejection": 2.5196793002915454,
+        "threshold": 0.53466796875
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8004049754122071,
+        "fpr": 0.47620769453283196,
+        "rejection": 2.0999240698557324,
+        "threshold": 0.491455078125
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9000578536303153,
+        "fpr": 0.5681949667341626,
+        "rejection": 1.7599592719867634,
+        "threshold": 0.407958984375
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9500289268151576,
+        "fpr": 0.6405120046282904,
+        "rejection": 1.56125098791916,
+        "threshold": 0.320068359375
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9800404975412207,
+        "fpr": 0.7210731848423488,
+        "rejection": 1.3868217831711964,
+        "threshold": 0.2108154296875
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9900202487706103,
+        "fpr": 0.794691929418571,
+        "rejection": 1.2583492583492584,
+        "threshold": 0.125244140625
+      }
+    ]
+  },
+  {
+    "label": "edep + pos",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos",
+    "n_events": 27656,
+    "label_counts": {
+      "0": 13828,
+      "1": 13828
+    },
+    "accuracy_at_0.5": 0.9999638414810529,
+    "auc": 0.9999999999999999,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      }
+    ]
+  }
+]
