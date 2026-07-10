@@ -1,0 +1,108 @@
+{
+  "data_dir": "dataset/local430_strict_volid_stopped_full_nakagami",
+  "n_events": 276544,
+  "label_counts": [
+    138272,
+    138272
+  ],
+  "beta_bins": [
+    {
+      "beta_low": 0.2,
+      "beta_high": 0.25,
+      "antiP": 0,
+      "antiD": 32687
+    },
+    {
+      "beta_low": 0.25,
+      "beta_high": 0.3,
+      "antiP": 31150,
+      "antiD": 50106
+    },
+    {
+      "beta_low": 0.3,
+      "beta_high": 0.35,
+      "antiP": 44352,
+      "antiD": 35133
+    },
+    {
+      "beta_low": 0.35,
+      "beta_high": 0.4,
+      "antiP": 33350,
+      "antiD": 19098
+    },
+    {
+      "beta_low": 0.4,
+      "beta_high": 0.45,
+      "antiP": 23092,
+      "antiD": 1246
+    },
+    {
+      "beta_low": 0.45,
+      "beta_high": 0.5,
+      "antiP": 6328,
+      "antiD": 2
+    }
+  ],
+  "feature_auc": [
+    {
+      "feature": "beta",
+      "auc": 0.790173573372094,
+      "antiP_mean": 0.35104548895084536,
+      "antiD_mean": 0.2929378287035612
+    },
+    {
+      "feature": "n_hits",
+      "auc": 0.5479566029396556,
+      "antiP_mean": 14.170468352233279,
+      "antiD_mean": 13.755532573478362
+    },
+    {
+      "feature": "edep_sum",
+      "auc": 0.8436835165126589,
+      "antiP_mean": 41.27595504175538,
+      "antiD_mean": 55.88969613427201
+    },
+    {
+      "feature": "edep_mean",
+      "auc": 0.9933506594328853,
+      "antiP_mean": 2.9233306045610576,
+      "antiD_mean": 4.077553026278147
+    },
+    {
+      "feature": "tof_mean",
+      "auc": 0.7280123455120955,
+      "antiP_mean": 0.20104257653808333,
+      "antiD_mean": 0.24194546559667338
+    },
+    {
+      "feature": "stop_mean",
+      "auc": 0.5030860563567733,
+      "antiP_mean": 0.2452094429690396,
+      "antiD_mean": 0.24287491410536818
+    },
+    {
+      "feature": "vol_mean",
+      "auc": 0.5211270124375864,
+      "antiP_mean": 1.6949413229160233,
+      "antiD_mean": 1.6802827819562833
+    },
+    {
+      "feature": "pos_x_mean",
+      "auc": 0.5003132915301244,
+      "antiP_mean": -0.0005876195940213669,
+      "antiD_mean": -0.00017286899547164935
+    },
+    {
+      "feature": "pos_y_mean",
+      "auc": 0.5004865135978241,
+      "antiP_mean": -0.0005321372797240269,
+      "antiD_mean": 8.55337961278576e-05
+    },
+    {
+      "feature": "pos_z_mean",
+      "auc": 0.5184502260087979,
+      "antiP_mean": -0.057586182123298205,
+      "antiD_mean": -0.04444195722697123
+    }
+  ]
+}
