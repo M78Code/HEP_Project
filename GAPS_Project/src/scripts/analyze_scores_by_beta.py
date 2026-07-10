@@ -21,8 +21,11 @@ def evaluate_bin(labels, scores):
     result = {
         'n_events': int(len(labels)),
         'label_counts': counts,
-        'accuracy': float(accuracy_score(labels, scores >= 0.5)),
     }
+    if len(labels) == 0:
+        result['accuracy'] = None
+        return result
+    result['accuracy'] = float(accuracy_score(labels, scores >= 0.5))
     if len(np.unique(labels)) == 2:
         result['auc'] = float(roc_auc_score(labels, scores))
         result['rejection_0.90'] = rejection_at_efficiency(
@@ -67,11 +70,18 @@ def main():
         print(
             f'[{low:.2f},{high:.2f}{"]" if is_last else ")":>1} '
             f'{row["n_events"]:9,d} {counts.get("0", 0):9,d} '
-            f'{counts.get("1", 0):9,d} {row.get("auc", float("nan")):9.5f} '
-            f'{row.get("rejection_0.90", float("nan")):10.2f} '
-            f'{row.get("rejection_0.95", float("nan")):10.2f} '
-            f'{row.get("rejection_0.98", float("nan")):10.2f}'
+            f'{counts.get("1", 0):9,d} ',
+            end='',
         )
+        if row["n_events"] == 0:
+            print(f'{"empty":>9} {"empty":>10} {"empty":>10} {"empty":>10}')
+        else:
+            print(
+                f'{row.get("auc", float("nan")):9.5f} '
+                f'{row.get("rejection_0.90", float("nan")):10.2f} '
+                f'{row.get("rejection_0.95", float("nan")):10.2f} '
+                f'{row.get("rejection_0.98", float("nan")):10.2f}'
+            )
 
     with open(args.result_dir / 'metrics_by_beta.json', 'w', encoding='utf-8') as f:
         json.dump(rows, f, indent=2, ensure_ascii=False)
