@@ -1,0 +1,5 @@
+selection,feature,n_events,n_background,n_signal,accuracy,auc,rej50,rej70,rej80,rej90,rej95,rej98,result_dir
+stopped_original,edep_only,27656,13828,13828,0.998590,0.999991,>13828,>13828,>13828,>13828,>13828,>13828,results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only
+stopped_original,edep_pos,27656,13828,13828,0.999964,1.000000,>13828,>13828,>13828,>13828,>13828,>13828,results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos
+beta_matched,edep_only,17326,8669,8657,0.998730,0.999990,>8669,>8669,>8669,>8669,>8669,>8669,results/local430_strict_volid_dgcnn_stopped_full_nakagami_beta_matched_edep_only
+beta_matched,edep_pos,17326,8669,8657,0.999423,0.999999,>8669,>8669,>8669,>8669,>8669,>8669,results/local430_strict_volid_dgcnn_stopped_full_nakagami_beta_matched_edep_pos

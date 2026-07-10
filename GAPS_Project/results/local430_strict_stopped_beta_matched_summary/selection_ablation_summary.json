@@ -1,0 +1,242 @@
+[
+  {
+    "selection": "stopped_original",
+    "feature": "edep_only",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_only",
+    "n_events": 27656,
+    "n_background": 13828,
+    "n_signal": 13828,
+    "accuracy": 0.9985898177610645,
+    "auc": 0.9999912610811166,
+    "rejection": {
+      "0.5": {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.7": {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.8": {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.9": {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.95": {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9558142898466879,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.98": {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9806913508822679,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 0.99853515625
+      }
+    }
+  },
+  {
+    "selection": "stopped_original",
+    "feature": "edep_pos",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_edep_pos",
+    "n_events": 27656,
+    "n_background": 13828,
+    "n_signal": 13828,
+    "accuracy": 0.9999638414810529,
+    "auc": 0.9999999999999999,
+    "rejection": {
+      "0.5": {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.7": {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.8": {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.9": {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.95": {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.98": {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9971073184842348,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      }
+    }
+  },
+  {
+    "selection": "beta_matched",
+    "feature": "edep_only",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_beta_matched_edep_only",
+    "n_events": 17326,
+    "n_background": 8669,
+    "n_signal": 8657,
+    "accuracy": 0.9987302320212398,
+    "auc": 0.9999899596966099,
+    "rejection": {
+      "0.5": {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9705440683839668,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.7": {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9705440683839668,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.8": {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9705440683839668,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.9": {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9705440683839668,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.95": {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9705440683839668,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.98": {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9805937391706133,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 0.99951171875
+      }
+    }
+  },
+  {
+    "selection": "beta_matched",
+    "feature": "edep_pos",
+    "result_dir": "results/local430_strict_volid_dgcnn_stopped_full_nakagami_beta_matched_edep_pos",
+    "n_events": 17326,
+    "n_background": 8669,
+    "n_signal": 8657,
+    "accuracy": 0.9994228327369271,
+    "auc": 0.999999073920258,
+    "rejection": {
+      "0.5": {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9228370105117246,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.7": {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9228370105117246,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.8": {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9228370105117246,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.9": {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9228370105117246,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 1.0
+      },
+      "0.95": {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9789765507681645,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 0.99951171875
+      },
+      "0.98": {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9860228716645489,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "zero_fpr": true,
+        "threshold": 0.9990234375
+      }
+    }
+  }
+]
