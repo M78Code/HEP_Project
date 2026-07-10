@@ -323,9 +323,11 @@ def train(args: argparse.Namespace) -> None:
     state = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(state["model"])
     test = evaluate(model, test_loader, device, args.amp)
+    test_betas = np.array([float(g.beta) for g in test_graphs], dtype=np.float32)
 
     np.save(args.output_dir / "labels.npy", test["labels"])
     np.save(args.output_dir / "scores.npy", test["scores"])
+    np.save(args.output_dir / "betas.npy", test_betas)
     metrics = {
         "accuracy": test["accuracy"],
         "auc": test["auc"],
