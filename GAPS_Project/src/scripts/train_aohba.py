@@ -64,7 +64,7 @@ from pathlib import Path
 import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import IterableDataset
+from torch.utils.data import IterableDataset, get_worker_info
 from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
@@ -155,6 +155,10 @@ class CachedStreamDataset(IterableDataset):
             rng = random.Random(self.seed + epoch)
             rng.shuffle(files)
 
+        worker = get_worker_info()
+        if worker is not None:
+            files = files[worker.id::worker.num_workers]
+
         for file_index, pt_path in enumerate(files):
             data_list = self._load_shard(pt_path)
             if self.shuffle_events:
@@ -171,6 +175,11 @@ class CachedStreamDataset(IterableDataset):
         if self.shuffle_files:
             random.Random(self.seed + epoch).shuffle(antiD_files)
             random.Random(self.seed + epoch + 10_000).shuffle(antiP_files)
+
+        worker = get_worker_info()
+        if worker is not None:
+            antiD_files = antiD_files[worker.id::worker.num_workers]
+            antiP_files = antiP_files[worker.id::worker.num_workers]
 
         def class_stream(files, class_offset):
             for file_index, pt_path in enumerate(files):
@@ -216,6 +225,19 @@ class CachedStreamDataset(IterableDataset):
 
 
 # ── データロード ───────────────────────────────────────
+def make_dataloader(dataset, batch_size: int, num_workers: int,
+                    prefetch_factor: int):
+    kwargs = {
+        'batch_size': batch_size,
+        'num_workers': num_workers,
+        'pin_memory': DEVICE.type == 'cuda',
+    }
+    if num_workers > 0:
+        kwargs['persistent_workers'] = True
+        kwargs['prefetch_factor'] = prefetch_factor
+    return DataLoader(dataset, **kwargs)
+
+
 def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
     """pkl パスをキャッシュ済み .pt パスに変換する。
 
@@ -229,7 +251,8 @@ def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
 
 
 def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size: int,
-                               max_train_files: int = None, max_val_files: int = None):
+                               max_train_files: int = None, max_val_files: int = None,
+                               num_workers: int = 0, prefetch_factor: int = 2):
     with open(manifest_path) as f:
         manifest = json.load(f)
 
@@ -254,13 +277,17 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
     val_ds   = CachedStreamDataset(get_pt_files('val',   max_val_files),
                                    shuffle_files=False, shuffle_events=False)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=0)
-    val_loader   = DataLoader(val_ds,   batch_size=batch_size, num_workers=0)
+    train_loader = make_dataloader(
+        train_ds, batch_size, num_workers, prefetch_factor)
+    val_loader = make_dataloader(
+        val_ds, batch_size, num_workers, prefetch_factor)
 
     return train_loader, val_loader, train_ds, val_ds
 
 
-def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
+def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int,
+                                  num_workers: int = 0,
+                                  prefetch_factor: int = 2):
     """Load sharded or single-file caches created from split.pkl files.
 
     中文说明:
@@ -286,10 +313,10 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int):
     )
     val_ds = CachedStreamDataset(
         find_split_files('val'), shuffle_files=False, shuffle_events=False)
-    train_loader = DataLoader(
-        train_ds, batch_size=batch_size, num_workers=0)
-    val_loader = DataLoader(
-        val_ds, batch_size=batch_size, num_workers=0)
+    train_loader = make_dataloader(
+        train_ds, batch_size, num_workers, prefetch_factor)
+    val_loader = make_dataloader(
+        val_ds, batch_size, num_workers, prefetch_factor)
     return train_loader, val_loader, train_ds, val_ds
 
 
@@ -299,15 +326,17 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           split_cache_dir: Path = None, batch_size: int = BATCH_SIZE,
           max_train_batches: int = None, max_val_batches: int = None,
           model_name: str = 'gravnet', result_dir: Path = None,
-          dataset_tag: str = None, resume_checkpoint: Path = None):
+          dataset_tag: str = None, resume_checkpoint: Path = None,
+          num_workers: int = 0, prefetch_factor: int = 2):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
-            split_cache_dir, batch_size)
+            split_cache_dir, batch_size, num_workers, prefetch_factor)
     else:
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
             manifest_path, cache_dir, batch_size,
-            max_train_files=max_train_files, max_val_files=max_val_files)
+            max_train_files=max_train_files, max_val_files=max_val_files,
+            num_workers=num_workers, prefetch_factor=prefetch_factor)
 
     train_approx = train_ds.approx_len()
     val_approx   = val_ds.approx_len()
@@ -319,6 +348,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         val_batches = min(val_batches, max_val_batches)
     print(f'train events (approx): {train_approx:,}  batches: {train_batches:,}')
     print(f'val   events (approx): {val_approx:,}  batches: {val_batches:,}')
+    print(
+        f'dataloader: num_workers={num_workers}, '
+        f'pin_memory={DEVICE.type == "cuda"}, '
+        f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
 
     if dataset_tag is None:
         dataset_tag = split_cache_dir.name if split_cache_dir is not None else 'aohba'
@@ -525,6 +558,10 @@ if __name__ == '__main__':
                     help='train.pt/val.pt direct cache directory')
     ap.add_argument('--epochs',          type=int, default=EPOCHS)
     ap.add_argument('--batch-size',      type=int, default=BATCH_SIZE)
+    ap.add_argument('--num-workers', type=int, default=0,
+                    help='DataLoader worker数。0なら従来通り単一プロセス')
+    ap.add_argument('--prefetch-factor', type=int, default=2,
+                    help='num-workers > 0 の時に各workerが先読みするbatch数')
     ap.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
@@ -556,4 +593,6 @@ if __name__ == '__main__':
           model_name=args.model,
           result_dir=args.result_dir,
           dataset_tag=args.dataset_tag,
-          resume_checkpoint=args.resume_checkpoint)
+          resume_checkpoint=args.resume_checkpoint,
+          num_workers=args.num_workers,
+          prefetch_factor=args.prefetch_factor)
