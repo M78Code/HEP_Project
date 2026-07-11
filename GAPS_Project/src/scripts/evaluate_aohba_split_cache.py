@@ -178,7 +178,7 @@ def main():
         'auc': float(roc_auc_score(labels, scores)),
         'rejection': [
             rejection_at_efficiency(labels, scores, target)
-            for target in (0.50, 0.80, 0.90, 0.95, 0.98, 0.99)
+            for target in (0.50, 0.70, 0.80, 0.90, 0.95, 0.98, 0.99)
         ],
         'tof_mode': args.tof_mode,
     }
