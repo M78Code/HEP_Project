@@ -135,7 +135,7 @@ def plot_rejection_curve(evals, out: Path):
     plt.xlabel("Signal efficiency")
     plt.ylabel("Background rejection")
     plt.xlim(0.45, 1.0)
-    plt.ylim(1, 1e5)
+    plt.ylim(1, 1e6)
     plt.grid(True, which="both", linestyle=":", linewidth=0.6)
     plt.legend(frameon=False, fontsize=7)
     plt.tight_layout()
