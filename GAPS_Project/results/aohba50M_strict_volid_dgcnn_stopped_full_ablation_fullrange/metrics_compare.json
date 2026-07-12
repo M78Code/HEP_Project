@@ -1,0 +1,312 @@
+[
+  {
+    "label": "edep only",
+    "result_dir": "results/aohba50M_strict_volid_dgcnn_stopped_full_edep_only",
+    "n_events": 311654,
+    "label_counts": {
+      "0": 155827,
+      "1": 155827
+    },
+    "accuracy_at_0.5": 0.9988512902128642,
+    "auc": 0.9999942338691609,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9795414145173814,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9795414145173814,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9795414145173814,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9795414145173814,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9795414145173814,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9850860248865729,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.99951171875
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9900979932874278,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9970703125
+      }
+    ]
+  },
+  {
+    "label": "pos only",
+    "result_dir": "results/aohba50M_strict_volid_dgcnn_stopped_full_pos_only",
+    "n_events": 311654,
+    "label_counts": {
+      "0": 155827,
+      "1": 155827
+    },
+    "accuracy_at_0.5": 0.6992016787848062,
+    "auc": 0.7602776353054692,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5017230646807036,
+        "fpr": 0.2073517426376687,
+        "rejection": 4.822722911701897,
+        "threshold": 0.65087890625
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7008926565999474,
+        "fpr": 0.3282807215694328,
+        "rejection": 3.0461733945850846,
+        "threshold": 0.5927734375
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8003619398435444,
+        "fpr": 0.4059501883499009,
+        "rejection": 2.4633564134180657,
+        "threshold": 0.5517578125
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9000429963998536,
+        "fpr": 0.5024931494542024,
+        "rejection": 1.9900768818165564,
+        "threshold": 0.493408203125
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9501370109159517,
+        "fpr": 0.5670262534734032,
+        "rejection": 1.7635867719957445,
+        "threshold": 0.421875
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9800098827545932,
+        "fpr": 0.6259441560191751,
+        "rejection": 1.597586606383088,
+        "threshold": 0.299072265625
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9900017326907403,
+        "fpr": 0.6681768884724727,
+        "rejection": 1.4966096811371494,
+        "threshold": 0.189697265625
+      }
+    ]
+  },
+  {
+    "label": "edep + pos",
+    "result_dir": "results/aohba50M_strict_volid_dgcnn_stopped_full_edep_pos",
+    "n_events": 311654,
+    "label_counts": {
+      "0": 155827,
+      "1": 155827
+    },
+    "accuracy_at_0.5": 0.9999486610151,
+    "auc": 0.9999999188083509,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9973303727852041,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      }
+    ]
+  },
+  {
+    "label": "no edep",
+    "result_dir": "results/aohba50M_strict_volid_dgcnn_stopped_full_no_edep",
+    "n_events": 311654,
+    "label_counts": {
+      "0": 155827,
+      "1": 155827
+    },
+    "accuracy_at_0.5": 0.9988288294069706,
+    "auc": 0.999958924706167,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9823458065675397,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9901621670185526,
+        "fpr": 1.2834746224980267e-05,
+        "rejection": 77913.5,
+        "threshold": 0.99853515625
+      }
+    ]
+  },
+  {
+    "label": "full",
+    "result_dir": "results/aohba50M_strict_volid_dgcnn_stopped_full",
+    "n_events": 311654,
+    "label_counts": {
+      "0": 155827,
+      "1": 155827
+    },
+    "accuracy_at_0.5": 0.9999614957613251,
+    "auc": 0.9999998701922,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.9988512902128642,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 1.0
+      }
+    ]
+  }
+]
