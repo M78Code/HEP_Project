@@ -1,0 +1,50 @@
+{
+  "accuracy": 0.9999486610151,
+  "auc": 0.9999999188083509,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.9973303727852041,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    }
+  ],
+  "best_epoch": 9,
+  "best_val_auc": 0.9999999589604083
+}
