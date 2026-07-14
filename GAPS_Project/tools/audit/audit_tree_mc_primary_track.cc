@@ -1,6 +1,4 @@
 
-R__ADD_INCLUDE_PATH(/home/ynakagami/simpledet/SimpleDet/common/include)
-R__ADD_INCLUDE_PATH(/home/ynakagami/simpledet/build/install/gaps-v1.7.0/include/gaps)
 
 #include <iostream>
 #include <map>
@@ -114,4 +112,14 @@ void audit_tree_mc_primary_track(const char* root_path, Long64_t max_entries=200
     std::cout << "\nbad volume examples:\n";
     for (auto& kv : bad_vol_examples) std::cout << "  " << kv.first << " " << kv.second << "\n";
   }
+}
+
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    std::cerr << "usage: " << argv[0] << " input.root [max_entries]\n";
+    return 1;
+  }
+  Long64_t max_entries = (argc >= 3) ? std::stoll(argv[2]) : 20000;
+  audit_tree_mc_primary_track(argv[1], max_entries);
+  return 0;
 }
