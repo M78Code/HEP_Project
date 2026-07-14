@@ -22,7 +22,8 @@ Two input layouts:
     mc_beta.  Used as the ML-2 contrast (realistic reconstructed input).
 
 Feature modes:
-  edep      energy-loss summary statistics only
+  edep_shape energy-loss shape statistics only (no sum -> multiplicity-independent)
+  edep      energy-loss summary statistics only (includes sum)
   edep_geo  edep stats + n_hits + hit-position summary
   full      volid: edep_geo + tof/stoplayer/unique-volume ;
             treerec: edep_geo + 45-D graph_feat
@@ -137,6 +138,8 @@ def event_features(rec: dict, mode: str, layout: str) -> list[float]:
     feats = _edep_stats(rec["edep"])
     if mode == "edep":
         return feats
+    if mode == "edep_shape":
+        return feats[1:]  # drop sum -> multiplicity-independent energy shape stats
     feats.append(float(rec["edep"].shape[0]))          # n_hits
     feats += _pos_stats(rec["pos"])
     if mode == "edep_geo":
