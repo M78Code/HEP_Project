@@ -4,5 +4,6 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/GAPS_Project" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/PlotNeuralNet" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/simpledet/SimpleDet" vcs="Git" />
   </component>
 </project>
