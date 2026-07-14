@@ -133,7 +133,7 @@ void print_summary(int idx, const TrackIndexSummary& s) {
 
 }  // namespace
 
-void audit_tree_mc_track_indices(const char* root_path, Long64_t max_entries = 20000, int max_track_index = 8) {
+void tree_mc_track_index_audit(const char* root_path, Long64_t start_entry, Long64_t max_entries, int max_track_index) {
   TChain tree("TreeMc");
   tree.Add(root_path);
 
@@ -141,7 +141,11 @@ void audit_tree_mc_track_indices(const char* root_path, Long64_t max_entries = 2
   tree.SetBranchAddress("Mc", &event_base);
 
   const Long64_t entries_total = tree.GetEntries();
-  const Long64_t n_loop = (max_entries > 0 && max_entries < entries_total) ? max_entries : entries_total;
+  if (start_entry < 0) start_entry = 0;
+  if (start_entry > entries_total) start_entry = entries_total;
+  const Long64_t end_entry =
+      (max_entries > 0) ? std::min(entries_total, start_entry + max_entries) : entries_total;
+  const Long64_t n_loop = end_entry - start_entry;
   std::vector<TrackIndexSummary> by_index(max_track_index + 1);
 
   long long events_seen = 0;
@@ -153,7 +157,7 @@ void audit_tree_mc_track_indices(const char* root_path, Long64_t max_entries = 2
   RunningStats track0_hit_fraction;
   RunningStats track0_edep_fraction;
 
-  for (Long64_t entry = 0; entry < n_loop; ++entry) {
+  for (Long64_t entry = start_entry; entry < end_entry; ++entry) {
     tree.GetEntry(entry);
     auto* event = dynamic_cast<CEventMc*>(event_base);
     if (!event) continue;
@@ -210,6 +214,8 @@ void audit_tree_mc_track_indices(const char* root_path, Long64_t max_entries = 2
 
   std::cout << "root: " << root_path << "\n";
   std::cout << "entries_total: " << entries_total << "\n";
+  std::cout << "start_entry: " << start_entry << "\n";
+  std::cout << "end_entry: " << end_entry << "\n";
   std::cout << "entries_looped: " << n_loop << "\n";
   std::cout << "events_seen: " << events_seen << "\n";
   std::cout << "no_track: " << no_track << "\n";
@@ -241,12 +247,16 @@ void audit_tree_mc_track_indices(const char* root_path, Long64_t max_entries = 2
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " input.root [max_entries] [max_track_index]\n";
+    std::cerr << "usage: " << argv[0]
+              << " input.root [start_entry] [max_entries] [max_track_index]\n";
     return 1;
   }
 
-  const Long64_t max_entries = (argc >= 3) ? std::stoll(argv[2]) : 20000;
-  const int max_track_index = (argc >= 4) ? std::stoi(argv[3]) : 8;
-  audit_tree_mc_track_indices(argv[1], max_entries, max_track_index);
+  const char* root_path = argv[1];
+  Long64_t start_entry = (argc >= 3) ? std::stoll(argv[2]) : 0;
+  Long64_t max_entries = (argc >= 4) ? std::stoll(argv[3]) : 200000;
+  int max_track_index = (argc >= 5) ? std::stoi(argv[4]) : 12;
+
+  tree_mc_track_index_audit(root_path, start_entry, max_entries, max_track_index);
   return 0;
 }
