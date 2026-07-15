@@ -83,6 +83,28 @@ def resolve_split_files(data_dir: Path, split: str) -> list[Path]:
     shards = sorted(data_dir.glob(f"{split}_mixed_*.pt"))
     if shards:
         return shards
+    manifest_path = data_dir / "subset_manifest.json"
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        source_dir = Path(manifest["source_dir"])
+        if not source_dir.exists():
+            candidates = [
+                data_dir.parent / source_dir.name,
+                data_dir.parent / "aohba_atrest_tof172_sharded",
+            ]
+            source_dir = next((p for p in candidates if p.exists()), source_dir)
+
+        split_info = manifest["splits"][split]
+        files = []
+        for particle in sorted(split_info["particles"]):
+            files.extend(source_dir / name for name in split_info["particles"][particle]["files"])
+
+        missing = [str(p) for p in files if not p.exists()]
+        if missing:
+            raise FileNotFoundError(
+                f"{len(missing)} manifest shard files are missing; first missing: {missing[0]}"
+            )
+        return files
     raise FileNotFoundError(f"no {split}.pt or {split}_mixed_*.pt in {data_dir}")
 
 
@@ -93,7 +115,14 @@ def extract_record(g, layout: str) -> dict:
             "edep": x[:, 0], "pos": g.pos.numpy(),
             "tof": x[:, 1], "stoplayer": x[:, 2], "volid": g.volume_id.numpy(),
         }
-    gf = g.graph_feat.numpy().reshape(-1) if hasattr(g, "graph_feat") else None
+    if hasattr(g, "graph_feat"):
+        gf = g.graph_feat.numpy().reshape(-1)
+    else:
+        parts = []
+        for attr in ("n_hits", "total_energy", "sili_profile", "tof_profile", "tof_feat"):
+            if hasattr(g, attr):
+                parts.append(torch.as_tensor(getattr(g, attr)).detach().cpu().numpy().reshape(-1))
+        gf = np.concatenate(parts).astype(np.float32) if parts else None
     return {"edep": np.log1p(np.clip(x[:, 3], 0.0, None)), "pos": x[:, :3], "graph_feat": gf}
 
 
