@@ -22,6 +22,14 @@ Two input layouts:
     mc_beta.  Used as the ML-2 contrast (realistic reconstructed input).
 
 Feature modes:
+  n_hits    hit multiplicity only
+  edep_sum  total energy loss only
+  edep_mean mean energy loss only
+  edep_quantile energy-loss quantiles only
+  edep_no_max energy-loss shape statistics without sum/max
+  stoplayer volid only: stopping-layer summary only
+  tof_only  volid only: TOF-like summary only
+  vol_count volid only: number of unique volume IDs only
   edep_shape energy-loss shape statistics only (no sum -> multiplicity-independent)
   edep      energy-loss summary statistics only (includes sum)
   edep_geo  edep stats + n_hits + hit-position summary
@@ -120,6 +128,12 @@ def _edep_stats(edep: np.ndarray) -> list[float]:
             float(edep.min()), float(edep.max()), *[float(v) for v in q]]
 
 
+def _scalar_stats(xs: np.ndarray) -> list[float]:
+    q = np.quantile(xs, QUANTILES)
+    return [float(xs.mean()), float(xs.std()), float(xs.min()), float(xs.max()),
+            *[float(v) for v in q]]
+
+
 def _pos_stats(pos: np.ndarray) -> list[float]:
     return [
         float(pos[:, 0].mean()), float(pos[:, 1].mean()), float(pos[:, 2].mean()),
@@ -136,6 +150,28 @@ def event_features(rec: dict, mode: str, layout: str) -> list[float]:
         return [float(v) for v in rec["graph_feat"]]
 
     feats = _edep_stats(rec["edep"])
+    if mode == "n_hits":
+        return [float(rec["edep"].shape[0])]
+    if mode == "edep_sum":
+        return [feats[0]]
+    if mode == "edep_mean":
+        return [feats[1]]
+    if mode == "edep_quantile":
+        return feats[5:]
+    if mode == "edep_no_max":
+        return [feats[1], feats[2], feats[3], *feats[5:]]
+    if mode == "stoplayer":
+        if layout != "volid":
+            raise ValueError("stoplayer mode requires volid layout")
+        return _scalar_stats(rec["stoplayer"])
+    if mode == "tof_only":
+        if layout != "volid":
+            raise ValueError("tof_only mode requires volid layout")
+        return _scalar_stats(rec["tof"])
+    if mode == "vol_count":
+        if layout != "volid":
+            raise ValueError("vol_count mode requires volid layout")
+        return [float(np.unique(rec["volid"]).size)]
     if mode == "edep":
         return feats
     if mode == "edep_shape":
