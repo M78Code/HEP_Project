@@ -88,6 +88,8 @@ MIN_EPOCHS   = 20
 IN_CHANNEL   = 8
 NUM_BLOCKS   = 6
 HIDDEN_DIM   = 128
+DEFAULT_BETA_BINS = '0.20,0.25,0.30,0.35,0.40,0.45,0.50'
+DEFAULT_BETA_BIN_WEIGHTS = '1,1,1.5,2,4,6'
 
 if torch.cuda.is_available():
     DEVICE = torch.device('cuda:0')
@@ -96,6 +98,27 @@ elif torch.backends.mps.is_available():
 else:
     DEVICE = torch.device('cpu')
 print(f'使用设备：{DEVICE}')
+
+
+def parse_float_list(value: str) -> list[float]:
+    return [float(x.strip()) for x in value.split(',') if x.strip()]
+
+
+def beta_bin_weights(
+        beta: torch.Tensor,
+        bin_edges: torch.Tensor,
+        bin_weights: torch.Tensor) -> torch.Tensor:
+    """Return per-graph weights according to beta bins."""
+    weights = torch.ones_like(beta, dtype=torch.float32)
+    for i in range(len(bin_weights)):
+        lo = bin_edges[i]
+        hi = bin_edges[i + 1]
+        if i == len(bin_weights) - 1:
+            mask = (beta >= lo) & (beta <= hi)
+        else:
+            mask = (beta >= lo) & (beta < hi)
+        weights[mask] = bin_weights[i]
+    return weights
 
 
 # ── IterableDataset ────────────────────────────────────
@@ -327,7 +350,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           max_train_batches: int = None, max_val_batches: int = None,
           model_name: str = 'gravnet', result_dir: Path = None,
           dataset_tag: str = None, resume_checkpoint: Path = None,
-          num_workers: int = 0, prefetch_factor: int = 2):
+          num_workers: int = 0, prefetch_factor: int = 2,
+          beta_weighted_loss: bool = False,
+          beta_bins: str = DEFAULT_BETA_BINS,
+          beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
@@ -372,6 +398,25 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'patience={PATIENCE}, monitor=val_loss')
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
+    criterion_none = FocalLoss(gamma=FOCAL_GAMMA, reduction='none')
+    beta_bin_edges = None
+    beta_weights = None
+    if beta_weighted_loss:
+        beta_bin_edges_list = parse_float_list(beta_bins)
+        beta_weights_list = parse_float_list(beta_bin_weights_arg)
+        if len(beta_bin_edges_list) != len(beta_weights_list) + 1:
+            raise ValueError(
+                '--beta-bins must have exactly one more value than '
+                '--beta-bin-weights')
+        beta_bin_edges = torch.tensor(
+            beta_bin_edges_list, dtype=torch.float32, device=DEVICE)
+        beta_weights = torch.tensor(
+            beta_weights_list, dtype=torch.float32, device=DEVICE)
+        print('beta weighted loss: enabled')
+        print(f'  beta bins   : {beta_bin_edges_list}')
+        print(f'  bin weights : {beta_weights_list}')
+    else:
+        print('beta weighted loss: disabled')
     optimizer = Adam(model.parameters(), lr=LR)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
@@ -454,13 +499,25 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 logits = model(
                     batch.x, batch.edge_index, batch.batch,
                     graph_feat=graph_feat)
-            loss = criterion(logits, batch.y.view(-1))
+            targets = batch.y.view(-1)
+            if beta_weighted_loss:
+                if not hasattr(batch, 'mc_beta'):
+                    raise ValueError(
+                        '--beta-weighted-loss requires mc_beta in graph cache')
+                losses = criterion_none(logits, targets)
+                weights = beta_bin_weights(
+                    batch.mc_beta.view(-1).float(),
+                    beta_bin_edges,
+                    beta_weights)
+                loss = (losses * weights).sum() / weights.sum().clamp_min(1.0)
+            else:
+                loss = criterion(logits, targets)
             loss.backward()
             optimizer.step()
 
             total_loss    += loss.item() * batch.num_graphs
             preds          = logits.argmax(dim=1)
-            total_correct += (preds == batch.y.view(-1)).sum().item()
+            total_correct += (preds == targets).sum().item()
             total_samples += batch.num_graphs
             train_bar.set_postfix(loss=f'{loss.item():.4f}')
 
@@ -582,6 +639,12 @@ if __name__ == '__main__':
                     help='训练batch数上限（smoke test用）')
     ap.add_argument('--max-val-batches', type=int, default=None,
                     help='验证batch数上限（smoke test用）')
+    ap.add_argument('--beta-weighted-loss', action='store_true',
+                    help='train loss に beta-bin ごとの重みを掛ける')
+    ap.add_argument('--beta-bins', default=DEFAULT_BETA_BINS,
+                    help='comma-separated beta bin edges')
+    ap.add_argument('--beta-bin-weights', default=DEFAULT_BETA_BIN_WEIGHTS,
+                    help='comma-separated train loss weights for beta bins')
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files,
@@ -595,4 +658,7 @@ if __name__ == '__main__':
           dataset_tag=args.dataset_tag,
           resume_checkpoint=args.resume_checkpoint,
           num_workers=args.num_workers,
-          prefetch_factor=args.prefetch_factor)
+          prefetch_factor=args.prefetch_factor,
+          beta_weighted_loss=args.beta_weighted_loss,
+          beta_bins=args.beta_bins,
+          beta_bin_weights_arg=args.beta_bin_weights)
