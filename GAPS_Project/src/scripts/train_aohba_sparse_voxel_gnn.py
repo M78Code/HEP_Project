@@ -21,6 +21,8 @@ from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
 
+from GAPS_Project.src.models.gravnet import GravNetClassifier
+
 from sklearn.metrics import roc_auc_score, accuracy_score
 
 
@@ -201,6 +203,36 @@ class SparseVoxelGNN(nn.Module):
         return self.cls(torch.cat([g, t], dim=1)).view(-1)
 
 
+class SparseVoxelGravNet(nn.Module):
+    def __init__(
+        self,
+        hidden=128,
+        tof_dim=183,
+        dropout=0.15,
+        k=8,
+        num_blocks=6,
+    ):
+        super().__init__()
+        self.core = GravNetClassifier(
+            in_channels=5,
+            hidden_dim=hidden,
+            k=k,
+            num_classes=2,
+            dropout=dropout,
+            graph_feat_dim=tof_dim,
+            num_blocks=num_blocks,
+        )
+
+    def forward(self, data):
+        logits = self.core(
+            data.x,
+            data.edge_index,
+            data.batch,
+            graph_feat=data.tof,
+        )
+        return logits[:, 1] - logits[:, 0]
+
+
 def rejection_at_eff(labels, scores, eff):
     labels = np.asarray(labels)
     scores = np.asarray(scores)
@@ -274,7 +306,22 @@ def train(args):
     test_loader = DataLoader(test_ds, shuffle=False, **loader_kw)
 
     tof_dim = 183 + int(args.use_beta)
-    model = SparseVoxelGNN(hidden=args.hidden, tof_dim=tof_dim, dropout=args.dropout).to(device)
+    if args.model == "graphconv":
+        model = SparseVoxelGNN(
+            hidden=args.hidden,
+            tof_dim=tof_dim,
+            dropout=args.dropout,
+        ).to(device)
+    elif args.model == "gravnet":
+        model = SparseVoxelGravNet(
+            hidden=args.hidden,
+            tof_dim=tof_dim,
+            dropout=args.dropout,
+            k=args.k,
+            num_blocks=args.num_blocks,
+        ).to(device)
+    else:
+        raise ValueError(f"unknown model: {args.model}")
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
@@ -283,6 +330,7 @@ def train(args):
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
     print("use beta:", args.use_beta)
     print("tof/global dim:", tof_dim)
+    print("model:", args.model)
     print("model params:", sum(p.numel() for p in model.parameters()))
 
     best_val_auc = -float("inf")
@@ -368,10 +416,12 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--data-dir", required=True)
     p.add_argument("--dataset-tag", default="voxel_sparse_gnn")
+    p.add_argument("--model", choices=["graphconv", "gravnet"], default="graphconv")
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--batch-size", type=int, default=512)
     p.add_argument("--num-workers", type=int, default=4)
     p.add_argument("--hidden", type=int, default=128)
+    p.add_argument("--num-blocks", type=int, default=6)
     p.add_argument("--k", type=int, default=8)
     p.add_argument("--dropout", type=float, default=0.15)
     p.add_argument("--lr", type=float, default=3e-4)
