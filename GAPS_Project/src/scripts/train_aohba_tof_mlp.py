@@ -65,7 +65,7 @@ class TofDataset(Dataset):
     def __len__(self) -> int:
         return self.n
 
-    def __getitem__(self, idx: int):
+    def raw_feature(self, idx: int) -> np.ndarray:
         idx = int(idx)
         primary = np.asarray(self.tof_primary[idx], dtype=np.float32)
         paddles = np.asarray(self.tof_paddles[idx], dtype=np.float32)
@@ -84,21 +84,50 @@ class TofDataset(Dataset):
             x = np.concatenate([primary, beta], axis=0)
         else:
             raise ValueError(self.mode)
+        return x.astype(np.float32)
 
+    def __getitem__(self, idx: int):
+        x = self.raw_feature(idx)
+        idx = int(idx)
         y = np.asarray([self.labels[idx]], dtype=np.float32)
         return torch.from_numpy(x), torch.from_numpy(y), torch.tensor(float(self.betas[idx]))
 
 
+class StandardizedDataset(Dataset):
+    def __init__(self, base: TofDataset, mean: np.ndarray, std: np.ndarray):
+        self.base = base
+        self.mean = mean.astype(np.float32)
+        self.std = std.astype(np.float32)
+        self.dim = base.dim
+
+    def __len__(self) -> int:
+        return len(self.base)
+
+    def __getitem__(self, idx: int):
+        x, y, beta = self.base[idx]
+        x = (x - torch.from_numpy(self.mean)) / torch.from_numpy(self.std)
+        return x, y, beta
+
+
+def compute_standardizer(ds: TofDataset, max_samples: int | None = None):
+    n = len(ds) if max_samples is None else min(len(ds), int(max_samples))
+    xs = np.empty((n, ds.dim), dtype=np.float32)
+    for i in range(n):
+        xs[i] = ds.raw_feature(i)
+    mean = xs.mean(axis=0)
+    std = xs.std(axis=0)
+    std[std < 1e-6] = 1.0
+    return mean, std
+
+
 class TofMLP(nn.Module):
-    def __init__(self, in_dim: int, hidden: int = 128, dropout: float = 0.15):
+    def __init__(self, in_dim: int, hidden: int = 128, dropout: float = 0.05):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_dim, hidden),
-            nn.BatchNorm1d(hidden),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, hidden),
-            nn.BatchNorm1d(hidden),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, hidden // 2),
@@ -159,9 +188,14 @@ def train(args):
     out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_TofMLP_{args.dataset_tag}_{args.mode}"
     out.mkdir(parents=True, exist_ok=True)
 
-    train_ds = TofDataset(args.data_dir, "train", args.mode, args.max_train_events)
-    val_ds = TofDataset(args.data_dir, "val", args.mode, args.max_val_events)
-    test_ds = TofDataset(args.data_dir, "test", args.mode, args.max_test_events)
+    train_base = TofDataset(args.data_dir, "train", args.mode, args.max_train_events)
+    val_base = TofDataset(args.data_dir, "val", args.mode, args.max_val_events)
+    test_base = TofDataset(args.data_dir, "test", args.mode, args.max_test_events)
+
+    mean, std = compute_standardizer(train_base, args.standardize_samples)
+    train_ds = StandardizedDataset(train_base, mean, std)
+    val_ds = StandardizedDataset(val_base, mean, std)
+    test_ds = StandardizedDataset(test_base, mean, std)
 
     loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=device.type == "cuda")
     if args.num_workers > 0:
@@ -181,7 +215,7 @@ def train(args):
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
     print("model params:", sum(p.numel() for p in model.parameters()))
 
-    best_val = float("inf")
+    best_val_auc = -float("inf")
     best_path = out / "best.pt"
     for epoch in range(1, args.epochs + 1):
         model.train()
@@ -219,10 +253,19 @@ def train(args):
         )
 
         torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, out / "last.pt")
-        if val_loss < best_val:
-            best_val = val_loss
-            torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, best_path)
-            print("  -> best saved:", best_path, flush=True)
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "args": vars(args),
+                    "epoch": epoch,
+                    "standardizer": {"mean": mean, "std": std},
+                    "best_val_auc": best_val_auc,
+                },
+                best_path,
+            )
+            print(f"  -> best saved: {best_path} (val_auc={best_val_auc:.6f})", flush=True)
 
     ckpt = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
@@ -254,7 +297,7 @@ def main():
     p.add_argument("--batch-size", type=int, default=512)
     p.add_argument("--num-workers", type=int, default=4)
     p.add_argument("--hidden", type=int, default=128)
-    p.add_argument("--dropout", type=float, default=0.15)
+    p.add_argument("--dropout", type=float, default=0.05)
     p.add_argument("--lr", type=float, default=3e-4)
     p.add_argument("--weight-decay", type=float, default=1e-4)
     p.add_argument("--seed", type=int, default=42)
@@ -263,6 +306,7 @@ def main():
     p.add_argument("--max-val-events", type=int)
     p.add_argument("--max-test-events", type=int)
     p.add_argument("--max-train-batches", type=int)
+    p.add_argument("--standardize-samples", type=int, default=None)
     args = p.parse_args()
     train(args)
 
