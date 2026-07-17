@@ -332,8 +332,18 @@ def train(args):
     print("tof/global dim:", tof_dim)
     print("model:", args.model)
     print("model params:", sum(p.numel() for p in model.parameters()))
+    if args.early_stopping_patience > 0:
+        print(
+            "early stopping: "
+            f"monitor=val_auc mode=max min_epochs={args.min_epochs} "
+            f"patience={args.early_stopping_patience} "
+            f"min_delta={args.early_stopping_min_delta}",
+            flush=True,
+        )
 
     best_val_auc = -float("inf")
+    best_epoch = 0
+    no_improve_epochs = 0
     best_path = out / "best.pt"
 
     for epoch in range(1, args.epochs + 1):
@@ -374,9 +384,24 @@ def train(args):
             flush=True,
         )
 
-        torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, out / "last.pt")
-        if val_auc > best_val_auc:
+        torch.save(
+            {
+                "model": model.state_dict(),
+                "args": vars(args),
+                "epoch": epoch,
+                "best_val_auc": best_val_auc,
+                "best_epoch": best_epoch,
+            },
+            out / "last.pt",
+        )
+
+        improved = np.isfinite(val_auc) and (
+            val_auc > best_val_auc + args.early_stopping_min_delta
+        )
+        if improved:
             best_val_auc = val_auc
+            best_epoch = epoch
+            no_improve_epochs = 0
             torch.save(
                 {
                     "model": model.state_dict(),
@@ -384,10 +409,27 @@ def train(args):
                     "epoch": epoch,
                     "tof_standardizer": {"mean": tof_mean, "std": tof_std},
                     "best_val_auc": best_val_auc,
+                    "best_epoch": best_epoch,
                 },
                 best_path,
             )
             print(f"  -> best saved: {best_path} (val_auc={best_val_auc:.6f})", flush=True)
+        else:
+            no_improve_epochs += 1
+
+        if (
+            args.early_stopping_patience > 0
+            and epoch >= args.min_epochs
+            and no_improve_epochs >= args.early_stopping_patience
+        ):
+            print(
+                "early stopping triggered: "
+                f"epoch={epoch}, best_epoch={best_epoch}, "
+                f"best_val_auc={best_val_auc:.6f}, "
+                f"no_improve_epochs={no_improve_epochs}",
+                flush=True,
+            )
+            break
 
     ckpt = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
@@ -433,6 +475,24 @@ def main():
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
     p.add_argument("--use-beta", action="store_true")
+    p.add_argument(
+        "--early-stopping-patience",
+        type=int,
+        default=20,
+        help="Stop after this many epochs without val_auc improvement. 0 disables early stopping.",
+    )
+    p.add_argument(
+        "--min-epochs",
+        type=int,
+        default=20,
+        help="Minimum epochs before early stopping can trigger.",
+    )
+    p.add_argument(
+        "--early-stopping-min-delta",
+        type=float,
+        default=1e-5,
+        help="Minimum val_auc improvement required to reset early stopping patience.",
+    )
     args = p.parse_args()
     train(args)
 
