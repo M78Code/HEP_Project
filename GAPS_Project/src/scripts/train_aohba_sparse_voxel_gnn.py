@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+import argparse, json, time
+from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
+from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
+
+from sklearn.metrics import roc_auc_score, accuracy_score
+
+
+def split_dir(data_dir, split):
+    return Path(data_dir) / f"{split}_nakagami_style_4M"
+
+
+class SparseVoxelDataset(torch.utils.data.Dataset):
+    def __init__(self, data_dir, split, max_events=None, k=8):
+        d = split_dir(data_dir, split)
+        if not d.exists():
+            raise FileNotFoundError(d)
+
+        self.voxels = np.load(d / "voxels.npy", mmap_mode="r")
+        self.tof_paddles = np.load(d / "tof_paddles.npy", mmap_mode="r")
+        self.tof_primary = np.load(d / "tof_primary.npy", mmap_mode="r")
+        self.labels = np.load(d / "labels.npy", mmap_mode="r")
+        self.betas = np.load(d / "betas.npy", mmap_mode="r")
+        self.k = k
+
+        n = len(self.labels)
+        self.n = min(n, max_events) if max_events else n
+
+    def __len__(self):
+        return self.n
+
+    def _edge_index(self, pos):
+        n = pos.shape[0]
+        if n <= 1:
+            return torch.empty((2, 0), dtype=torch.long)
+
+        k = min(self.k, n - 1)
+        dist = torch.cdist(pos, pos)
+        dist.fill_diagonal_(float("inf"))
+        nn_idx = dist.topk(k, largest=False).indices
+
+        src = torch.arange(n).repeat_interleave(k)
+        dst = nn_idx.reshape(-1)
+        return torch.stack([src, dst], dim=0).long()
+
+    def __getitem__(self, idx):
+        v = self.voxels[idx]  # (10, 12, 12)
+        z, x, y = np.nonzero(v > 0)
+
+        if len(z) == 0:
+            edep = np.array([0.0], dtype=np.float32)
+            coords = np.array([[0.0, 0.0, 0.0]], dtype=np.float32)
+            occ = np.array([[0.0]], dtype=np.float32)
+        else:
+            edep = v[z, x, y].astype(np.float32)
+            coords = np.stack(
+                [z / 9.0, x / 11.0, y / 11.0], axis=1
+            ).astype(np.float32)
+            occ = np.ones((len(edep), 1), dtype=np.float32)
+
+        edep_feat = np.log1p(edep).reshape(-1, 1).astype(np.float32)
+        node_x = np.concatenate([edep_feat, coords, occ], axis=1)
+
+        x_t = torch.from_numpy(node_x)
+        pos_t = torch.from_numpy(coords)
+        edge_index = self._edge_index(pos_t)
+
+        tof = np.concatenate(
+            [self.tof_paddles[idx].astype(np.float32),
+             self.tof_primary[idx].astype(np.float32)]
+        )
+
+        return Data(
+            x=x_t,
+            pos=pos_t,
+            edge_index=edge_index,
+            y=torch.tensor([float(self.labels[idx])], dtype=torch.float32),
+            tof=torch.from_numpy(tof).view(1, -1),
+            beta=torch.tensor([float(self.betas[idx])], dtype=torch.float32),
+        )
+
+
+class SparseVoxelGNN(nn.Module):
+    def __init__(self, hidden=128, tof_dim=183, dropout=0.15):
+        super().__init__()
+        self.conv1 = GraphConv(5, hidden)
+        self.conv2 = GraphConv(hidden, hidden)
+        self.conv3 = GraphConv(hidden, hidden)
+
+        self.tof_mlp = nn.Sequential(
+            nn.Linear(tof_dim, 128),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+        )
+
+        self.cls = nn.Sequential(
+            nn.Linear(hidden * 2 + 64, hidden),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, 1),
+        )
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.relu(self.conv2(x, edge_index))
+        x = F.relu(self.conv3(x, edge_index))
+
+        g = torch.cat(
+            [global_mean_pool(x, batch), global_max_pool(x, batch)],
+            dim=1,
+        )
+
+        tof = data.tof
+        if tof.dim() == 1:
+            tof = tof.view(g.size(0), -1)
+        t = self.tof_mlp(tof)
+
+        return self.cls(torch.cat([g, t], dim=1)).view(-1)
+
+
+def rejection_at_eff(labels, scores, eff):
+    labels = np.asarray(labels)
+    scores = np.asarray(scores)
+    sig = scores[labels == 1]
+    bg = scores[labels == 0]
+    if len(sig) == 0 or len(bg) == 0:
+        return float("nan"), float("nan")
+
+    thr = np.quantile(sig, 1.0 - eff)
+    fpr = np.mean(bg >= thr)
+    if fpr == 0:
+        return float("inf"), 0.0
+    return 1.0 / fpr, fpr
+
+
+@torch.no_grad()
+def evaluate(model, loader, device):
+    model.eval()
+    ys, ss, bs = [], [], []
+    total_loss, total_n = 0.0, 0
+
+    for data in loader:
+        data = data.to(device)
+        logits = model(data)
+        y = data.y.view(-1)
+        loss = F.binary_cross_entropy_with_logits(logits, y)
+
+        prob = torch.sigmoid(logits)
+        ys.append(y.cpu().numpy())
+        ss.append(prob.cpu().numpy())
+        bs.append(data.beta.view(-1).cpu().numpy())
+
+        total_loss += float(loss.item()) * y.numel()
+        total_n += y.numel()
+
+    y = np.concatenate(ys)
+    s = np.concatenate(ss)
+    b = np.concatenate(bs)
+
+    acc = accuracy_score(y.astype(int), (s >= 0.5).astype(int))
+    auc = roc_auc_score(y, s) if len(np.unique(y)) == 2 else float("nan")
+    return total_loss / max(total_n, 1), acc, auc, y, s, b
+
+
+def train(args):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
+    out.mkdir(parents=True, exist_ok=True)
+
+    train_ds = SparseVoxelDataset(args.data_dir, "train", args.max_train_events, args.k)
+    val_ds = SparseVoxelDataset(args.data_dir, "val", args.max_val_events, args.k)
+    test_ds = SparseVoxelDataset(args.data_dir, "test", args.max_test_events, args.k)
+
+    loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers)
+    if args.num_workers > 0:
+        loader_kw.update(dict(persistent_workers=True, prefetch_factor=2))
+
+    train_loader = DataLoader(train_ds, shuffle=True, **loader_kw)
+    val_loader = DataLoader(val_ds, shuffle=False, **loader_kw)
+    test_loader = DataLoader(test_ds, shuffle=False, **loader_kw)
+
+    model = SparseVoxelGNN(hidden=args.hidden, dropout=args.dropout).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    scaler = torch.cuda.amp.GradScaler(enabled=args.amp and device.type == "cuda")
+
+    print("device:", device)
+    print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
+    print("batches:", len(train_loader), len(val_loader), len(test_loader))
+    print("model params:", sum(p.numel() for p in model.parameters()))
+
+    best_val = float("inf")
+    best_path = out / "best.pt"
+
+    for epoch in range(1, args.epochs + 1):
+        model.train()
+        t0 = time.time()
+        total_loss, total_correct, total_n = 0.0, 0, 0
+
+        for bi, data in enumerate(train_loader):
+            if args.max_train_batches and bi >= args.max_train_batches:
+                break
+
+            data = data.to(device)
+            y = data.y.view(-1)
+
+            opt.zero_grad(set_to_none=True)
+            with torch.cuda.amp.autocast(enabled=args.amp and device.type == "cuda"):
+                logits = model(data)
+                loss = F.binary_cross_entropy_with_logits(logits, y)
+
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
+
+            pred = (torch.sigmoid(logits) >= 0.5).float()
+            total_correct += int((pred == y).sum().item())
+            total_loss += float(loss.item()) * y.numel()
+            total_n += y.numel()
+
+        val_loss, val_acc, val_auc, *_ = evaluate(model, val_loader, device)
+        train_loss = total_loss / max(total_n, 1)
+        train_acc = total_correct / max(total_n, 1)
+
+        print(
+            f"Epoch {epoch:3d}/{args.epochs} | "
+            f"train_loss={train_loss:.4f} train_acc={train_acc:.4f} | "
+            f"val_loss={val_loss:.4f} val_acc={val_acc:.4f} val_auc={val_auc:.6f} | "
+            f"{time.time()-t0:.1f}s",
+            flush=True,
+        )
+
+        torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, out / "last.pt")
+        if val_loss < best_val:
+            best_val = val_loss
+            torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, best_path)
+            print("  -> best saved:", best_path, flush=True)
+
+    ckpt = torch.load(best_path, map_location=device, weights_only=False)
+    model.load_state_dict(ckpt["model"])
+
+    test_loss, test_acc, test_auc, y, s, b = evaluate(model, test_loader, device)
+    print("\nTEST")
+    print("loss:", test_loss)
+    print("accuracy:", test_acc)
+    print("AUC:", test_auc)
+    for eff in [0.5, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]:
+        rej, fpr = rejection_at_eff(y, s, eff)
+        print(f"Rej@{eff:.2f}: {rej}  FPR={fpr}")
+
+    ev = out / "evaluation_test"
+    ev.mkdir(exist_ok=True)
+    np.save(ev / "labels.npy", y)
+    np.save(ev / "scores.npy", s)
+    np.save(ev / "betas.npy", b)
+    with open(ev / "metrics.json", "w") as f:
+        json.dump({"test_loss": test_loss, "accuracy": test_acc, "auc": test_auc}, f, indent=2)
+
+    print("saved:", out)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--data-dir", required=True)
+    p.add_argument("--dataset-tag", default="voxel_sparse_gnn")
+    p.add_argument("--epochs", type=int, default=30)
+    p.add_argument("--batch-size", type=int, default=512)
+    p.add_argument("--num-workers", type=int, default=4)
+    p.add_argument("--hidden", type=int, default=128)
+    p.add_argument("--k", type=int, default=8)
+    p.add_argument("--dropout", type=float, default=0.15)
+    p.add_argument("--lr", type=float, default=3e-4)
+    p.add_argument("--weight-decay", type=float, default=1e-4)
+    p.add_argument("--amp", action="store_true")
+    p.add_argument("--max-train-events", type=int)
+    p.add_argument("--max-val-events", type=int)
+    p.add_argument("--max-test-events", type=int)
+    p.add_argument("--max-train-batches", type=int)
+    args = p.parse_args()
+    train(args)
+
+
+if __name__ == "__main__":
+    main()
