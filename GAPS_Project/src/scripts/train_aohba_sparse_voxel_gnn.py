@@ -28,7 +28,7 @@ def split_dir(data_dir, split):
     return Path(data_dir) / f"{split}_nakagami_style_4M"
 
 class SparseVoxelDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, split, max_events=None, k=8):
+    def __init__(self, data_dir, split, max_events=None, k=8, tof_mean=None, tof_std=None):
         d = split_dir(data_dir, split)
         if not d.exists():
             raise FileNotFoundError(d)
@@ -39,6 +39,8 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         self.labels = np.load(d / "labels.npy", mmap_mode="r")
         self.betas = np.load(d / "betas.npy", mmap_mode="r")
         self.k = k
+        self.tof_mean = None if tof_mean is None else np.asarray(tof_mean, dtype=np.float32)
+        self.tof_std = None if tof_std is None else np.asarray(tof_std, dtype=np.float32)
 
         n = len(self.labels)
         if max_events:
@@ -59,6 +61,16 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.n
 
+    def raw_tof(self, local_idx):
+        idx = int(self.indices[int(local_idx)])
+        tof = np.concatenate(
+            [
+                self.tof_paddles[idx].astype(np.float32),
+                self.tof_primary[idx].astype(np.float32),
+            ]
+        )
+        return np.log1p(np.clip(tof, 0, None)).astype(np.float32)
+
     def _edge_index(self, pos):
         n = pos.shape[0]
         if n <= 1:
@@ -74,7 +86,8 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         return torch.stack([src, dst], dim=0).long()
 
     def __getitem__(self, idx):
-        idx = int(self.indices[idx])
+        local_idx = int(idx)
+        idx = int(self.indices[local_idx])
         v = self.voxels[idx]  # (10, 12, 12)
         z, x, y = np.nonzero(v > 0)
 
@@ -96,10 +109,9 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         pos_t = torch.from_numpy(coords)
         edge_index = self._edge_index(pos_t)
 
-        tof = np.concatenate(
-            [self.tof_paddles[idx].astype(np.float32),
-             self.tof_primary[idx].astype(np.float32)]
-        )
+        tof = self.raw_tof(local_idx)
+        if self.tof_mean is not None and self.tof_std is not None:
+            tof = (tof - self.tof_mean) / self.tof_std
 
         return Data(
             x=x_t,
@@ -109,6 +121,30 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
             tof=torch.from_numpy(tof).view(1, -1),
             beta=torch.tensor([float(self.betas[idx])], dtype=torch.float32),
         )
+
+
+def compute_tof_standardizer(dataset, max_samples=None):
+    n = len(dataset) if max_samples is None else min(len(dataset), int(max_samples))
+    if n <= 0:
+        raise ValueError("cannot compute standardizer from empty dataset")
+
+    mean = None
+    m2 = None
+    count = 0
+    for i in range(n):
+        x = dataset.raw_tof(i).astype(np.float64)
+        if mean is None:
+            mean = np.zeros_like(x, dtype=np.float64)
+            m2 = np.zeros_like(x, dtype=np.float64)
+        count += 1
+        delta = x - mean
+        mean += delta / count
+        m2 += delta * (x - mean)
+
+    var = m2 / max(count - 1, 1)
+    std = np.sqrt(var)
+    std[std < 1e-6] = 1.0
+    return mean.astype(np.float32), std.astype(np.float32)
 
 
 class SparseVoxelGNN(nn.Module):
@@ -202,9 +238,18 @@ def train(args):
     out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
     out.mkdir(parents=True, exist_ok=True)
 
-    train_ds = SparseVoxelDataset(args.data_dir, "train", args.max_train_events, args.k)
-    val_ds = SparseVoxelDataset(args.data_dir, "val", args.max_val_events, args.k)
-    test_ds = SparseVoxelDataset(args.data_dir, "test", args.max_test_events, args.k)
+    train_base = SparseVoxelDataset(args.data_dir, "train", args.max_train_events, args.k)
+    tof_mean, tof_std = compute_tof_standardizer(train_base, args.standardize_samples)
+
+    train_ds = SparseVoxelDataset(
+        args.data_dir, "train", args.max_train_events, args.k, tof_mean, tof_std
+    )
+    val_ds = SparseVoxelDataset(
+        args.data_dir, "val", args.max_val_events, args.k, tof_mean, tof_std
+    )
+    test_ds = SparseVoxelDataset(
+        args.data_dir, "test", args.max_test_events, args.k, tof_mean, tof_std
+    )
 
     loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers)
     if args.num_workers > 0:
@@ -223,7 +268,7 @@ def train(args):
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
     print("model params:", sum(p.numel() for p in model.parameters()))
 
-    best_val = float("inf")
+    best_val_auc = -float("inf")
     best_path = out / "best.pt"
 
     for epoch in range(1, args.epochs + 1):
@@ -265,10 +310,19 @@ def train(args):
         )
 
         torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, out / "last.pt")
-        if val_loss < best_val:
-            best_val = val_loss
-            torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, best_path)
-            print("  -> best saved:", best_path, flush=True)
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "args": vars(args),
+                    "epoch": epoch,
+                    "tof_standardizer": {"mean": tof_mean, "std": tof_std},
+                    "best_val_auc": best_val_auc,
+                },
+                best_path,
+            )
+            print(f"  -> best saved: {best_path} (val_auc={best_val_auc:.6f})", flush=True)
 
     ckpt = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
@@ -310,6 +364,7 @@ def main():
     p.add_argument("--max-val-events", type=int)
     p.add_argument("--max-test-events", type=int)
     p.add_argument("--max-train-batches", type=int)
+    p.add_argument("--standardize-samples", type=int, default=None)
     args = p.parse_args()
     train(args)
 
