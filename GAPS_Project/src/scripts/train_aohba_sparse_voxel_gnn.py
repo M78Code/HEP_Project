@@ -28,7 +28,16 @@ def split_dir(data_dir, split):
     return Path(data_dir) / f"{split}_nakagami_style_4M"
 
 class SparseVoxelDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, split, max_events=None, k=8, tof_mean=None, tof_std=None):
+    def __init__(
+        self,
+        data_dir,
+        split,
+        max_events=None,
+        k=8,
+        tof_mean=None,
+        tof_std=None,
+        use_beta=False,
+    ):
         d = split_dir(data_dir, split)
         if not d.exists():
             raise FileNotFoundError(d)
@@ -41,6 +50,7 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         self.k = k
         self.tof_mean = None if tof_mean is None else np.asarray(tof_mean, dtype=np.float32)
         self.tof_std = None if tof_std is None else np.asarray(tof_std, dtype=np.float32)
+        self.use_beta = bool(use_beta)
 
         n = len(self.labels)
         if max_events:
@@ -69,6 +79,8 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
                 self.tof_primary[idx].astype(np.float32),
             ]
         )
+        if self.use_beta:
+            tof = np.concatenate([tof, np.array([self.betas[idx]], dtype=np.float32)])
         return np.log1p(np.clip(tof, 0, None)).astype(np.float32)
 
     def _edge_index(self, pos):
@@ -238,17 +250,19 @@ def train(args):
     out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
     out.mkdir(parents=True, exist_ok=True)
 
-    train_base = SparseVoxelDataset(args.data_dir, "train", args.max_train_events, args.k)
+    train_base = SparseVoxelDataset(
+        args.data_dir, "train", args.max_train_events, args.k, use_beta=args.use_beta
+    )
     tof_mean, tof_std = compute_tof_standardizer(train_base, args.standardize_samples)
 
     train_ds = SparseVoxelDataset(
-        args.data_dir, "train", args.max_train_events, args.k, tof_mean, tof_std
+        args.data_dir, "train", args.max_train_events, args.k, tof_mean, tof_std, args.use_beta
     )
     val_ds = SparseVoxelDataset(
-        args.data_dir, "val", args.max_val_events, args.k, tof_mean, tof_std
+        args.data_dir, "val", args.max_val_events, args.k, tof_mean, tof_std, args.use_beta
     )
     test_ds = SparseVoxelDataset(
-        args.data_dir, "test", args.max_test_events, args.k, tof_mean, tof_std
+        args.data_dir, "test", args.max_test_events, args.k, tof_mean, tof_std, args.use_beta
     )
 
     loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers)
@@ -259,13 +273,16 @@ def train(args):
     val_loader = DataLoader(val_ds, shuffle=False, **loader_kw)
     test_loader = DataLoader(test_ds, shuffle=False, **loader_kw)
 
-    model = SparseVoxelGNN(hidden=args.hidden, dropout=args.dropout).to(device)
+    tof_dim = 183 + int(args.use_beta)
+    model = SparseVoxelGNN(hidden=args.hidden, tof_dim=tof_dim, dropout=args.dropout).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
     print("device:", device)
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
+    print("use beta:", args.use_beta)
+    print("tof/global dim:", tof_dim)
     print("model params:", sum(p.numel() for p in model.parameters()))
 
     best_val_auc = -float("inf")
@@ -365,6 +382,7 @@ def main():
     p.add_argument("--max-test-events", type=int)
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
+    p.add_argument("--use-beta", action="store_true")
     args = p.parse_args()
     train(args)
 
