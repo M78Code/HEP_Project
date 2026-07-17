@@ -135,13 +135,28 @@ class CachedStreamDataset(IterableDataset):
 
     def __init__(self, pt_files: list, shuffle_files: bool = True,
                  shuffle_events: bool = True, seed: int = 42,
-                 balance_tagged_classes: bool = False):
+                 balance_tagged_classes: bool = False,
+                 beta_min: float = None, beta_max: float = None):
         self.pt_files       = list(pt_files)
         self.shuffle_files  = shuffle_files
         self.shuffle_events = shuffle_events
         self.seed           = seed
         self.balance_tagged_classes = balance_tagged_classes
+        self.beta_min       = beta_min
+        self.beta_max       = beta_max
         self._epoch         = 0
+
+    def _passes_beta(self, data) -> bool:
+        if self.beta_min is None and self.beta_max is None:
+            return True
+        if not hasattr(data, 'mc_beta'):
+            return False
+        beta = float(data.mc_beta.view(-1)[0])
+        if self.beta_min is not None and beta < self.beta_min:
+            return False
+        if self.beta_max is not None and beta >= self.beta_max:
+            return False
+        return True
 
     @staticmethod
     def _load_shard(pt_path: Path):
@@ -189,7 +204,8 @@ class CachedStreamDataset(IterableDataset):
                     self.seed + epoch * 1_000_003 + file_index
                 ).shuffle(data_list)
             for data in data_list:
-                yield data
+                if self._passes_beta(data):
+                    yield data
 
     def _iter_balanced(self, antiD_files, antiP_files, epoch):
         """Interleave class-pure shards so every batch is class balanced."""
@@ -214,7 +230,9 @@ class CachedStreamDataset(IterableDataset):
                         + class_offset
                         + file_index
                     ).shuffle(data_list)
-                yield from data_list
+                for data in data_list:
+                    if self._passes_beta(data):
+                        yield data
 
         antiD_stream = class_stream(antiD_files, 100_000)
         antiP_stream = class_stream(antiP_files, 200_000)
@@ -275,7 +293,8 @@ def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
 
 def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size: int,
                                max_train_files: int = None, max_val_files: int = None,
-                               num_workers: int = 0, prefetch_factor: int = 2):
+                               num_workers: int = 0, prefetch_factor: int = 2,
+                               beta_min: float = None, beta_max: float = None):
     with open(manifest_path) as f:
         manifest = json.load(f)
 
@@ -296,9 +315,11 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
         return pt_files
 
     train_ds = CachedStreamDataset(get_pt_files('train', max_train_files),
-                                   shuffle_files=True, shuffle_events=True)
+                                   shuffle_files=True, shuffle_events=True,
+                                   beta_min=beta_min, beta_max=beta_max)
     val_ds   = CachedStreamDataset(get_pt_files('val',   max_val_files),
-                                   shuffle_files=False, shuffle_events=False)
+                                   shuffle_files=False, shuffle_events=False,
+                                   beta_min=beta_min, beta_max=beta_max)
 
     train_loader = make_dataloader(
         train_ds, batch_size, num_workers, prefetch_factor)
@@ -310,7 +331,9 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
 
 def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int,
                                   num_workers: int = 0,
-                                  prefetch_factor: int = 2):
+                                  prefetch_factor: int = 2,
+                                  beta_min: float = None,
+                                  beta_max: float = None):
     """Load sharded or single-file caches created from split.pkl files.
 
     中文说明:
@@ -333,9 +356,12 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int,
         shuffle_files=True,
         shuffle_events=True,
         balance_tagged_classes=True,
+        beta_min=beta_min,
+        beta_max=beta_max,
     )
     val_ds = CachedStreamDataset(
-        find_split_files('val'), shuffle_files=False, shuffle_events=False)
+        find_split_files('val'), shuffle_files=False, shuffle_events=False,
+        beta_min=beta_min, beta_max=beta_max)
     train_loader = make_dataloader(
         train_ds, batch_size, num_workers, prefetch_factor)
     val_loader = make_dataloader(
@@ -353,16 +379,19 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           num_workers: int = 0, prefetch_factor: int = 2,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
-          beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS):
+          beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
+          beta_min: float = None, beta_max: float = None):
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
-            split_cache_dir, batch_size, num_workers, prefetch_factor)
+            split_cache_dir, batch_size, num_workers, prefetch_factor,
+            beta_min=beta_min, beta_max=beta_max)
     else:
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
             manifest_path, cache_dir, batch_size,
             max_train_files=max_train_files, max_val_files=max_val_files,
-            num_workers=num_workers, prefetch_factor=prefetch_factor)
+            num_workers=num_workers, prefetch_factor=prefetch_factor,
+            beta_min=beta_min, beta_max=beta_max)
 
     train_approx = train_ds.approx_len()
     val_approx   = val_ds.approx_len()
@@ -374,6 +403,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         val_batches = min(val_batches, max_val_batches)
     print(f'train events (approx): {train_approx:,}  batches: {train_batches:,}')
     print(f'val   events (approx): {val_approx:,}  batches: {val_batches:,}')
+    if beta_min is not None or beta_max is not None:
+        lo = beta_min if beta_min is not None else '-inf'
+        hi = beta_max if beta_max is not None else '+inf'
+        print(f'beta filter: [{lo}, {hi})')
     print(
         f'dataloader: num_workers={num_workers}, '
         f'pin_memory={DEVICE.type == "cuda"}, '
@@ -645,6 +678,10 @@ if __name__ == '__main__':
                     help='comma-separated beta bin edges')
     ap.add_argument('--beta-bin-weights', default=DEFAULT_BETA_BIN_WEIGHTS,
                     help='comma-separated train loss weights for beta bins')
+    ap.add_argument('--beta-min', type=float, default=None,
+                    help='keep graphs with mc_beta >= beta_min')
+    ap.add_argument('--beta-max', type=float, default=None,
+                    help='keep graphs with mc_beta < beta_max')
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files,
@@ -661,4 +698,6 @@ if __name__ == '__main__':
           prefetch_factor=args.prefetch_factor,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
-          beta_bin_weights_arg=args.beta_bin_weights)
+          beta_bin_weights_arg=args.beta_bin_weights,
+          beta_min=args.beta_min,
+          beta_max=args.beta_max)
