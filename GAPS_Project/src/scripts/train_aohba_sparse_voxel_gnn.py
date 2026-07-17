@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+"""
+Sparse voxel GNN for TreeRec-derived voxel input.
+
+Each nonzero Si(Li) voxel is treated as one graph node.
+Node features are log1p(edep), normalized voxel indices, and occupancy.
+TOF paddle energy and TOF primary features are appended as graph-level features.
+"""
+
 import argparse, json, time
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +26,6 @@ from sklearn.metrics import roc_auc_score, accuracy_score
 
 def split_dir(data_dir, split):
     return Path(data_dir) / f"{split}_nakagami_style_4M"
-
 
 class SparseVoxelDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir, split, max_events=None, k=8):
@@ -208,7 +216,7 @@ def train(args):
 
     model = SparseVoxelGNN(hidden=args.hidden, dropout=args.dropout).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    scaler = torch.cuda.amp.GradScaler(enabled=args.amp and device.type == "cuda")
+    scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
     print("device:", device)
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
@@ -231,7 +239,7 @@ def train(args):
             y = data.y.view(-1)
 
             opt.zero_grad(set_to_none=True)
-            with torch.cuda.amp.autocast(enabled=args.amp and device.type == "cuda"):
+            with torch.amp.autocast("cuda", enabled=args.amp and device.type == "cuda"):
                 logits = model(data)
                 loss = F.binary_cross_entropy_with_logits(logits, y)
 
