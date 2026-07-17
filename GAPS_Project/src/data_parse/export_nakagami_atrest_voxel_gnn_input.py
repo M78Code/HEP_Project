@@ -21,6 +21,14 @@ Supported layouts:
     col 3:1443  : Si(Li) voxel edep, 1440 values -> (10, 12, 12)
     col 1620:1631: 11 TOF/global features
 
+  topiso1457:
+    col 0       : random seed / file id
+    col 1       : ROOT entry index
+    col 2       : label (0=pbar, 1=dbar)
+    col 4       : primary beta
+    col 6:1446  : Si(Li) voxel edep, 1440 values -> (10, 12, 12)
+    col 1446:1457: 11 TOF/global features
+
   onlyprimary:
     col 0       : file/random id
     col 1       : event id
@@ -46,7 +54,6 @@ import numpy as np
 from tqdm import tqdm
 
 
-N_COLS = 1631
 N_VOXEL = 10 * 12 * 12
 N_TOF_PADDLE = 172
 N_TOF_PRIMARY = 11
@@ -54,6 +61,7 @@ N_TOF_PRIMARY = 11
 
 @dataclass(frozen=True)
 class Layout:
+    n_cols: int
     label_col: int
     beta_col: int | None
     si_start: int
@@ -66,6 +74,7 @@ class Layout:
 
 LAYOUTS = {
     "renew_topiso": Layout(
+        n_cols=1631,
         label_col=2,
         beta_col=4,
         si_start=3,
@@ -75,7 +84,19 @@ LAYOUTS = {
         tof_primary_start=1620,
         tof_primary_end=1631,
     ),
+    "topiso1457": Layout(
+        n_cols=1457,
+        label_col=2,
+        beta_col=4,
+        si_start=6,
+        si_end=1446,
+        tof_paddle_start=None,
+        tof_paddle_end=None,
+        tof_primary_start=1446,
+        tof_primary_end=1457,
+    ),
     "onlyprimary": Layout(
+        n_cols=1631,
         label_col=2,
         beta_col=None,
         si_start=6,
@@ -132,7 +153,7 @@ def count_rows(files: Iterable[Path], layout: Layout) -> tuple[int, int, dict[in
         fallback_label = infer_particle_label(fp)
         with fp.open() as f:
             for row in csv.reader(f):
-                if len(row) != N_COLS:
+                if len(row) != layout.n_cols:
                     bad += 1
                     continue
                 try:
@@ -162,9 +183,15 @@ def collect_refs(files: list[Path], layout: Layout, seed: int, events_per_class:
     rng.shuffle(shuffled)
     for fp in tqdm(shuffled, desc="collect refs", dynamic_ncols=True):
         fallback_label = infer_particle_label(fp)
+        if (
+            events_per_class is not None
+            and fallback_label in (0, 1)
+            and len(refs_by_label[fallback_label]) >= events_per_class
+        ):
+            continue
         with fp.open() as f:
             for row_idx, row in enumerate(csv.reader(f)):
-                if len(row) != N_COLS:
+                if len(row) != layout.n_cols:
                     bad += 1
                     continue
                 try:
@@ -178,6 +205,8 @@ def collect_refs(files: list[Path], layout: Layout, seed: int, events_per_class:
                     continue
                 if events_per_class is None or len(refs_by_label[label]) < events_per_class:
                     refs_by_label[label].append((str(fp), row_idx, label))
+                elif events_per_class is not None and fallback_label in (0, 1):
+                    break
         if events_per_class is not None and all(
             len(refs_by_label[k]) >= events_per_class for k in (0, 1)
         ):
