@@ -33,7 +33,20 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         self.k = k
 
         n = len(self.labels)
-        self.n = min(n, max_events) if max_events else n
+        if max_events:
+            labels_arr = np.asarray(self.labels)
+            rng = np.random.default_rng(42)
+            n0 = max_events // 2
+            n1 = max_events - n0
+            idx0 = np.flatnonzero(labels_arr == 0)
+            idx1 = np.flatnonzero(labels_arr == 1)
+            idx0 = rng.choice(idx0, size=min(n0, len(idx0)), replace=False)
+            idx1 = rng.choice(idx1, size=min(n1, len(idx1)), replace=False)
+            self.indices = np.concatenate([idx0, idx1])
+            rng.shuffle(self.indices)
+        else:
+            self.indices = np.arange(n)
+        self.n = len(self.indices)
 
     def __len__(self):
         return self.n
@@ -53,6 +66,7 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         return torch.stack([src, dst], dim=0).long()
 
     def __getitem__(self, idx):
+        idx = int(self.indices[idx])
         v = self.voxels[idx]  # (10, 12, 12)
         z, x, y = np.nonzero(v > 0)
 
