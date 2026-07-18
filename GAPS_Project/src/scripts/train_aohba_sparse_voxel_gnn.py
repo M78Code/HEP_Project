@@ -305,7 +305,7 @@ def train(args):
     val_loader = DataLoader(val_ds, shuffle=False, **loader_kw)
     test_loader = DataLoader(test_ds, shuffle=False, **loader_kw)
 
-    tof_dim = 183 + int(args.use_beta)
+    tof_dim = int(train_ds.raw_tof(0).shape[0])
     if args.model == "graphconv":
         model = SparseVoxelGNN(
             hidden=args.hidden,
