@@ -405,6 +405,24 @@ def main():
     ap.add_argument("--output-dir", type=Path, required=True)
     ap.add_argument("--layout", choices=sorted(LAYOUTS), default="renew_topiso")
     ap.add_argument("--events-per-class", type=int, default=None)
+    ap.add_argument(
+        "--train-events-per-class",
+        type=int,
+        default=None,
+        help="Balanced events per class for explicit train split. Overrides --events-per-class.",
+    )
+    ap.add_argument(
+        "--val-events-per-class",
+        type=int,
+        default=None,
+        help="Balanced events per class for explicit validation split. Overrides --events-per-class.",
+    )
+    ap.add_argument(
+        "--test-events-per-class",
+        type=int,
+        default=None,
+        help="Balanced events per class for explicit test split. Overrides --events-per-class.",
+    )
     ap.add_argument("--train-frac", type=float, default=0.8)
     ap.add_argument("--val-frac", type=float, default=0.1)
     ap.add_argument("--seed", type=int, default=42)
@@ -449,8 +467,15 @@ def main():
         split_meta = {}
         bad_total = 0
         for split, split_files_ in split_files.items():
+            split_events_per_class = {
+                "train": args.train_events_per_class,
+                "val": args.val_events_per_class,
+                "test": args.test_events_per_class,
+            }[split]
+            if split_events_per_class is None:
+                split_events_per_class = args.events_per_class
             refs, bad, label_counts = collect_refs(
-                split_files_, layout, args.seed, args.events_per_class
+                split_files_, layout, args.seed, split_events_per_class
             )
             print(
                 f"collected {split} refs:",
@@ -466,6 +491,7 @@ def main():
                 "files": [str(p) for p in split_files_],
                 "labels": label_counts,
                 "bad": bad,
+                "events_per_class": split_events_per_class,
             }
             bad_total += bad
     else:
@@ -483,6 +509,9 @@ def main():
         "inputs": [str(p) for p in files],
         "explicit_split": explicit_split,
         "events_per_class": args.events_per_class,
+        "train_events_per_class": args.train_events_per_class,
+        "val_events_per_class": args.val_events_per_class,
+        "test_events_per_class": args.test_events_per_class,
         "train_frac": args.train_frac,
         "val_frac": args.val_frac,
         "seed": args.seed,
