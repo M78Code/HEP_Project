@@ -141,9 +141,9 @@ def infer_particle_label(path: Path) -> int | None:
     return None
 
 
-def list_files(args: argparse.Namespace) -> list[Path]:
+def list_files(args: argparse.Namespace, items: list[str] | None = None) -> list[Path]:
     files: list[Path] = []
-    for item in args.inputs:
+    for item in (args.inputs if items is None else items):
         p = Path(item)
         if p.is_dir():
             files.extend(sorted(p.glob(args.glob)))
@@ -378,8 +378,28 @@ def main():
     ap.add_argument(
         "--inputs",
         nargs="+",
-        required=True,
+        default=None,
         help="CSV files, directories, or glob patterns.",
+    )
+    ap.add_argument(
+        "--train-inputs",
+        nargs="+",
+        default=None,
+        help="Explicit train CSV files, directories, or glob patterns. "
+        "When set, --val-inputs is also required and random splitting is disabled.",
+    )
+    ap.add_argument(
+        "--val-inputs",
+        nargs="+",
+        default=None,
+        help="Explicit validation CSV files, directories, or glob patterns.",
+    )
+    ap.add_argument(
+        "--test-inputs",
+        nargs="+",
+        default=None,
+        help="Explicit test CSV files, directories, or glob patterns. "
+        "If omitted in explicit split mode, validation inputs are reused for test.",
     )
     ap.add_argument("--glob", default="CNN*Atrest*.csv")
     ap.add_argument("--output-dir", type=Path, required=True)
@@ -394,7 +414,19 @@ def main():
     args = ap.parse_args()
 
     layout = LAYOUTS[args.layout]
-    files = list_files(args)
+    explicit_split = args.train_inputs is not None or args.val_inputs is not None
+    if explicit_split:
+        if args.train_inputs is None or args.val_inputs is None:
+            raise ValueError("--train-inputs and --val-inputs must be specified together")
+        files = (
+            list_files(args, args.train_inputs)
+            + list_files(args, args.val_inputs)
+            + list_files(args, args.test_inputs or args.val_inputs)
+        )
+    else:
+        if args.inputs is None:
+            raise ValueError("--inputs is required unless explicit split inputs are used")
+        files = list_files(args)
     if not files:
         raise FileNotFoundError("no CSV files matched")
 
@@ -407,22 +439,56 @@ def main():
         print({"rows": total, "bad": bad, "labels": labels})
         return
 
-    refs, bad, label_counts = collect_refs(
-        files, layout, args.seed, args.events_per_class
-    )
-    print("collected refs:", len(refs), "bad:", bad, "labels:", label_counts)
-    splits = split_refs(refs, args.train_frac, args.val_frac, args.seed)
+    if explicit_split:
+        split_files = {
+            "train": list_files(args, args.train_inputs),
+            "val": list_files(args, args.val_inputs),
+            "test": list_files(args, args.test_inputs or args.val_inputs),
+        }
+        splits = {}
+        split_meta = {}
+        bad_total = 0
+        for split, split_files_ in split_files.items():
+            refs, bad, label_counts = collect_refs(
+                split_files_, layout, args.seed, args.events_per_class
+            )
+            print(
+                f"collected {split} refs:",
+                len(refs),
+                "bad:",
+                bad,
+                "labels:",
+                label_counts,
+                flush=True,
+            )
+            splits[split] = refs
+            split_meta[split] = {
+                "files": [str(p) for p in split_files_],
+                "labels": label_counts,
+                "bad": bad,
+            }
+            bad_total += bad
+    else:
+        refs, bad_total, label_counts = collect_refs(
+            files, layout, args.seed, args.events_per_class
+        )
+        print("collected refs:", len(refs), "bad:", bad_total, "labels:", label_counts)
+        splits = split_refs(refs, args.train_frac, args.val_frac, args.seed)
+        split_meta = None
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     meta = {
         "source": "Nakagami fixed-length Atrest CSV",
         "layout": args.layout,
         "inputs": [str(p) for p in files],
+        "explicit_split": explicit_split,
         "events_per_class": args.events_per_class,
         "train_frac": args.train_frac,
         "val_frac": args.val_frac,
         "seed": args.seed,
         "splits": {k: len(v) for k, v in splits.items()},
+        "split_meta": split_meta,
+        "bad_total": bad_total,
         "note": "This is not VolID hit/step CSV; Si(Li) fixed grid is converted to sparse voxel nodes by the training dataset.",
     }
     with (args.output_dir / "export_manifest.json").open("w") as f:
