@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
+from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import GravNetClassifier
 
@@ -249,12 +250,12 @@ def rejection_at_eff(labels, scores, eff):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device):
+def evaluate(model, loader, device, desc="eval"):
     model.eval()
     ys, ss, bs = [], [], []
     total_loss, total_n = 0.0, 0
 
-    for data in loader:
+    for data in tqdm(loader, total=len(loader), desc=desc, leave=False, dynamic_ncols=True):
         data = data.to(device)
         logits = model(data)
         y = data.y.view(-1)
@@ -351,7 +352,14 @@ def train(args):
         t0 = time.time()
         total_loss, total_correct, total_n = 0.0, 0, 0
 
-        for bi, data in enumerate(train_loader):
+        train_bar = tqdm(
+            train_loader,
+            total=len(train_loader),
+            desc=f"Epoch {epoch:3d}/{args.epochs} [train]",
+            leave=False,
+            dynamic_ncols=True,
+        )
+        for bi, data in enumerate(train_bar):
             if args.max_train_batches and bi >= args.max_train_batches:
                 break
 
@@ -371,8 +379,11 @@ def train(args):
             total_correct += int((pred == y).sum().item())
             total_loss += float(loss.item()) * y.numel()
             total_n += y.numel()
+            train_bar.set_postfix(loss=f"{float(loss.item()):.4f}")
 
-        val_loss, val_acc, val_auc, *_ = evaluate(model, val_loader, device)
+        val_loss, val_acc, val_auc, *_ = evaluate(
+            model, val_loader, device, desc=f"Epoch {epoch:3d}/{args.epochs} [val]"
+        )
         train_loss = total_loss / max(total_n, 1)
         train_acc = total_correct / max(total_n, 1)
 
@@ -434,7 +445,7 @@ def train(args):
     ckpt = torch.load(best_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
 
-    test_loss, test_acc, test_auc, y, s, b = evaluate(model, test_loader, device)
+    test_loss, test_acc, test_auc, y, s, b = evaluate(model, test_loader, device, desc="test")
     print("\nTEST")
     print("loss:", test_loss)
     print("accuracy:", test_acc)
