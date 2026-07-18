@@ -1,0 +1,64 @@
+[
+  {
+    "label": "GravNet Fig6.2 data",
+    "result_dir": "results/20260718-193002_SparseVoxelGNN_nakagami_fig62_sparse_voxel_gravnet_4M_std/evaluation_test",
+    "n_events": 800000,
+    "label_counts": {
+      "0": 400000,
+      "1": 400000
+    },
+    "accuracy_at_0.5": 0.99271875,
+    "auc": 0.999584180965625,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.508995,
+        "fpr": 5e-06,
+        "rejection": 199999.99999999997,
+        "threshold": 0.9999995231628418
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7002975,
+        "fpr": 1.25e-05,
+        "rejection": 80000.0,
+        "threshold": 0.9999834299087524
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.800025,
+        "fpr": 2.5e-05,
+        "rejection": 40000.0,
+        "threshold": 0.9998923540115356
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 7e-05,
+        "rejection": 14285.714285714286,
+        "threshold": 0.9986514449119568
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.0002225,
+        "rejection": 4494.38202247191,
+        "threshold": 0.9896305203437805
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.001465,
+        "rejection": 682.5938566552901,
+        "threshold": 0.8902186751365662
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.0047075,
+        "rejection": 212.42697822623472,
+        "threshold": 0.61231929063797
+      }
+    ]
+  }
+]
