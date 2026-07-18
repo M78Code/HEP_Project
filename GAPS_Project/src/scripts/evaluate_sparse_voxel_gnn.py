@@ -27,6 +27,7 @@ from torch_geometric.loader import DataLoader
 
 from GAPS_Project.src.scripts.train_aohba_sparse_voxel_gnn import (
     SparseVoxelDataset,
+    SparseVoxelDGCNN,
     SparseVoxelGNN,
     SparseVoxelGravNet,
     evaluate,
@@ -77,6 +78,13 @@ def build_model(train_args: SimpleNamespace, tof_dim: int, device: torch.device)
             dropout=dropout,
             k=k,
             num_blocks=num_blocks,
+        )
+    elif model_name == "dgcnn":
+        model = SparseVoxelDGCNN(
+            hidden=hidden,
+            tof_dim=tof_dim,
+            dropout=dropout,
+            k=k,
         )
     else:
         raise ValueError(f"unknown model in checkpoint args: {model_name}")

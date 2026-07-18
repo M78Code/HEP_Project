@@ -23,6 +23,7 @@ from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
 from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 
 from sklearn.metrics import roc_auc_score, accuracy_score
 
@@ -234,6 +235,34 @@ class SparseVoxelGravNet(nn.Module):
         return logits[:, 1] - logits[:, 0]
 
 
+class SparseVoxelDGCNN(nn.Module):
+    def __init__(
+        self,
+        hidden=64,
+        tof_dim=183,
+        dropout=0.3,
+        k=8,
+    ):
+        super().__init__()
+        self.core = DGCNNClassifier(
+            in_channels=5,
+            hidden_dim=hidden,
+            k=k,
+            num_classes=2,
+            dropout=dropout,
+            graph_feat_dim=tof_dim,
+        )
+
+    def forward(self, data):
+        logits = self.core(
+            data.x,
+            data.edge_index,
+            data.batch,
+            graph_feat=data.tof,
+        )
+        return logits[:, 1] - logits[:, 0]
+
+
 def rejection_at_eff(labels, scores, eff):
     labels = np.asarray(labels)
     scores = np.asarray(scores)
@@ -320,6 +349,13 @@ def train(args):
             dropout=args.dropout,
             k=args.k,
             num_blocks=args.num_blocks,
+        ).to(device)
+    elif args.model == "dgcnn":
+        model = SparseVoxelDGCNN(
+            hidden=args.hidden,
+            tof_dim=tof_dim,
+            dropout=args.dropout,
+            k=args.k,
         ).to(device)
     else:
         raise ValueError(f"unknown model: {args.model}")
@@ -469,7 +505,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--data-dir", required=True)
     p.add_argument("--dataset-tag", default="voxel_sparse_gnn")
-    p.add_argument("--model", choices=["graphconv", "gravnet"], default="graphconv")
+    p.add_argument("--model", choices=["graphconv", "gravnet", "dgcnn"], default="graphconv")
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--batch-size", type=int, default=512)
     p.add_argument("--num-workers", type=int, default=4)
