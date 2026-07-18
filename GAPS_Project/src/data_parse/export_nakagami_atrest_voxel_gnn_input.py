@@ -29,6 +29,14 @@ Supported layouts:
     col 6:1446  : Si(Li) voxel edep, 1440 values -> (10, 12, 12)
     col 1446:1457: 11 TOF/global features
 
+  topiso1452_fig62:
+    col 0       : random seed / file id
+    col 1       : ROOT entry index
+    col 2       : label (0=pbar, 1=dbar)
+    col 3:1443  : Si(Li) voxel edep, 1440 values -> (10, 12, 12)
+    col 1443:1446: 3 DNN/TOF-like features used by Nakagami Fig. 6.2
+    beta is not explicitly available; betas.npy is filled with 0.
+
   onlyprimary:
     col 0       : file/random id
     col 1       : event id
@@ -71,6 +79,10 @@ class Layout:
     tof_primary_start: int
     tof_primary_end: int
 
+    @property
+    def tof_primary_dim(self) -> int:
+        return self.tof_primary_end - self.tof_primary_start
+
 
 LAYOUTS = {
     "renew_topiso": Layout(
@@ -94,6 +106,17 @@ LAYOUTS = {
         tof_paddle_end=None,
         tof_primary_start=1446,
         tof_primary_end=1457,
+    ),
+    "topiso1452_fig62": Layout(
+        n_cols=1452,
+        label_col=2,
+        beta_col=None,
+        si_start=3,
+        si_end=1443,
+        tof_paddle_start=None,
+        tof_paddle_end=None,
+        tof_primary_start=1443,
+        tof_primary_end=1446,
     ),
     "onlyprimary": Layout(
         n_cols=1631,
@@ -269,7 +292,7 @@ def row_to_arrays(row: list[str], layout: Layout):
         row[layout.tof_primary_start : layout.tof_primary_end],
         dtype=np.float32,
     )
-    if tof_primary.size != N_TOF_PRIMARY:
+    if tof_primary.size != layout.tof_primary_dim:
         raise ValueError(f"bad TOF primary size: {tof_primary.size}")
 
     return voxel, tof_paddle, tof_primary, label, beta
@@ -297,7 +320,7 @@ def export_split(name: str, refs, out_dir: Path, layout: Layout):
         split_dir / "tof_primary.npy",
         mode="w+",
         dtype=np.float32,
-        shape=(n, N_TOF_PRIMARY),
+        shape=(n, layout.tof_primary_dim),
     )
     labels = np.lib.format.open_memmap(
         split_dir / "labels.npy", mode="w+", dtype=np.int64, shape=(n,)
@@ -342,7 +365,7 @@ def export_split(name: str, refs, out_dir: Path, layout: Layout):
         "label_counts": label_counts,
         "voxel_shape": [10, 12, 12],
         "tof_paddles": N_TOF_PADDLE,
-        "tof_primary": N_TOF_PRIMARY,
+        "tof_primary": layout.tof_primary_dim,
         "bad_rows_during_export": bad,
     }
     with (split_dir / "summary.json").open("w") as f:
