@@ -478,7 +478,7 @@ def main():
     p.add_argument(
         "--early-stopping-patience",
         type=int,
-        default=20,
+        default=10,
         help="Stop after this many epochs without val_auc improvement. 0 disables early stopping.",
     )
     p.add_argument(
