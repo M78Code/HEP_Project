@@ -1,0 +1,64 @@
+[
+  {
+    "label": "DGCNN 4M",
+    "result_dir": "results/20260720-184037_SparseVoxelGNN_nakagami_fig62_sparse_voxel_dgcnn_4M_std/evaluation_test",
+    "n_events": 800000,
+    "label_counts": {
+      "0": 400000,
+      "1": 400000
+    },
+    "accuracy_at_0.5": 0.99253,
+    "auc": 0.999581592915625,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.50611,
+        "fpr": 7.5e-06,
+        "rejection": 133333.33333333334,
+        "threshold": 0.9999996423721313
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7005275,
+        "fpr": 1.25e-05,
+        "rejection": 80000.0,
+        "threshold": 0.9999885559082031
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8000475,
+        "fpr": 1.75e-05,
+        "rejection": 57142.857142857145,
+        "threshold": 0.9999297857284546
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.900005,
+        "fpr": 8.5e-05,
+        "rejection": 11764.70588235294,
+        "threshold": 0.9991903901100159
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.9500025,
+        "fpr": 0.0002475,
+        "rejection": 4040.4040404040406,
+        "threshold": 0.993427038192749
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.0015925,
+        "rejection": 627.9434850863422,
+        "threshold": 0.907770574092865
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.005105,
+        "rejection": 195.8863858961802,
+        "threshold": 0.6184648871421814
+      }
+    ]
+  }
+]
