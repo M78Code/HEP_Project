@@ -297,6 +297,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-train-batches", type=int, default=None)
     p.add_argument("--max-val-batches", type=int, default=None)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument(
+        "--resume",
+        type=Path,
+        default=None,
+        help="Resume training from a checkpoint saved as last.pt or best.pt.",
+    )
     return p.parse_args()
 
 
@@ -332,14 +338,35 @@ def main() -> None:
     amp_enabled = args.amp and device.type == "cuda"
     scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled and amp_dtype == torch.float16)
 
-    run_dir = (
-        PROJECT_ROOT
-        / "results"
-        / f"{datetime.now():%Y%m%d-%H%M%S}_CNNDNNFig72_{args.dataset_tag}"
-    )
+    if args.resume is not None:
+        run_dir = args.resume.resolve().parent
+    else:
+        run_dir = (
+            PROJECT_ROOT
+            / "results"
+            / f"{datetime.now():%Y%m%d-%H%M%S}_CNNDNNFig72_{args.dataset_tag}"
+        )
     run_dir.mkdir(parents=True, exist_ok=True)
     best_path = run_dir / "best.pt"
     last_path = run_dir / "last.pt"
+
+    start_epoch = 1
+    best_val_loss = float("inf")
+    best_epoch = 0
+    no_improve = 0
+    if args.resume is not None:
+        ckpt = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model_state"])
+        if "optimizer_state" in ckpt:
+            optimizer.load_state_dict(ckpt["optimizer_state"])
+        if "scheduler_state" in ckpt:
+            scheduler.load_state_dict(ckpt["scheduler_state"])
+        if "scaler_state" in ckpt and scaler.is_enabled():
+            scaler.load_state_dict(ckpt["scaler_state"])
+        start_epoch = int(ckpt.get("epoch", 0)) + 1
+        best_val_loss = float(ckpt.get("best_val_loss", best_val_loss))
+        best_epoch = int(ckpt.get("best_epoch", best_epoch))
+        no_improve = int(ckpt.get("no_improve", no_improve))
 
     print(f"device     : {device}", flush=True)
     print(f"data dir   : {args.data_dir}", flush=True)
@@ -349,6 +376,9 @@ def main() -> None:
     print("model      : CNNDNNHybrid / Nakagami Fig.7.2 style", flush=True)
     print(f"parameters : {sum(p.numel() for p in model.parameters()):,}", flush=True)
     print(f"AMP        : {amp_enabled} ({args.amp_dtype if amp_enabled else 'disabled'})", flush=True)
+    if args.resume is not None:
+        print(f"resume     : {args.resume}", flush=True)
+        print(f"start epoch: {start_epoch}", flush=True)
     print(
         "early stopping: "
         f"monitor=val_loss mode=min min_epochs={args.min_epochs} "
@@ -356,11 +386,7 @@ def main() -> None:
         flush=True,
     )
 
-    best_val_loss = float("inf")
-    best_epoch = 0
-    no_improve = 0
-
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(start_epoch, args.epochs + 1):
         t0 = time.time()
         train_loss, train_acc = run_epoch(
             model,
@@ -399,10 +425,14 @@ def main() -> None:
         torch.save(
             {
                 "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+                "scheduler_state": scheduler.state_dict(),
+                "scaler_state": scaler.state_dict() if scaler.is_enabled() else None,
                 "args": vars(args),
                 "epoch": epoch,
                 "best_val_loss": best_val_loss,
                 "best_epoch": best_epoch,
+                "no_improve": no_improve,
             },
             last_path,
         )
@@ -414,10 +444,14 @@ def main() -> None:
             torch.save(
                 {
                     "model_state": model.state_dict(),
+                    "optimizer_state": optimizer.state_dict(),
+                    "scheduler_state": scheduler.state_dict(),
+                    "scaler_state": scaler.state_dict() if scaler.is_enabled() else None,
                     "args": vars(args),
                     "epoch": epoch,
                     "best_val_loss": best_val_loss,
                     "best_epoch": best_epoch,
+                    "no_improve": no_improve,
                 },
                 best_path,
             )
