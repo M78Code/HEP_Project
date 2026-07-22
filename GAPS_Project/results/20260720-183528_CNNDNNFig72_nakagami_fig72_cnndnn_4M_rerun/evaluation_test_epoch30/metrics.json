@@ -1,0 +1,70 @@
+{
+  "n_events": 400000,
+  "label_counts": {
+    "0": 200000,
+    "1": 200000
+  },
+  "test_loss": 0.02925390527048148,
+  "accuracy": 0.9904925,
+  "auc": 0.9992130489625001,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.786185,
+      "fpr": 6e-05,
+      "rejection": 16666.666666666668,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.786185,
+      "fpr": 6e-05,
+      "rejection": 16666.666666666668,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.83915,
+      "fpr": 0.00012,
+      "rejection": 8333.333333333334,
+      "threshold": 0.99951171875
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.90404,
+      "fpr": 0.000345,
+      "rejection": 2898.5507246376815,
+      "threshold": 0.99658203125
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.950305,
+      "fpr": 0.00093,
+      "rejection": 1075.268817204301,
+      "threshold": 0.97998046875
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.980025,
+      "fpr": 0.0035,
+      "rejection": 285.7142857142857,
+      "threshold": 0.84228515625
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.99,
+      "fpr": 0.009115,
+      "rejection": 109.70927043335162,
+      "threshold": 0.489501953125
+    }
+  ],
+  "model_path": "results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/best.pt",
+  "input": {
+    "voxel": "voxels.npy",
+    "tof": "tof_primary.npy",
+    "ignored": [
+      "tof_paddles.npy",
+      "betas.npy"
+    ]
+  }
+}
