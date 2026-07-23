@@ -73,7 +73,7 @@ def main() -> None:
         figsize=(12.4, 8.2),
         dpi=args.dpi,
     )
-    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.94, wspace=0.28, hspace=0.40)
+    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.94, wspace=0.28, hspace=0.28)
     ax_rej, ax_score = axs[0]
     ax_loss, ax_auc = axs[1]
 
