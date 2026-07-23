@@ -90,7 +90,7 @@ def main() -> None:
     ax_rej.set_xlim(args.x_min, 1.0)
     ax_rej.set_ylim(1.0, args.y_max)
     ax_rej.grid(True, which="both", alpha=0.3)
-    ax_rej.legend(loc="upper right")
+    ax_rej.legend(loc="upper right", fontsize=9)
 
     bins = np.linspace(0.0, 1.0, 101)
     ax_score.hist(
