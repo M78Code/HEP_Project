@@ -7,7 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve
 
 
 EPOCH_RE = re.compile(
@@ -38,13 +38,14 @@ def parse_log(path: Path) -> dict[str, np.ndarray]:
     return {k: np.array([r[k] for r in rows]) for k in rows[0]}
 
 
-def rejection_curve(eval_dir: Path) -> tuple[np.ndarray, np.ndarray]:
+def rejection_curve(eval_dir: Path) -> tuple[np.ndarray, np.ndarray, float]:
     labels = np.load(eval_dir / "labels.npy")
     scores = np.load(eval_dir / "scores.npy")
     fpr, tpr, _ = roc_curve(labels, scores, drop_intermediate=True)
     n_background = int((labels == 0).sum())
     fpr_floor = 1.0 / n_background
-    return tpr, 1.0 / np.maximum(fpr, fpr_floor)
+    auc = float(roc_auc_score(labels, scores))
+    return tpr, 1.0 / np.maximum(fpr, fpr_floor), auc
 
 
 def main() -> None:
@@ -78,10 +79,10 @@ def main() -> None:
     ax_loss, ax_auc = axs[1]
 
     if args.cnn_eval_dir is not None:
-        eff, rej = rejection_curve(args.cnn_eval_dir)
-        ax_rej.plot(eff, rej, label=args.cnn_label, linewidth=1.8)
-    eff, rej = rejection_curve(args.eval_dir)
-    ax_rej.plot(eff, rej, label=args.gnn_label, linewidth=1.8)
+        eff, rej, auc = rejection_curve(args.cnn_eval_dir)
+        ax_rej.plot(eff, rej, label=f"{args.cnn_label} AUC={auc:.4f}", linewidth=1.8)
+    eff, rej, auc = rejection_curve(args.eval_dir)
+    ax_rej.plot(eff, rej, label=f"{args.gnn_label} AUC={auc:.4f}", linewidth=1.8)
     ax_rej.set_title("(a) Rejection curve")
     ax_rej.set_xlabel("Signal efficiency")
     ax_rej.set_ylabel("Background rejection")
