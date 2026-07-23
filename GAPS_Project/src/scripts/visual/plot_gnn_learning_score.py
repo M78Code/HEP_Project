@@ -41,9 +41,10 @@ def parse_log(path: Path) -> dict[str, np.ndarray]:
 def rejection_curve(eval_dir: Path) -> tuple[np.ndarray, np.ndarray]:
     labels = np.load(eval_dir / "labels.npy")
     scores = np.load(eval_dir / "scores.npy")
-    fpr, tpr, _ = roc_curve(labels, scores)
-    keep = fpr > 0
-    return tpr[keep], 1.0 / fpr[keep]
+    fpr, tpr, _ = roc_curve(labels, scores, drop_intermediate=True)
+    n_background = int((labels == 0).sum())
+    fpr_floor = 1.0 / n_background
+    return tpr, 1.0 / np.maximum(fpr, fpr_floor)
 
 
 def main() -> None:
@@ -69,10 +70,10 @@ def main() -> None:
     fig, axs = plt.subplots(
         2,
         2,
-        figsize=(12.0, 7.6),
+        figsize=(12.4, 8.2),
         dpi=args.dpi,
-        constrained_layout=True,
     )
+    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.94, wspace=0.28, hspace=0.40)
     ax_rej, ax_score = axs[0]
     ax_loss, ax_auc = axs[1]
 
@@ -83,12 +84,12 @@ def main() -> None:
     ax_rej.plot(eff, rej, label=args.gnn_label, linewidth=1.8)
     ax_rej.set_title("(a) Rejection curve")
     ax_rej.set_xlabel("Signal efficiency")
-    ax_rej.set_ylabel("Rejection Power")
+    ax_rej.set_ylabel("Background rejection")
     ax_rej.set_yscale("log")
     ax_rej.set_xlim(args.x_min, 1.0)
     ax_rej.set_ylim(1.0, args.y_max)
     ax_rej.grid(True, which="both", alpha=0.3)
-    ax_rej.legend()
+    ax_rej.legend(loc="upper right")
 
     bins = np.linspace(0.0, 1.0, 101)
     ax_score.hist(
