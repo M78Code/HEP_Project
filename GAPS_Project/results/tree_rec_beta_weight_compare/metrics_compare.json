@@ -1,0 +1,126 @@
+[
+  {
+    "label": "GravNet 50M",
+    "result_dir": "results/evaluation_aohba50M_gravnet_on_4Mtest_latest_current",
+    "n_events": 600000,
+    "label_counts": {
+      "0": 300000,
+      "1": 300000
+    },
+    "accuracy_at_0.5": 0.9535033333333334,
+    "auc": 0.9917332031944445,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 1.6666666666666667e-05,
+        "rejection": 60000.0,
+        "threshold": 0.9805263876914978
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.00020333333333333333,
+        "rejection": 4918.0327868852455,
+        "threshold": 0.8974316716194153
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0011366666666666667,
+        "rejection": 879.7653958944281,
+        "threshold": 0.779934287071228
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.010446666666666667,
+        "rejection": 95.72431397574984,
+        "threshold": 0.5822190642356873
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.04337666666666667,
+        "rejection": 23.053869207715362,
+        "threshold": 0.4513378441333771
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.11658666666666667,
+        "rejection": 8.577310155535224,
+        "threshold": 0.34757423400878906
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.18222333333333332,
+        "rejection": 5.487771416027951,
+        "threshold": 0.2657173275947571
+      }
+    ]
+  },
+  {
+    "label": "Beta weight w1",
+    "result_dir": "results/evaluation_aohba4M_beta_weight_w1_on_4Mtest_epoch29",
+    "n_events": 400000,
+    "label_counts": {
+      "0": 200000,
+      "1": 200000
+    },
+    "accuracy_at_0.5": 0.899525,
+    "auc": 0.9676693214125001,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 0.00087,
+        "rejection": 1149.4252873563219,
+        "threshold": 0.8311267495155334
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.00967,
+        "rejection": 103.41261633919338,
+        "threshold": 0.6573940515518188
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.03023,
+        "rejection": 33.079722130334105,
+        "threshold": 0.5686488151550293
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.10221,
+        "rejection": 9.783778495254868,
+        "threshold": 0.4667263329029083
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.195685,
+        "rejection": 5.110253724097402,
+        "threshold": 0.38357439637184143
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.322585,
+        "rejection": 3.099958150564967,
+        "threshold": 0.2890506386756897
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.42003,
+        "rejection": 2.3807823250720186,
+        "threshold": 0.23109781742095947
+      }
+    ]
+  }
+]
