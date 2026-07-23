@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import roc_curve
 
 
 EPOCH_RE = re.compile(
@@ -37,12 +38,25 @@ def parse_log(path: Path) -> dict[str, np.ndarray]:
     return {k: np.array([r[k] for r in rows]) for k in rows[0]}
 
 
+def rejection_curve(eval_dir: Path) -> tuple[np.ndarray, np.ndarray]:
+    labels = np.load(eval_dir / "labels.npy")
+    scores = np.load(eval_dir / "scores.npy")
+    fpr, tpr, _ = roc_curve(labels, scores)
+    keep = fpr > 0
+    return tpr[keep], 1.0 / fpr[keep]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", required=True, type=Path)
     ap.add_argument("--eval-dir", required=True, type=Path)
+    ap.add_argument("--cnn-eval-dir", type=Path, default=None)
+    ap.add_argument("--gnn-label", default="GNN")
+    ap.add_argument("--cnn-label", default="CNN+DNN")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--dpi", type=int, default=300)
+    ap.add_argument("--x-min", type=float, default=0.5)
+    ap.add_argument("--y-max", type=float, default=1e6)
     args = ap.parse_args()
 
     hist = parse_log(args.log)
@@ -55,27 +69,26 @@ def main() -> None:
     fig, axs = plt.subplots(
         2,
         2,
-        figsize=(11.5, 7.2),
+        figsize=(12.0, 7.6),
         dpi=args.dpi,
-        gridspec_kw={"width_ratios": [1.0, 1.15]},
+        constrained_layout=True,
     )
-    ax_loss, ax_score = axs[0]
-    ax_auc = axs[1, 0]
-    axs[1, 1].axis("off")
+    ax_rej, ax_score = axs[0]
+    ax_loss, ax_auc = axs[1]
 
-    ax_loss.plot(hist["epoch"], hist["train_loss"], label="train", linewidth=1.8)
-    ax_loss.plot(hist["epoch"], hist["val_loss"], label="validation", linewidth=1.8)
-    ax_loss.set_title("(a) GNN loss")
-    ax_loss.set_xlabel("Epoch")
-    ax_loss.set_ylabel("Loss")
-    ax_loss.grid(True, alpha=0.3)
-    ax_loss.legend()
-
-    ax_auc.plot(hist["epoch"], hist["val_auc"], linewidth=1.8)
-    ax_auc.set_title("(b) GNN validation ROC-AUC")
-    ax_auc.set_xlabel("Epoch")
-    ax_auc.set_ylabel("ROC-AUC")
-    ax_auc.grid(True, alpha=0.3)
+    if args.cnn_eval_dir is not None:
+        eff, rej = rejection_curve(args.cnn_eval_dir)
+        ax_rej.plot(eff, rej, label=args.cnn_label, linewidth=1.8)
+    eff, rej = rejection_curve(args.eval_dir)
+    ax_rej.plot(eff, rej, label=args.gnn_label, linewidth=1.8)
+    ax_rej.set_title("(a) Rejection curve")
+    ax_rej.set_xlabel("Signal efficiency")
+    ax_rej.set_ylabel("Rejection Power")
+    ax_rej.set_yscale("log")
+    ax_rej.set_xlim(args.x_min, 1.0)
+    ax_rej.set_ylim(1.0, args.y_max)
+    ax_rej.grid(True, which="both", alpha=0.3)
+    ax_rej.legend()
 
     bins = np.linspace(0.0, 1.0, 101)
     ax_score.hist(
@@ -94,18 +107,31 @@ def main() -> None:
         color="#1b9e77",
         label="anti-deuteron",
     )
-    ax_score.set_title("(c) GNN score distribution")
+    ax_score.set_title("(b) GNN score distribution")
     ax_score.set_xlabel("Classification score for anti-deuteron")
     ax_score.set_ylabel("Counts")
     ax_score.set_yscale("log")
-    ax_score.set_xlim(0.0, 1.0)
+    ax_score.set_xlim(-0.025, 1.025)
     ax_score.set_ylim(bottom=1.0)
     ax_score.grid(True, which="both", alpha=0.3)
     ax_score.legend()
 
-    fig.tight_layout()
+    ax_loss.plot(hist["epoch"], hist["train_loss"], label="train", linewidth=1.8)
+    ax_loss.plot(hist["epoch"], hist["val_loss"], label="validation", linewidth=1.8)
+    ax_loss.set_title("(c) GNN loss")
+    ax_loss.set_xlabel("Epoch")
+    ax_loss.set_ylabel("Loss")
+    ax_loss.grid(True, alpha=0.3)
+    ax_loss.legend()
+
+    ax_auc.plot(hist["epoch"], hist["val_auc"], linewidth=1.8)
+    ax_auc.set_title("(d) GNN validation ROC-AUC")
+    ax_auc.set_xlabel("Epoch")
+    ax_auc.set_ylabel("ROC-AUC")
+    ax_auc.grid(True, alpha=0.3)
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out, bbox_inches="tight")
+    fig.savefig(args.out)
     print(f"saved: {args.out}")
 
 
