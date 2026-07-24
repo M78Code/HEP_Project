@@ -493,3 +493,7 @@ AUC = 0.999612
 Rej@0.90 = 13828
 这说明 TOF + stoplayer + VolID + position 里也有很强的信息。
 也就是说，中上式的 stopped / toptrigger / primary-track selection 后，事件几何路径、停止层、TOF 分布本身也已经带有很强的粒子差异。
+
+
+
+
