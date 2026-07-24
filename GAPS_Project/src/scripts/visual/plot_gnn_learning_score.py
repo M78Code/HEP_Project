@@ -68,29 +68,18 @@ def main() -> None:
     anti_p = scores[labels == 0]
     anti_d = scores[labels == 1]
 
-    fig, axs = plt.subplots(
-        2,
-        2,
-        figsize=(12.4, 8.2),
-        dpi=args.dpi,
-    )
-    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.94, wspace=0.28, hspace=0.30)
-    ax_rej, ax_score = axs[0]
-    ax_loss, ax_auc = axs[1]
+    out_stem = args.out.with_suffix("")
+    out_score = out_stem.with_name(out_stem.name + "_validation_score").with_suffix(args.out.suffix)
+    out_rej = out_stem.with_name(out_stem.name + "_rejection_curve").with_suffix(args.out.suffix)
 
-    if args.cnn_eval_dir is not None:
-        eff, rej, auc = rejection_curve(args.cnn_eval_dir)
-        ax_rej.plot(eff, rej, label=f"{args.cnn_label} AUC={auc:.4f}", linewidth=1.8)
-    eff, rej, auc = rejection_curve(args.eval_dir)
-    ax_rej.plot(eff, rej, label=f"{args.gnn_label} AUC={auc:.4f}", linewidth=1.8)
-    ax_rej.set_title("(a) Rejection curve")
-    ax_rej.set_xlabel("Signal efficiency")
-    ax_rej.set_ylabel("Background rejection")
-    ax_rej.set_yscale("log")
-    ax_rej.set_xlim(args.x_min, 1.0)
-    ax_rej.set_ylim(1.0, args.y_max)
-    ax_rej.grid(True, which="both", alpha=0.3)
-    ax_rej.legend(loc="upper right", fontsize=9)
+    fig_vs, (ax_auc, ax_score) = plt.subplots(1, 2, figsize=(12.4, 4.2), dpi=args.dpi)
+    fig_vs.subplots_adjust(left=0.07, right=0.98, bottom=0.16, top=0.88, wspace=0.28)
+
+    ax_auc.plot(hist["epoch"], hist["val_auc"], linewidth=1.8)
+    ax_auc.set_title("(a) GNN validation ROC-AUC")
+    ax_auc.set_xlabel("Epoch")
+    ax_auc.set_ylabel("ROC-AUC")
+    ax_auc.grid(True, alpha=0.3)
 
     bins = np.linspace(0.0, 1.0, 101)
     ax_score.hist(
@@ -118,23 +107,28 @@ def main() -> None:
     ax_score.grid(True, which="both", alpha=0.3)
     ax_score.legend()
 
-    ax_loss.plot(hist["epoch"], hist["train_loss"], label="train", linewidth=1.8)
-    ax_loss.plot(hist["epoch"], hist["val_loss"], label="validation", linewidth=1.8)
-    ax_loss.set_title("(c) GNN loss")
-    ax_loss.set_xlabel("Epoch")
-    ax_loss.set_ylabel("Loss")
-    ax_loss.grid(True, alpha=0.3)
-    ax_loss.legend()
+    fig_rej, ax_rej = plt.subplots(1, 1, figsize=(7.2, 4.8), dpi=args.dpi)
+    fig_rej.subplots_adjust(left=0.14, right=0.98, bottom=0.13, top=0.92)
 
-    ax_auc.plot(hist["epoch"], hist["val_auc"], linewidth=1.8)
-    ax_auc.set_title("(d) GNN validation ROC-AUC")
-    ax_auc.set_xlabel("Epoch")
-    ax_auc.set_ylabel("ROC-AUC")
-    ax_auc.grid(True, alpha=0.3)
+    if args.cnn_eval_dir is not None:
+        eff, rej, auc = rejection_curve(args.cnn_eval_dir)
+        ax_rej.plot(eff, rej, label=f"{args.cnn_label} AUC={auc:.4f}", linewidth=1.8)
+    eff, rej, auc = rejection_curve(args.eval_dir)
+    ax_rej.plot(eff, rej, label=f"{args.gnn_label} AUC={auc:.4f}", linewidth=1.8)
+    ax_rej.set_title("Rejection curve")
+    ax_rej.set_xlabel("Signal efficiency")
+    ax_rej.set_ylabel("Background rejection")
+    ax_rej.set_yscale("log")
+    ax_rej.set_xlim(args.x_min, 1.0)
+    ax_rej.set_ylim(1.0, args.y_max)
+    ax_rej.grid(True, which="both", alpha=0.3)
+    ax_rej.legend(loc="upper right", fontsize=9)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out)
-    print(f"saved: {args.out}")
+    fig_vs.savefig(out_score)
+    fig_rej.savefig(out_rej)
+    print(f"saved: {out_score}")
+    print(f"saved: {out_rej}")
 
 
 if __name__ == "__main__":
