@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Sparse voxel GNN for TreeRec-derived voxel input.
+Sparse voxel GNN for Nakagami CSV-derived fixed-grid input.
 
 Each nonzero Si(Li) voxel is treated as one graph node.
 Node features are log1p(edep), normalized voxel indices, and occupancy.
-TOF paddle energy and TOF primary features are appended as graph-level features.
+voxels.npy is converted into graph nodes. Graph-level features use
+tof_primary.npy only. Beta is appended only when --use-beta is explicitly set.
+labels.npy is used only as the supervised teacher label, not as a model input
+feature.
 """
 
 import argparse, json, time
@@ -22,8 +25,8 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
 from tqdm import tqdm
 
-from GAPS_Project.src.models.gravnet import GravNetClassifier
-from GAPS_Project.src.models.dgcnn import DGCNNClassifier
+from src.models.gravnet import GravNetClassifier
+from src.models.dgcnn import DGCNNClassifier
 
 from sklearn.metrics import roc_auc_score, accuracy_score
 
@@ -51,7 +54,6 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         self.labels = np.load(d / "labels.npy", mmap_mode="r")
         self.betas = np.load(d / "betas.npy", mmap_mode="r")
 
-        self.tof_paddles = np.load(d / "tof_paddles.npy", mmap_mode="r")
         self.k = k
         self.tof_mean = None if tof_mean is None else np.asarray(tof_mean, dtype=np.float32)
         self.tof_std = None if tof_std is None else np.asarray(tof_std, dtype=np.float32)
@@ -78,12 +80,7 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
 
     def raw_tof(self, local_idx):
         idx = int(self.indices[int(local_idx)])
-        tof = np.concatenate(
-            [
-                self.tof_paddles[idx].astype(np.float32),
-                self.tof_primary[idx].astype(np.float32),
-            ]
-        )
+        tof = self.tof_primary[idx].astype(np.float32)
         if self.use_beta:
             tof = np.concatenate([tof, np.array([self.betas[idx]], dtype=np.float32)])
         return np.log1p(np.clip(tof, 0, None)).astype(np.float32)
@@ -165,7 +162,7 @@ def compute_tof_standardizer(dataset, max_samples=None):
 
 
 class SparseVoxelGNN(nn.Module):
-    def __init__(self, hidden=128, tof_dim=183, dropout=0.15):
+    def __init__(self, hidden=128, tof_dim=11, dropout=0.15):
         super().__init__()
         self.conv1 = GraphConv(5, hidden)
         self.conv2 = GraphConv(hidden, hidden)
@@ -210,7 +207,7 @@ class SparseVoxelGravNet(nn.Module):
     def __init__(
         self,
         hidden=128,
-        tof_dim=183,
+        tof_dim=11,
         dropout=0.15,
         k=8,
         num_blocks=6,
@@ -240,7 +237,7 @@ class SparseVoxelDGCNN(nn.Module):
     def __init__(
         self,
         hidden=64,
-        tof_dim=183,
+        tof_dim=11,
         dropout=0.3,
         k=8,
     ):

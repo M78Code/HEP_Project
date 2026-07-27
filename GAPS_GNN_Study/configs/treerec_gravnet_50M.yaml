@@ -1,0 +1,96 @@
+experiment:
+  name: treerec_gravnet_50M
+  description: GravNet trained with the 50M-scale TreeRec-derived graph cache and evaluated on the common 4M test split.
+  status: completed_on_gp1_summary_synced
+
+data:
+  source_type: TreeRec-derived GAPS data
+  dataset_label: aohba50M_atrest
+  training_input_from_code_comment:
+    manifest: /mnt/ynakagami3/aohba_preprocess/split/split_manifest.json
+    cache_dir: /mnt/ynakagami3/aohba_preprocess/graph_cache_v2
+  evaluation_input:
+    note: Evaluated on the common aohba4M test split.
+    expected_events: 600000
+    expected_label_counts:
+      antiP: 300000
+      antiD: 300000
+
+input_definition:
+  representation: PyTorch Geometric hit graph built by GraphBuilder
+  node_definition: one TreeRec hitseries hit becomes one graph node
+  node_feature_dim: 8
+  node_features:
+    - x_position
+    - y_position
+    - z_position
+    - energy_deposit
+    - hit_time
+    - dE_dx_local_energy_density
+    - detector_type_from_volume_id
+    - normalized_layer_id_from_volume_id
+  edge_definition:
+    method: k_nearest_neighbors
+    k: 8
+    built_from: hit_position
+  graph_feature_dim: 45
+  graph_features:
+    - n_hits
+    - total_energy
+    - sili_layer_energy_profile_16
+    - tof_layer_energy_profile_16
+    - tof_summary_features_11
+  tof_paddle_energy:
+    dimension: 172
+    used_in_this_run: false
+    note: Used only by the separate gravnet_tof branch.
+  beta:
+    used_as_input: false
+    available_for_analysis: true
+    storage_name: mc_beta / betas.npy
+
+model:
+  name: GravNet
+  architecture: GravNet_6b_h128
+  hidden_dim: 128
+  num_blocks: 6
+  k: 8
+  graph_pooling: global_mean_pool
+
+training:
+  script: src/scripts/train_aohba.py
+  log_on_gp1: ~/train_aohba50M_atrest_gravnet_full.log
+  result_dir_on_gp1: results/20260625-110900_GravNet_6b_h128_aohba50M_atrest_gravnet_full
+  verified_from_code:
+    epochs_default: 80
+    batch_size_default: 128
+    optimizer: Adam
+    learning_rate: 3.0e-4
+    scheduler: StepLR(step_size=15, gamma=0.5)
+    loss: FocalLoss(gamma=1.5)
+    early_stopping: min_epochs=20, patience=10, monitor=val_loss
+
+evaluation:
+  evaluation_dir_on_gp1: results/evaluation_aohba50M_gravnet_on_4Mtest_latest_current
+  local_status: original labels.npy / scores.npy / betas.npy are not synced in this clean local project copy
+  summary_metrics_source_local: results/yokou_ch4_outputs_latest_current/metrics_data_amount_rej70.json
+  summary_metrics:
+    roc_auc: 0.9917332031944445
+    rej_0_50: 60000.0
+    rej_0_70: 4918.0327868852455
+    rej_0_80: 879.7653958944281
+    rej_0_90: 95.72431397574984
+    rej_0_98: 8.577310155535224
+  beta_bin_analysis_from_gp1_log:
+    source_log: ~/analyze_tree_rec_eval_by_beta_bin_latest_current.log
+    note: Full original evaluation directory should be synced from gp1 before regenerating beta-bin plots.
+
+checks_before_rerun:
+  - Sync or regenerate results/evaluation_aohba50M_gravnet_on_4Mtest_latest_current.
+  - Confirm gp1 log and exact checkpoint path.
+  - Confirm test split event count and label counts from metrics.json after evaluation.
+
+code_references:
+  graph_builder: src/data_parse/graph_builder.py
+  training_script: src/scripts/train_aohba.py
+  evaluation_script: src/scripts/evaluate_aohba_split_cache.py

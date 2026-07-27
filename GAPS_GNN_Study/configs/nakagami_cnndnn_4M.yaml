@@ -1,0 +1,82 @@
+experiment:
+  name: nakagami_cnndnn_4M
+  description: CNN+DNN reproduction on Nakagami 1457 CSV-derived 4M dataset.
+  status: completed
+
+data:
+  source: /mnt/ynakagami2/SimulationData/210713_renew_topIso_flat/csvFiles
+  exported_dir: dataset/nakagami_atrest_voxel_gnn_4M
+  split_dirs:
+    train: train_nakagami_style_4M
+    val: val_nakagami_style_4M
+    test: test_nakagami_style_4M
+  events:
+    train: 3200000
+    val: 400000
+    test: 400000
+  input_files:
+    voxel: voxels.npy
+    tof: tof_primary.npy
+    label: labels.npy
+    beta_for_analysis: betas.npy
+  notes:
+    - voxels.npy is input to the CNN branch.
+    - tof_primary.npy is input to the DNN branch.
+    - labels.npy is the teacher label for supervised training and evaluation, not an input feature.
+    - beta is not used as an input feature.
+
+model:
+  name: CNNDNNHybrid
+  reference: Nakagami Fig.7.2-style CNN+DNN
+  parameters: 1200003
+  voxel_input_shape: [1, 10, 12, 12]
+  tof_dim: 11
+  dropout: 0.3
+
+training:
+  script: src/scripts/train_nakagami_cnndnn_fig72_amp.py
+  command_log: ~/train_nakagami_fig72_cnndnn_4M_rerun.log
+  device: cuda:0
+  batch_size: 200
+  learning_rate: 4.0e-5
+  epochs_requested: 100
+  early_stopping:
+    monitor: val_loss
+    mode: min
+    min_epochs: 20
+    patience: 10
+    min_delta: 1.0e-5
+  amp: true
+  resume_checkpoint: results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/last.pt
+
+final_training_state:
+  stopped_epoch: 70
+  best_epoch: 59
+  best_val_loss: 0.019786
+  note: Early stopping triggered after no improvement for 10 epochs.
+
+evaluation:
+  result_dir: results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun
+  evaluation_dir: results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/evaluation_test
+  metrics:
+    loss: 0.018960616315154766
+    accuracy: 0.9942975
+    roc_auc: 0.9995790623874999
+    rejection:
+      eff_0_50: 10000.0
+      eff_0_70: 10000.0
+      eff_0_80: 10000.0
+      eff_0_90: 7692.307692307693
+      eff_0_95: 3389.830508474576
+      eff_0_98: 1098.901098901099
+      eff_0_99: 387.59689922480624
+  files:
+    metrics: metrics.json
+    labels: labels.npy
+    scores: scores.npy
+    betas: betas.npy
+    rejection_curve: rejection_curve.png
+
+comparison:
+  primary_reference: nakagami_gravnet_4M
+  note: Use the same exported 4M event set for model comparison.

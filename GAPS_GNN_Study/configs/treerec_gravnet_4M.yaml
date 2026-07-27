@@ -1,0 +1,116 @@
+experiment:
+  name: treerec_gravnet_4M
+  description: GravNet evaluation using TreeRec-derived 4M-scale hit-graph input.
+  status: completed
+
+data:
+  source_type: TreeRec-derived GAPS data
+  source_note: Newer GAPS simulation / reconstruction-derived hit information.
+  dataset_label: aohba4M_atrest
+  events:
+    evaluation_events: 600000
+    evaluation_label_counts:
+      antiP: 300000
+      antiD: 300000
+    note: Training split should be confirmed from the gp1 training log before rerunning.
+
+input_definition:
+  representation: PyTorch Geometric hit graph built by GraphBuilder
+  node_definition: one TreeRec hitseries hit becomes one graph node
+  node_feature_dim: 8
+  node_features:
+    - x_position
+    - y_position
+    - z_position
+    - energy_deposit
+    - hit_time
+    - dE_dx_local_energy_density
+    - detector_type_from_volume_id
+    - normalized_layer_id_from_volume_id
+  edge_definition:
+    method: k_nearest_neighbors
+    k: 8
+    built_from: hit_position
+  graph_feature_dim: 45
+  graph_features:
+    - n_hits
+    - total_energy
+    - sili_layer_energy_profile_16
+    - tof_layer_energy_profile_16
+    - tof_summary_features_11
+  tof_paddle_energy:
+    dimension: 172
+    used_in_this_run: false
+    note: Used only by the separate gravnet_tof branch, not by the normal GravNet run.
+  beta:
+    used_as_input: false
+    available_for_analysis: true
+    storage_name: mc_beta / betas.npy
+  notes:
+    - This is not the Nakagami fixed-grid CSV / sparse-voxel input.
+    - Beta-bin analysis is valid because non-zero generated beta values are saved as metadata.
+    - Labels and beta metadata are TreeMc-derived, but hit-level model input is TreeRec-derived.
+
+model:
+  name: GravNet
+  architecture: GravNet_6b_h128
+  hidden_dim: 128
+  num_blocks: 6
+  k: 8
+  graph_pooling: global_mean_pool
+  classifier_input: concatenated GravNet block outputs + skip feature + 45-D graph features
+
+training:
+  script: src/scripts/train_aohba.py
+  expected_log_on_gp1: ~/train_aohba4M_atrest_gravnet_mc1.log
+  verified_from_code:
+    epochs_default: 80
+    batch_size_default: 128
+    optimizer: Adam
+    learning_rate: 3.0e-4
+    scheduler: StepLR(step_size=15, gamma=0.5)
+    loss: FocalLoss(gamma=1.5)
+    early_stopping: min_epochs=20, patience=10, monitor=val_loss
+  note: Exact command and train/validation event counts should be copied from the gp1 log before rerunning.
+
+evaluation:
+  evaluation_dir: results/evaluation_aohba4M_atrest_gravnet_mc1
+  files:
+    metrics: metrics.json
+    labels: labels.npy
+    scores: scores.npy
+    betas: betas.npy
+  verified_metrics:
+    n_events: 600000
+    antiP: 300000
+    antiD: 300000
+    accuracy: 0.9394283333333333
+    roc_auc: 0.9863819673388888
+    rej_0_50: 15000.0
+    rej_0_70: 1102.9411764705883
+    rej_0_80: 242.5222312045271
+    rej_0_90: 37.67424337561221
+    rej_0_95: 12.369603760359542
+    rej_0_98: 5.64652738565782
+    rej_0_99: 3.802763341361389
+
+figures:
+  result_figures_may_be_in:
+    - results/yokou_ch4_outputs_latest_current
+    - results/yokou_ch4_outputs
+  note: Confirm the exact figure source before using figures in reports.
+
+comparison:
+  paired_with: treerec_gravnet_50M
+  purpose: Evaluate the effect of increasing the training event scale.
+
+checks_before_rerun:
+  - Confirm the exact gp1 training command from the log.
+  - Confirm whether the run used --manifest/--cache-dir or --split-cache-dir.
+  - Confirm train and validation event counts from the training log.
+  - Confirm evaluation output contains labels.npy, scores.npy, metrics.json, and betas.npy.
+
+code_references:
+  graph_builder: src/data_parse/graph_builder.py
+  training_script: src/scripts/train_aohba.py
+  evaluation_script: src/scripts/evaluate_aohba_split_cache.py

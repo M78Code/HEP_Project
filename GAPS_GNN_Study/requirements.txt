@@ -1,0 +1,18 @@
+numpy
+scipy
+scikit-learn
+matplotlib
+tqdm
+PyYAML
+
+# Deep learning
+torch
+torchvision
+tensorboard
+
+# Graph neural network
+torch-geometric
+
+# Optional, useful for ROOT / HEP data inspection
+uproot
+awkward

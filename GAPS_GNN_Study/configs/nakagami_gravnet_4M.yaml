@@ -1,0 +1,109 @@
+experiment:
+  name: nakagami_gravnet_4M
+  description: GravNet on Nakagami 1457 CSV-derived 4M dataset.
+  status: completed_historical
+
+data:
+  source: /mnt/ynakagami2/SimulationData/210713_renew_topIso_flat/csvFiles
+  exported_dir: dataset/nakagami_atrest_voxel_gnn_4M
+  split_dirs:
+    train: train_nakagami_style_4M
+    val: val_nakagami_style_4M
+    test: test_nakagami_style_4M
+  events:
+    train: 3200000
+    val: 400000
+    test: 400000
+  input_files:
+    voxel: voxels.npy
+    tof_primary: tof_primary.npy
+    label: labels.npy
+    beta_for_analysis: betas.npy
+
+input_definition:
+  graph_nodes: non-zero voxels from voxels.npy
+  node_features:
+    - log1p_energy_deposit
+    - normalized_z
+    - normalized_x
+    - normalized_y
+    - occupancy
+  node_feature_dim: 5
+  graph_features:
+    files:
+      - tof_primary.npy
+    dim: 11
+  use_beta: false
+  notes:
+    - voxels.npy is converted into non-zero voxel graph nodes.
+    - Clean reproduction code uses tof_primary.npy only as graph-level auxiliary input.
+    - labels.npy is the teacher label for supervised training and evaluation, not an input feature.
+    - The original Nakagami 1457 CSV does not contain a 172-dimensional TOF paddle map.
+    - Historical thesis training used an older compatibility script that concatenated zero-filled tof_paddles.npy and tof_primary.npy; that checkpoint is not compatible with the clean 11-dimensional input model.
+
+model:
+  name: SparseVoxelGravNet
+  core: GravNetClassifier
+  parameters: null
+  hidden_dim: 128
+  num_blocks: 6
+  k: 8
+  dropout: 0.15
+  note: Parameter count should be re-recorded after clean tof_primary-only rerun.
+
+training:
+  script: src/train/train_nakagami_gravnet.py
+  wrapper_script: scripts/04_train_nakagami_gravnet_4M.sh
+  command_log: ~/train_nakagami_atrest_sparse_voxel_gravnet_4M_tof11.log
+  device: cuda
+  batch_size: 512
+  epochs_requested: 200
+  early_stopping:
+    monitor: val_auc
+    mode: max
+    min_epochs: 20
+    patience: 20
+    min_delta: 1.0e-5
+  amp: true
+
+final_training_state:
+  stopped_epoch: 65
+  best_epoch: 45
+  best_val_auc: 0.999818
+  note: Early stopping triggered after no improvement for 20 epochs.
+
+historical_evaluation:
+  result_dir: results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std
+  evaluation_dir: results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test
+  metrics:
+    loss: 0.014978144809901714
+    accuracy: 0.9949425
+    roc_auc: 0.99980412075
+    rejection:
+      eff_0_50: .inf
+      eff_0_70: 99999.99999999999
+      eff_0_80: 66666.66666666667
+      eff_0_90: 24999.999999999996
+      eff_0_95: 7407.407407407407
+      eff_0_98: 1680.672268907563
+      eff_0_99: 584.7953216374269
+  files:
+    metrics: metrics.json
+    labels: labels.npy
+    scores: scores.npy
+    betas: betas.npy
+  note: Historical result used older 183-dimensional graph-level input. Use original GAPS_Project code or rerun the clean 11-dimensional model before comparing with cleaned scripts.
+
+comparison:
+  primary_reference: nakagami_cnndnn_4M
+  note: Compare with CNN+DNN using the same exported 4M event set.
+
+clean_rerun:
+  required: true
+  reason: Use only physically present tof_primary.npy as graph-level input.
+  planned_input:
+    graph_nodes: non-zero voxels from voxels.npy
+    graph_features:
+      - tof_primary.npy
+    use_beta: false
+  expected_tof_dim: 11
