@@ -33,7 +33,7 @@ from GAPS_GNN_Study.src.models.dgcnn import DGCNNClassifier
 
 PROJECT_ROOT = Path(GAPS_GNN_Study.__file__).resolve().parent
 
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, accuracy_score, roc_curve
 
 
 def split_dir(data_dir, split):
@@ -269,13 +269,16 @@ class SparseVoxelDGCNN(nn.Module):
 def rejection_at_eff(labels, scores, eff):
     labels = np.asarray(labels)
     scores = np.asarray(scores)
-    sig = scores[labels == 1]
-    bg = scores[labels == 0]
-    if len(sig) == 0 or len(bg) == 0:
+    if len(np.unique(labels)) < 2:
         return float("nan"), float("nan")
 
-    thr = np.quantile(sig, 1.0 - eff)
-    fpr = np.mean(bg >= thr)
+    fpr_arr, tpr_arr, _ = roc_curve(labels, scores, drop_intermediate=False)
+    candidates = np.flatnonzero(tpr_arr >= eff)
+    if len(candidates) == 0:
+        return float("nan"), float("nan")
+
+    idx = candidates[np.argmin(fpr_arr[candidates])]
+    fpr = float(fpr_arr[idx])
     if fpr == 0:
         return float("inf"), 0.0
     return 1.0 / fpr, fpr
