@@ -5,4 +5,4 @@ requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["Scintillator_Project*", "GAPS_Project*"]
+include = ["Scintillator_Project*", "GAPS_Project*", "GAPS_GNN_Study*"]

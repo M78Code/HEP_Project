@@ -4,8 +4,10 @@ set -euo pipefail
 # Export Nakagami 1457-column CSV files to the shared npy format used by
 # CNN+DNN and sparse-voxel GNN training.
 
-cd "$(dirname "$0")/.."
-export PYTHONPATH="${PYTHONPATH:-.}"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_PARENT="$(dirname "$PROJECT_ROOT")"
+cd "$PROJECT_ROOT"
+export PYTHONPATH="$PROJECT_PARENT:${PYTHONPATH:-}"
 
 INPUTS="${INPUTS:-/mnt/ynakagami2/SimulationData/210713_renew_topIso_flat/csvFiles}"
 OUTPUT_DIR="${OUTPUT_DIR:-dataset/nakagami_atrest_voxel_gnn_4M}"

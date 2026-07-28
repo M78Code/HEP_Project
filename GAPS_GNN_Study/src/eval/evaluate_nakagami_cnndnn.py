@@ -9,19 +9,17 @@ additional training.
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from src.train.train_nakagami_cnndnn import (
+from GAPS_GNN_Study.src.train.train_nakagami_cnndnn import (
     NakagamiFig72CNNDNNDataset,
     infer,
     save_evaluation,
 )
-from src.models.cnn_dnn_hybrid import CNNDNNHybrid
+from GAPS_GNN_Study.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
 
 def parse_args() -> argparse.Namespace:

@@ -69,11 +69,15 @@ from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-from src.common.losses import FocalLoss
-from src.models.gravnet import GravNetClassifier
-from src.models.gravnet_tof import GravNetTOFClassifier
+import GAPS_GNN_Study
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from GAPS_GNN_Study.src.models.gravnet import GravNetClassifier
+from GAPS_GNN_Study.src.common.losses import FocalLoss
+from GAPS_GNN_Study.src.models.gravnet_tof import GravNetTOFClassifier
+
+PROJECT_ROOT = Path(GAPS_GNN_Study.__file__).resolve().parent
+
+
 
 # ── ハイパーパラメータ ──────────────────────────────────
 EPOCHS       = 80

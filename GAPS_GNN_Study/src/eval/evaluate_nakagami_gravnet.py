@@ -25,7 +25,7 @@ import torch
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
 from torch_geometric.loader import DataLoader
 
-from src.train.train_nakagami_gravnet import (
+from GAPS_GNN_Study.src.train.train_nakagami_gravnet import (
     SparseVoxelDataset,
     SparseVoxelDGCNN,
     SparseVoxelGNN,

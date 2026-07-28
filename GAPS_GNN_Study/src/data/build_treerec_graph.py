@@ -120,7 +120,7 @@ class GraphBuilder:
 
         tof_paddle_energy = None
         if self.tof_paddle_index is not None:
-            from src.data.tof_paddles import build_tof_paddle_energy
+            from GAPS_GNN_Study.src.data.tof_paddles import build_tof_paddle_energy
             tof_paddle_energy = build_tof_paddle_energy(
                 energies, volume_ids, self.tof_paddle_index)
 

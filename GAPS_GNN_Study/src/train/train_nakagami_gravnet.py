@@ -25,8 +25,13 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GraphConv, global_mean_pool, global_max_pool
 from tqdm import tqdm
 
-from src.models.gravnet import GravNetClassifier
-from src.models.dgcnn import DGCNNClassifier
+import GAPS_GNN_Study
+
+from GAPS_GNN_Study.src.models.gravnet import GravNetClassifier
+from GAPS_GNN_Study.src.models.dgcnn import DGCNNClassifier
+
+
+PROJECT_ROOT = Path(GAPS_GNN_Study.__file__).resolve().parent
 
 from sklearn.metrics import roc_auc_score, accuracy_score
 

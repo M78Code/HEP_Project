@@ -3,8 +3,10 @@ set -euo pipefail
 
 # Train GravNet on sparse nodes extracted from Nakagami fixed-grid voxels.
 
-cd "$(dirname "$0")/.."
-export PYTHONPATH="${PYTHONPATH:-.}"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_PARENT="$(dirname "$PROJECT_ROOT")"
+cd "$PROJECT_ROOT"
+export PYTHONPATH="$PROJECT_PARENT:${PYTHONPATH:-}"
 
 GPU="${GPU:-0}"
 DATA_DIR="${DATA_DIR:-dataset/nakagami_atrest_voxel_gnn_4M}"

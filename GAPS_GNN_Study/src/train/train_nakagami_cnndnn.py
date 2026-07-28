@@ -38,10 +38,12 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from src.models.cnn_dnn_hybrid import CNNDNNHybrid
 
+import GAPS_GNN_Study
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from GAPS_GNN_Study.src.models.cnn_dnn_hybrid import CNNDNNHybrid
+
+PROJECT_ROOT = Path(GAPS_GNN_Study.__file__).resolve().parent
 
 
 def split_dir(data_dir: Path, split: str) -> Path:

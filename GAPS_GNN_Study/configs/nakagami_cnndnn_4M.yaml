@@ -34,7 +34,8 @@ model:
   dropout: 0.3
 
 training:
-  script: src/scripts/train_nakagami_cnndnn_fig72_amp.py
+  script: src/train/train_nakagami_cnndnn.py
+  wrapper_script: scripts/02_train_nakagami_cnndnn_4M.sh
   command_log: ~/train_nakagami_fig72_cnndnn_4M_rerun.log
   device: cuda:0
   batch_size: 200

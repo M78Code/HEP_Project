@@ -13,9 +13,9 @@ from torch.utils.data import IterableDataset
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-from src.models.gravnet import GravNetClassifier
-from src.models.gravnet_tof import GravNetTOFClassifier
-from src.models.dgcnn import DGCNNClassifier
+from GAPS_GNN_Study.src.models.gravnet import GravNetClassifier
+from GAPS_GNN_Study.src.models.gravnet_tof import GravNetTOFClassifier
+from GAPS_GNN_Study.src.models.dgcnn import DGCNNClassifier
 
 
 class ShardedGraphDataset(IterableDataset):

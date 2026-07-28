@@ -3,8 +3,10 @@ set -euo pipefail
 
 # Plot the Rejection Curve comparison for Nakagami CNN+DNN and GravNet.
 
-cd "$(dirname "$0")/.."
-export PYTHONPATH="${PYTHONPATH:-.}"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_PARENT="$(dirname "$PROJECT_ROOT")"
+cd "$PROJECT_ROOT"
+export PYTHONPATH="$PROJECT_PARENT:${PYTHONPATH:-}"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-/tmp/matplotlib-$USER}"
 mkdir -p "$MPLCONFIGDIR"
 
