@@ -17,6 +17,11 @@ OUTPUT_DIR="${OUTPUT_DIR:-results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnn
 BATCH_SIZE="${BATCH_SIZE:-200}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
 LOG_FILE="${LOG_FILE:-$HOME/evaluate_nakagami_fig72_cnndnn_4M.log}"
+LIMIT_ARGS=()
+
+if [[ -n "${MAX_EVENTS:-}" ]]; then
+  LIMIT_ARGS+=(--max-events "$MAX_EVENTS")
+fi
 
 CUDA_VISIBLE_DEVICES="$GPU" python -u src/eval/evaluate_nakagami_cnndnn.py \
   --data-dir "$DATA_DIR" \
@@ -26,4 +31,5 @@ CUDA_VISIBLE_DEVICES="$GPU" python -u src/eval/evaluate_nakagami_cnndnn.py \
   --batch-size "$BATCH_SIZE" \
   --num-workers "$NUM_WORKERS" \
   --amp \
+  "${LIMIT_ARGS[@]}" \
   2>&1 | tee "$LOG_FILE"
