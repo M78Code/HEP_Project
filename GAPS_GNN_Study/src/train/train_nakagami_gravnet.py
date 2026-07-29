@@ -315,7 +315,11 @@ def evaluate(model, loader, device, desc="eval"):
 
 def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
+    out = (
+        args.resume.resolve().parent
+        if args.resume is not None
+        else Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
+    )
     out.mkdir(parents=True, exist_ok=True)
 
     train_base = SparseVoxelDataset(
@@ -368,6 +372,29 @@ def train(args):
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
+    best_val_auc = -float("inf")
+    best_epoch = 0
+    no_improve_epochs = 0
+    start_epoch = 1
+    best_path = out / "best.pt"
+    last_path = out / "last.pt"
+
+    if args.resume is not None:
+        ckpt = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model"])
+        if "optimizer" in ckpt:
+            opt.load_state_dict(ckpt["optimizer"])
+        if "scaler" in ckpt and ckpt["scaler"] is not None and scaler.is_enabled():
+            scaler.load_state_dict(ckpt["scaler"])
+        best_val_auc = float(ckpt.get("best_val_auc", best_val_auc))
+        best_epoch = int(ckpt.get("best_epoch", best_epoch))
+        no_improve_epochs = int(ckpt.get("no_improve_epochs", no_improve_epochs))
+        start_epoch = int(ckpt.get("epoch", 0)) + 1
+        saved_standardizer = ckpt.get("tof_standardizer")
+        if saved_standardizer is not None:
+            tof_mean = saved_standardizer.get("mean")
+            tof_std = saved_standardizer.get("std")
+
     print("device:", device)
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
@@ -375,6 +402,9 @@ def train(args):
     print("tof/global dim:", tof_dim)
     print("model:", args.model)
     print("model params:", sum(p.numel() for p in model.parameters()))
+    if args.resume is not None:
+        print("resume:", args.resume, flush=True)
+        print("start epoch:", start_epoch, flush=True)
     if args.early_stopping_patience > 0:
         print(
             "early stopping: "
@@ -384,12 +414,14 @@ def train(args):
             flush=True,
         )
 
-    best_val_auc = -float("inf")
-    best_epoch = 0
-    no_improve_epochs = 0
-    best_path = out / "best.pt"
+    if start_epoch > args.epochs:
+        print(
+            f"checkpoint already reached epoch {start_epoch - 1}; "
+            f"target epochs={args.epochs}",
+            flush=True,
+        )
 
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(start_epoch, args.epochs + 1):
         model.train()
         t0 = time.time()
         total_loss, total_correct, total_n = 0.0, 0, 0
@@ -437,17 +469,6 @@ def train(args):
             flush=True,
         )
 
-        torch.save(
-            {
-                "model": model.state_dict(),
-                "args": vars(args),
-                "epoch": epoch,
-                "best_val_auc": best_val_auc,
-                "best_epoch": best_epoch,
-            },
-            out / "last.pt",
-        )
-
         improved = np.isfinite(val_auc) and (
             val_auc > best_val_auc + args.early_stopping_min_delta
         )
@@ -458,17 +479,35 @@ def train(args):
             torch.save(
                 {
                     "model": model.state_dict(),
+                    "optimizer": opt.state_dict(),
+                    "scaler": scaler.state_dict() if scaler.is_enabled() else None,
                     "args": vars(args),
                     "epoch": epoch,
                     "tof_standardizer": {"mean": tof_mean, "std": tof_std},
                     "best_val_auc": best_val_auc,
                     "best_epoch": best_epoch,
+                    "no_improve_epochs": no_improve_epochs,
                 },
                 best_path,
             )
             print(f"  -> best saved: {best_path} (val_auc={best_val_auc:.6f})", flush=True)
         else:
             no_improve_epochs += 1
+
+        torch.save(
+            {
+                "model": model.state_dict(),
+                "optimizer": opt.state_dict(),
+                "scaler": scaler.state_dict() if scaler.is_enabled() else None,
+                "args": vars(args),
+                "epoch": epoch,
+                "tof_standardizer": {"mean": tof_mean, "std": tof_std},
+                "best_val_auc": best_val_auc,
+                "best_epoch": best_epoch,
+                "no_improve_epochs": no_improve_epochs,
+            },
+            last_path,
+        )
 
         if (
             args.early_stopping_patience > 0
@@ -528,6 +567,12 @@ def main():
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
     p.add_argument("--use-beta", action="store_true")
+    p.add_argument(
+        "--resume",
+        type=Path,
+        default=None,
+        help="Resume training from a last.pt or best.pt checkpoint.",
+    )
     p.add_argument(
         "--early-stopping-patience",
         type=int,

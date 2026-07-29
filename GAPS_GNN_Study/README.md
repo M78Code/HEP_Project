@@ -79,6 +79,29 @@ GAPS_GNN_Study/
 
 各コードと元の `GAPS_Project` 内ファイルの対応は `docs/code_map.md` に示す。
 
+
+## 初回セットアップ
+
+`GAPS_GNN_Study` をPythonパッケージとして読み込めるように、gp1などの実行環境では最初に親ディレクトリで editable install を行う。
+
+```bash
+cd ~/HEP_Project
+conda activate naka
+pip install -e .
+```
+
+インストール後、以下で確認できる。
+
+```bash
+cd ~/HEP_Project/GAPS_GNN_Study
+python - <<'PY'
+import GAPS_GNN_Study
+print(GAPS_GNN_Study.__file__)
+PY
+```
+
+`__init__.py` の場所が表示されれば、直接 `python -u src/...` を実行できる。なお、`scripts/*.sh` では親ディレクトリを `PYTHONPATH` に追加する処理も入れているため、editable install を忘れた場合でも実行しやすい。
+
 ## 中上データ4Mの基本実行順序
 
 中上データ4Mの再現では、通常は以下の順に実行する。  

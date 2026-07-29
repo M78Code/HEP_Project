@@ -16,6 +16,8 @@ BATCH_SIZE="${BATCH_SIZE:-512}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
 LOG_FILE="${LOG_FILE:-$HOME/train_nakagami_atrest_sparse_voxel_gravnet_4M_tof11.log}"
 LIMIT_ARGS=()
+RESUME_ARG=()
+TEE_ARGS=("$LOG_FILE")
 
 if [[ -n "${MAX_TRAIN_EVENTS:-}" ]]; then
   LIMIT_ARGS+=(--max-train-events "$MAX_TRAIN_EVENTS")
@@ -28,6 +30,10 @@ if [[ -n "${MAX_TEST_EVENTS:-}" ]]; then
 fi
 if [[ -n "${MAX_TRAIN_BATCHES:-}" ]]; then
   LIMIT_ARGS+=(--max-train-batches "$MAX_TRAIN_BATCHES")
+fi
+if [[ -n "${RESUME:-}" ]]; then
+  RESUME_ARG=(--resume "$RESUME")
+  TEE_ARGS=(-a "$LOG_FILE")
 fi
 
 CUDA_VISIBLE_DEVICES="$GPU" python -u src/train/train_nakagami_gravnet.py \
@@ -45,5 +51,6 @@ CUDA_VISIBLE_DEVICES="$GPU" python -u src/train/train_nakagami_gravnet.py \
   --min-epochs 20 \
   --early-stopping-patience 20 \
   --early-stopping-min-delta 1e-5 \
+  "${RESUME_ARG[@]}" \
   "${LIMIT_ARGS[@]}" \
-  2>&1 | tee "$LOG_FILE"
+  2>&1 | tee "${TEE_ARGS[@]}"
