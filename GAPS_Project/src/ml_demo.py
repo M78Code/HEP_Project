@@ -259,3 +259,8 @@ print("saved:", out_pdf)
 PY
 
 
+
+
+
+python src/scripts/visual/compare_binary_eval.py   --item "CNN+DNN final"   results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/evaluation_test_final   --item "GravNet 4M"   results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test   --out-dir results/nakagami_fig72_cnndnn_final_vs_gravnet_4M   --x-min 0.5   --y-max 1e6
+
