@@ -168,6 +168,94 @@ Mc/volumeId_[0]: [100052000, 100003000, 110003000, ..., 105552000, 201150306, 20
 """
 
 
+cd ~/HEP_Project/GAPS_Project
+conda activate naka
 
+python - <<'PY'
+from pathlib import Path
+import json
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+from sklearn.metrics import roc_curve, roc_auc_score
+
+# Japanese font
+font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+jp_font = fm.FontProperties(fname=font_path)
+mpl.rcParams["font.family"] = jp_font.get_name()
+mpl.rcParams["axes.unicode_minus"] = False
+
+items = [
+    (
+        "CNN+DNN",
+        Path("results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/evaluation_test"),
+        "#1f77b4",
+    ),
+    (
+        "GNN",
+        Path("results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test"),
+        "#ff7f0e",
+    ),
+]
+
+out_dir = Path("results/ppt_figures_large_font")
+out_dir.mkdir(parents=True, exist_ok=True)
+out_png = out_dir / "fig_result1_cnndnn_vs_gnn_large_font.png"
+out_pdf = out_dir / "fig_result1_cnndnn_vs_gnn_large_font.pdf"
+
+plt.figure(figsize=(11, 7.2), dpi=180)
+
+summary = []
+
+for name, d, color in items:
+    labels = np.load(d / "labels.npy")
+    scores = np.load(d / "scores.npy")
+
+    auc = roc_auc_score(labels, scores)
+    fpr, tpr, _ = roc_curve(labels, scores, pos_label=1, drop_intermediate=False)
+
+    # background rejection = 1 / false positive rate
+    mask = fpr > 0
+    rejection = np.empty_like(fpr)
+    rejection[:] = np.nan
+    rejection[mask] = 1.0 / fpr[mask]
+
+    plt.plot(
+        tpr[mask],
+        rejection[mask],
+        label=f"{name} AUC={auc:.4f}",
+        color=color,
+        linewidth=3.4,
+    )
+
+    summary.append({
+        "model": name,
+        "result_dir": str(d),
+        "auc": float(auc),
+    })
+
+plt.yscale("log")
+plt.xlim(0.5, 1.0)
+plt.ylim(1, 1e6)
+
+plt.xlabel("反重陽子の信号効率", fontsize=24)
+plt.ylabel("反陽子背景の除去性能", fontsize=24)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
+
+plt.grid(True, which="both", linestyle=":", linewidth=1.2, alpha=0.75)
+plt.legend(fontsize=20, loc="upper right", frameon=True)
+
+plt.tight_layout()
+plt.savefig(out_png, dpi=300)
+plt.savefig(out_pdf)
+
+with open(out_dir / "fig_result1_cnndnn_vs_gnn_large_font_summary.json", "w") as f:
+    json.dump(summary, f, indent=2)
+
+print("saved:", out_png)
+print("saved:", out_pdf)
+PY
 
 
