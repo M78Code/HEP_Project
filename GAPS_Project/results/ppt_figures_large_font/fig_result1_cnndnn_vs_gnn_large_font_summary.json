@@ -1,0 +1,12 @@
+[
+  {
+    "model": "CNN+DNN",
+    "result_dir": "results/20260720-183528_CNNDNNFig72_nakagami_fig72_cnndnn_4M_rerun/evaluation_test",
+    "auc": 0.9995790623874999
+  },
+  {
+    "model": "GNN",
+    "result_dir": "results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test",
+    "auc": 0.99980412075
+  }
+]
