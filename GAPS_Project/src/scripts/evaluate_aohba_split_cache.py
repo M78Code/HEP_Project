@@ -51,19 +51,33 @@ def rejection_at_efficiency(labels, scores, target):
     }
 
 
+def build_graph_feat(batch, use_mc_beta=False):
+    graph_feat = torch.cat([
+        batch.n_hits.view(-1, 1),
+        batch.total_energy.view(-1, 1),
+        batch.sili_profile.view(-1, 16),
+        batch.tof_profile.view(-1, 16),
+        batch.tof_feat.view(-1, 11),
+    ], dim=1)
+    if use_mc_beta:
+        if not hasattr(batch, 'mc_beta'):
+            raise ValueError('--use-mc-beta requires mc_beta in graph cache')
+        graph_feat = torch.cat(
+            [graph_feat, batch.mc_beta.view(-1, 1).float()],
+            dim=1,
+        )
+    return graph_feat
+
+
 @torch.no_grad()
-def infer(model, loader, device, total_batches, model_name, tof_mode='normal'):
+def infer(
+        model, loader, device, total_batches, model_name,
+        tof_mode='normal', use_mc_beta=False):
     labels, scores, betas = [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
         batch = batch.to(device)
-        graph_feat = torch.cat([
-            batch.n_hits.view(-1, 1),
-            batch.total_energy.view(-1, 1),
-            batch.sili_profile.view(-1, 16),
-            batch.tof_profile.view(-1, 16),
-            batch.tof_feat.view(-1, 11),
-        ], dim=1)
+        graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
         if model_name == 'gravnet_tof':
             tof_paddle_energy = batch.tof_paddle_energy.view(-1, 172)
 
@@ -113,6 +127,11 @@ def main():
         default='normal',
         help='TOF172 ablation mode',
     )
+    parser.add_argument(
+        '--use-mc-beta',
+        action='store_true',
+        help='append TreeMc primary beta to graph-level features',
+    )
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
 
@@ -135,16 +154,18 @@ def main():
     n_batches = (n_events + args.batch_size - 1) // args.batch_size
     loader = DataLoader(
         dataset, batch_size=args.batch_size, num_workers=0, pin_memory=True)
+    graph_feat_dim = 46 if args.use_mc_beta else 45
 
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
-            in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'dgcnn':
         model = DGCNNClassifier(
-            in_channels=8, hidden_dim=args.hidden_dim, k=8, graph_feat_dim=45)
+            in_channels=8, hidden_dim=args.hidden_dim, k=8,
+            graph_feat_dim=graph_feat_dim)
     else:
         model = GravNetClassifier(
-            in_channels=8, hidden_dim=128, graph_feat_dim=45, num_blocks=6)
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     state = torch.load(args.model_path, map_location=device, weights_only=True)
     state = {
         key.replace('_orig_mod.', '').replace('module.', ''): value
@@ -158,6 +179,8 @@ def main():
     print(f'test events: {n_events:,}')
     print(f'model      : {args.model_path}')
     print(f'TOF mode   : {args.tof_mode}')
+    print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
+    print(f'graph feat : {graph_feat_dim}')
 
     labels, scores, betas = infer(
         model,
@@ -166,6 +189,7 @@ def main():
         n_batches,
         args.model,
         tof_mode=args.tof_mode,
+        use_mc_beta=args.use_mc_beta,
     )
 
     predictions = (scores >= 0.5).astype(np.int64)
@@ -181,6 +205,8 @@ def main():
             for target in (0.50, 0.70, 0.80, 0.90, 0.95, 0.98, 0.99)
         ],
         'tof_mode': args.tof_mode,
+        'use_mc_beta': bool(args.use_mc_beta),
+        'graph_feat_dim': int(graph_feat_dim),
     }
 
     args.output_dir.mkdir(parents=True, exist_ok=True)

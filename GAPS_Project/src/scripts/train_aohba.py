@@ -121,6 +121,25 @@ def beta_bin_weights(
     return weights
 
 
+def build_graph_feat(batch, use_mc_beta: bool = False) -> torch.Tensor:
+    """Build event-level graph features, optionally appending MC truth beta."""
+    graph_feat = torch.cat([
+        batch.n_hits.view(-1, 1),
+        batch.total_energy.view(-1, 1),
+        batch.sili_profile.view(-1, 16),
+        batch.tof_profile.view(-1, 16),
+        batch.tof_feat.view(-1, 11),
+    ], dim=1)
+    if use_mc_beta:
+        if not hasattr(batch, 'mc_beta'):
+            raise ValueError('--use-mc-beta requires mc_beta in graph cache')
+        graph_feat = torch.cat(
+            [graph_feat, batch.mc_beta.view(-1, 1).float()],
+            dim=1,
+        )
+    return graph_feat
+
+
 # ── IterableDataset ────────────────────────────────────
 class CachedStreamDataset(IterableDataset):
     """
@@ -377,6 +396,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           model_name: str = 'gravnet', result_dir: Path = None,
           dataset_tag: str = None, resume_checkpoint: Path = None,
           num_workers: int = 0, prefetch_factor: int = 2,
+          use_mc_beta: bool = False,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
@@ -411,6 +431,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'dataloader: num_workers={num_workers}, '
         f'pin_memory={DEVICE.type == "cuda"}, '
         f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
+    graph_feat_dim = 46 if use_mc_beta else 45
+    print(
+        f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
+        f'(graph_feat_dim={graph_feat_dim})')
 
     if dataset_tag is None:
         dataset_tag = split_cache_dir.name if split_cache_dir is not None else 'aohba'
@@ -418,12 +442,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetTOFClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
-            graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     else:
         exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
-            graph_feat_dim=45, num_blocks=NUM_BLOCKS).to(DEVICE)
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     print(f'模型: {exp_name}')
     print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
     print(
@@ -464,6 +488,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint model={checkpoint["model_name"]}, '
                 f'requested model={model_name}')
+        checkpoint_use_mc_beta = bool(checkpoint.get('use_mc_beta', False))
+        if checkpoint_use_mc_beta != use_mc_beta:
+            raise ValueError(
+                f'checkpoint use_mc_beta={checkpoint_use_mc_beta}, '
+                f'requested use_mc_beta={use_mc_beta}')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
@@ -510,15 +539,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 break
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            # 图级特征 45维。节点特征 batch.x 已经在 graph cache 中，
+            # 图级特征 45维；--use-mc-beta 时追加 MC truth beta 变成 46维。
+            # 节点特征 batch.x 已经在 graph cache 中，
             # 这里把 event-level summary 拼成 graph_feat 后交给 GravNet。
-            graph_feat = torch.cat([
-                batch.n_hits.view(-1, 1),
-                batch.total_energy.view(-1, 1),
-                batch.sili_profile.view(-1, 16),
-                batch.tof_profile.view(-1, 16),
-                batch.tof_feat.view(-1, 11),
-            ], dim=1)
+            graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
             if model_name == 'gravnet_tof':
                 if not hasattr(batch, 'tof_paddle_energy'):
                     raise ValueError(
@@ -567,14 +591,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 if max_val_batches is not None and batch_idx >= max_val_batches:
                     break
                 batch = batch.to(DEVICE)
-                # 验证阶段使用同样的 45维图级特征。
-                graph_feat = torch.cat([
-                    batch.n_hits.view(-1, 1),
-                    batch.total_energy.view(-1, 1),
-                    batch.sili_profile.view(-1, 16),
-                    batch.tof_profile.view(-1, 16),
-                    batch.tof_feat.view(-1, 11),
-                ], dim=1)
+                # 验证阶段使用同样的图级特征。
+                graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
                 if model_name == 'gravnet_tof':
                     logits = model(
                         batch.x, batch.edge_index, batch.batch,
@@ -621,6 +639,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'epoch': epoch,
             'model_name': model_name,
             'dataset_tag': dataset_tag,
+            'use_mc_beta': use_mc_beta,
+            'graph_feat_dim': graph_feat_dim,
             'model_state': model.state_dict(),
             'optimizer_state': optimizer.state_dict(),
             'scheduler_state': scheduler.state_dict(),
@@ -672,6 +692,8 @@ if __name__ == '__main__':
                     help='训练batch数上限（smoke test用）')
     ap.add_argument('--max-val-batches', type=int, default=None,
                     help='验证batch数上限（smoke test用）')
+    ap.add_argument('--use-mc-beta', action='store_true',
+                    help='append TreeMc primary beta to graph-level features')
     ap.add_argument('--beta-weighted-loss', action='store_true',
                     help='train loss に beta-bin ごとの重みを掛ける')
     ap.add_argument('--beta-bins', default=DEFAULT_BETA_BINS,
@@ -696,6 +718,7 @@ if __name__ == '__main__':
           resume_checkpoint=args.resume_checkpoint,
           num_workers=args.num_workers,
           prefetch_factor=args.prefetch_factor,
+          use_mc_beta=args.use_mc_beta,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
           beta_bin_weights_arg=args.beta_bin_weights,
