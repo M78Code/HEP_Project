@@ -23,6 +23,7 @@ namespace {
 struct Args {
   std::string input;
   std::string output;
+  std::string geometry_file;
   long long max_events = -1;
   long long start_entry = 0;
   int target_label = -1;
@@ -31,7 +32,8 @@ struct Args {
 void print_usage(const char* argv0) {
   std::cerr
       << "usage: " << argv0 << " --input ROOT_OR_GLOB --output CSV "
-      << "[--max-events N] [--start-entry N] [--target-label 0|1]\n\n"
+      << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
+      << "[--target-label 0|1]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
       << "  col 1       : ROOT entry index\n"
@@ -59,6 +61,8 @@ Args parse_args(int argc, char** argv) {
       args.input = require_value("--input");
     } else if (key == "--output") {
       args.output = require_value("--output");
+    } else if (key == "--geometry-file") {
+      args.geometry_file = require_value("--geometry-file");
     } else if (key == "--max-events") {
       args.max_events = std::stoll(require_value("--max-events"));
     } else if (key == "--start-entry") {
@@ -78,6 +82,9 @@ Args parse_args(int argc, char** argv) {
   if (args.input.empty() || args.output.empty()) {
     print_usage(argv[0]);
     std::exit(2);
+  }
+  if (args.geometry_file.empty()) {
+    args.geometry_file = args.input;
   }
   if (args.target_label != -1 && args.target_label != 0 && args.target_label != 1) {
     std::cerr << "--target-label must be 0, 1, or omitted\n";
@@ -308,8 +315,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  const std::string first_file = tree.GetListOfFiles()->At(0)->GetTitle();
-  const std::vector<int> tracker_order = build_tracker_channel_order(first_file);
+  const std::vector<int> tracker_order = build_tracker_channel_order(args.geometry_file);
 
   std::ofstream out(args.output);
   if (!out) {
