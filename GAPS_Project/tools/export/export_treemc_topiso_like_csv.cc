@@ -303,6 +303,8 @@ void write_event_row(std::ofstream& out,
 int main(int argc, char** argv) {
   const Args args = parse_args(argc, argv);
 
+  const std::vector<int> tracker_order = build_tracker_channel_order(args.geometry_file);
+
   TChain tree("TreeMc");
   tree.Add(args.input.c_str());
 
@@ -314,8 +316,6 @@ int main(int argc, char** argv) {
     std::cerr << "no entries: " << args.input << "\n";
     return 1;
   }
-
-  const std::vector<int> tracker_order = build_tracker_channel_order(args.geometry_file);
 
   std::ofstream out(args.output);
   if (!out) {
