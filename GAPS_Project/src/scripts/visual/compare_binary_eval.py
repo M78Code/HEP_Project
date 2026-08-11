@@ -95,7 +95,7 @@ def main() -> None:
         auc = float(roc_auc_score(labels, scores))
         acc = float(accuracy_score(labels, scores >= 0.5))
         tpr, rejection = rejection_curve(labels, scores, args.zero_fpr_mode)
-        plt.plot(tpr, rejection, linewidth=5.0, label=f"{label} AUC={auc:.4f}")
+        plt.plot(tpr, rejection, label=f"{label} AUC={auc:.4f}")
 
         row = {
             "label": label,
