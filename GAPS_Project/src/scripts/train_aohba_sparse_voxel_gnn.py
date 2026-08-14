@@ -376,7 +376,7 @@ def train(args):
     if args.num_workers > 0:
         loader_kw.update(dict(persistent_workers=True, prefetch_factor=2))
 
-    train_loader = DataLoader(train_ds, shuffle=True, **loader_kw)
+    train_loader = DataLoader(train_ds, shuffle=not args.no_shuffle_train, **loader_kw)
     val_loader = DataLoader(val_ds, shuffle=False, **loader_kw)
     test_loader = DataLoader(test_ds, shuffle=False, **loader_kw)
 
@@ -410,6 +410,7 @@ def train(args):
     print("device:", device)
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
+    print("shuffle train:", not args.no_shuffle_train)
     print("use beta:", args.use_beta)
     print("tof mode:", args.tof_mode)
     print("tof/global dim:", tof_dim)
@@ -568,6 +569,14 @@ def main():
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
     p.add_argument("--use-beta", action="store_true")
+    p.add_argument(
+        "--no-shuffle-train",
+        action="store_true",
+        help=(
+            "Disable DataLoader shuffling. Use this for large interleaved memmap "
+            "datasets on NFS to avoid slow random reads."
+        ),
+    )
     p.add_argument(
         "--tof-mode",
         choices=["paddles-primary", "primary"],
