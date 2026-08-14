@@ -100,6 +100,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--batch-size", type=int, default=512)
     p.add_argument("--num-workers", type=int, default=4)
     p.add_argument("--max-events", type=int, default=None)
+    p.add_argument(
+        "--tof-mode",
+        choices=["checkpoint", "paddles-primary", "primary"],
+        default="checkpoint",
+        help="Override checkpoint TOF mode. Default restores the mode saved during training.",
+    )
     return p.parse_args()
 
 
@@ -120,6 +126,8 @@ def main() -> None:
     tof_mean = None if standardizer is None else standardizer.get("mean")
     tof_std = None if standardizer is None else standardizer.get("std")
     use_beta = bool(getattr(train_args, "use_beta", False))
+    checkpoint_tof_mode = getattr(train_args, "tof_mode", "paddles-primary")
+    tof_mode = checkpoint_tof_mode if args.tof_mode == "checkpoint" else args.tof_mode
     k = int(getattr(train_args, "k", 8))
 
     dataset = SparseVoxelDataset(
@@ -130,6 +138,7 @@ def main() -> None:
         tof_mean=tof_mean,
         tof_std=tof_std,
         use_beta=use_beta,
+        tof_mode=tof_mode,
     )
     loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers)
     if args.num_workers > 0:
@@ -150,6 +159,7 @@ def main() -> None:
     print("batches:", len(loader))
     print("model:", getattr(train_args, "model", "graphconv"))
     print("use beta:", use_beta)
+    print("tof mode:", tof_mode)
     print("tof/global dim:", tof_dim)
     print("checkpoint:", args.model_path)
 
@@ -174,6 +184,7 @@ def main() -> None:
         "data_dir": str(data_dir),
         "split": args.split,
         "use_beta": use_beta,
+        "tof_mode": tof_mode,
         "tof_dim": tof_dim,
     }
 

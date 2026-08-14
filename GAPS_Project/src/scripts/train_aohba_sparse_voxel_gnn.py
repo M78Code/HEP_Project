@@ -5,7 +5,10 @@ Sparse voxel GNN for TreeRec-derived voxel input.
 
 Each nonzero Si(Li) voxel is treated as one graph node.
 Node features are log1p(edep), normalized voxel indices, and occupancy.
-TOF paddle energy and TOF primary features are appended as graph-level features.
+TOF features are appended as graph-level features.  Legacy fixed-grid runs use
+TOF paddle energy plus TOF primary features, while newer topIso fixed-grid
+exports can use only the 11 primary TOF features because the paddle array is
+known to be all zeros.
 """
 
 import argparse, json, time
@@ -41,6 +44,7 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         tof_mean=None,
         tof_std=None,
         use_beta=False,
+        tof_mode="paddles-primary",
     ):
         d = split_dir(data_dir, split)
         if not d.exists():
@@ -51,7 +55,18 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
         self.labels = np.load(d / "labels.npy", mmap_mode="r")
         self.betas = np.load(d / "betas.npy", mmap_mode="r")
 
-        self.tof_paddles = np.load(d / "tof_paddles.npy", mmap_mode="r")
+        if tof_mode not in {"paddles-primary", "primary"}:
+            raise ValueError(f"unknown tof_mode: {tof_mode}")
+        self.tof_mode = tof_mode
+        self.tof_paddles = None
+        if self.tof_mode == "paddles-primary":
+            paddle_path = d / "tof_paddles.npy"
+            if not paddle_path.exists():
+                raise FileNotFoundError(
+                    f"{paddle_path} is required for tof_mode='paddles-primary'. "
+                    "Use --tof-mode primary for topIso fixed-grid exports with zero paddles."
+                )
+            self.tof_paddles = np.load(paddle_path, mmap_mode="r")
         self.k = k
         self.tof_mean = None if tof_mean is None else np.asarray(tof_mean, dtype=np.float32)
         self.tof_std = None if tof_std is None else np.asarray(tof_std, dtype=np.float32)
@@ -78,12 +93,15 @@ class SparseVoxelDataset(torch.utils.data.Dataset):
 
     def raw_tof(self, local_idx):
         idx = int(self.indices[int(local_idx)])
-        tof = np.concatenate(
-            [
-                self.tof_paddles[idx].astype(np.float32),
-                self.tof_primary[idx].astype(np.float32),
-            ]
-        )
+        if self.tof_mode == "primary":
+            tof = self.tof_primary[idx].astype(np.float32)
+        else:
+            tof = np.concatenate(
+                [
+                    self.tof_paddles[idx].astype(np.float32),
+                    self.tof_primary[idx].astype(np.float32),
+                ]
+            )
         if self.use_beta:
             tof = np.concatenate([tof, np.array([self.betas[idx]], dtype=np.float32)])
         return np.log1p(np.clip(tof, 0, None)).astype(np.float32)
@@ -314,18 +332,44 @@ def train(args):
     out.mkdir(parents=True, exist_ok=True)
 
     train_base = SparseVoxelDataset(
-        args.data_dir, "train", args.max_train_events, args.k, use_beta=args.use_beta
+        args.data_dir,
+        "train",
+        args.max_train_events,
+        args.k,
+        use_beta=args.use_beta,
+        tof_mode=args.tof_mode,
     )
     tof_mean, tof_std = compute_tof_standardizer(train_base, args.standardize_samples)
 
     train_ds = SparseVoxelDataset(
-        args.data_dir, "train", args.max_train_events, args.k, tof_mean, tof_std, args.use_beta
+        args.data_dir,
+        "train",
+        args.max_train_events,
+        args.k,
+        tof_mean,
+        tof_std,
+        args.use_beta,
+        args.tof_mode,
     )
     val_ds = SparseVoxelDataset(
-        args.data_dir, "val", args.max_val_events, args.k, tof_mean, tof_std, args.use_beta
+        args.data_dir,
+        "val",
+        args.max_val_events,
+        args.k,
+        tof_mean,
+        tof_std,
+        args.use_beta,
+        args.tof_mode,
     )
     test_ds = SparseVoxelDataset(
-        args.data_dir, "test", args.max_test_events, args.k, tof_mean, tof_std, args.use_beta
+        args.data_dir,
+        "test",
+        args.max_test_events,
+        args.k,
+        tof_mean,
+        tof_std,
+        args.use_beta,
+        args.tof_mode,
     )
 
     loader_kw = dict(batch_size=args.batch_size, num_workers=args.num_workers)
@@ -367,6 +411,7 @@ def train(args):
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
     print("use beta:", args.use_beta)
+    print("tof mode:", args.tof_mode)
     print("tof/global dim:", tof_dim)
     print("model:", args.model)
     print("model params:", sum(p.numel() for p in model.parameters()))
@@ -523,6 +568,15 @@ def main():
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
     p.add_argument("--use-beta", action="store_true")
+    p.add_argument(
+        "--tof-mode",
+        choices=["paddles-primary", "primary"],
+        default="paddles-primary",
+        help=(
+            "Graph-level TOF input. 'paddles-primary' uses legacy 172 paddle + "
+            "11 primary features; 'primary' uses only the 11 primary features."
+        ),
+    )
     p.add_argument(
         "--early-stopping-patience",
         type=int,
