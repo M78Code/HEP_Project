@@ -431,6 +431,22 @@ def main():
     ap.add_argument("--count-only", action="store_true")
     args = ap.parse_args()
 
+    large_n = max(
+        x or 0
+        for x in (
+            args.events_per_class,
+            args.train_events_per_class,
+            args.val_events_per_class,
+            args.test_events_per_class,
+        )
+    )
+    if large_n >= 1_000_000:
+        raise RuntimeError(
+            "This converter collects event references in memory. "
+            "For large fixed-grid CSV samples such as 40M, use "
+            "src/data_parse/export_nakagami_topiso_fixedgrid_stream.py instead."
+        )
+
     layout = LAYOUTS[args.layout]
     explicit_split = args.train_inputs is not None or args.val_inputs is not None
     if explicit_split:
