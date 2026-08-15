@@ -16,6 +16,7 @@ from tqdm import tqdm
 from GAPS_Project.src.models.gravnet import GravNetClassifier
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
+from GAPS_Project.src.models.tree_rec_features import reconstruct_tof_beta
 
 
 class ShardedGraphDataset(IterableDataset):
@@ -51,7 +52,9 @@ def rejection_at_efficiency(labels, scores, target):
     }
 
 
-def build_graph_feat(batch, use_mc_beta=False):
+def build_graph_feat(batch, use_mc_beta=False, use_tof_beta=False):
+    if use_mc_beta and use_tof_beta:
+        raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
     graph_feat = torch.cat([
         batch.n_hits.view(-1, 1),
         batch.total_energy.view(-1, 1),
@@ -66,18 +69,27 @@ def build_graph_feat(batch, use_mc_beta=False):
             [graph_feat, batch.mc_beta.view(-1, 1).float()],
             dim=1,
         )
+    elif use_tof_beta:
+        graph_feat = torch.cat([
+            graph_feat,
+            reconstruct_tof_beta(batch.tof_feat.view(-1, 11).float()),
+        ], dim=1)
     return graph_feat
 
 
 @torch.no_grad()
 def infer(
         model, loader, device, total_batches, model_name,
-        tof_mode='normal', use_mc_beta=False):
+        tof_mode='normal', use_mc_beta=False, use_tof_beta=False):
     labels, scores, betas = [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
         batch = batch.to(device)
-        graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
+        graph_feat = build_graph_feat(
+            batch,
+            use_mc_beta=use_mc_beta,
+            use_tof_beta=use_tof_beta,
+        )
         if model_name == 'gravnet_tof':
             tof_paddle_energy = batch.tof_paddle_energy.view(-1, 172)
 
@@ -132,6 +144,11 @@ def main():
         action='store_true',
         help='append TreeMc primary beta to graph-level features',
     )
+    parser.add_argument(
+        '--use-tof-beta',
+        action='store_true',
+        help='append beta reconstructed from TreeRec TOF hits and a validity mask',
+    )
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
 
@@ -143,6 +160,8 @@ def main():
         raise ValueError(
             '--tof-mode zero/shuffle is only valid with --model gravnet_tof'
         )
+    if args.use_mc_beta and args.use_tof_beta:
+        raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -154,7 +173,7 @@ def main():
     n_batches = (n_events + args.batch_size - 1) // args.batch_size
     loader = DataLoader(
         dataset, batch_size=args.batch_size, num_workers=0, pin_memory=True)
-    graph_feat_dim = 46 if args.use_mc_beta else 45
+    graph_feat_dim = 47 if args.use_tof_beta else (46 if args.use_mc_beta else 45)
 
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
@@ -180,6 +199,7 @@ def main():
     print(f'model      : {args.model_path}')
     print(f'TOF mode   : {args.tof_mode}')
     print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
+    print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
 
     labels, scores, betas = infer(
@@ -190,6 +210,7 @@ def main():
         args.model,
         tof_mode=args.tof_mode,
         use_mc_beta=args.use_mc_beta,
+        use_tof_beta=args.use_tof_beta,
     )
 
     predictions = (scores >= 0.5).astype(np.int64)
@@ -206,6 +227,7 @@ def main():
         ],
         'tof_mode': args.tof_mode,
         'use_mc_beta': bool(args.use_mc_beta),
+        'use_tof_beta': bool(args.use_tof_beta),
         'graph_feat_dim': int(graph_feat_dim),
     }
 

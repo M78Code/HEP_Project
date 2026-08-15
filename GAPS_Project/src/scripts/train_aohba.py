@@ -73,6 +73,7 @@ import GAPS_Project
 from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import GravNetClassifier
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
+from GAPS_Project.src.models.tree_rec_features import reconstruct_tof_beta
 
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
@@ -121,8 +122,12 @@ def beta_bin_weights(
     return weights
 
 
-def build_graph_feat(batch, use_mc_beta: bool = False) -> torch.Tensor:
-    """Build event-level graph features, optionally appending MC truth beta."""
+def build_graph_feat(
+        batch, use_mc_beta: bool = False,
+        use_tof_beta: bool = False) -> torch.Tensor:
+    """Build event-level graph features with one optional beta source."""
+    if use_mc_beta and use_tof_beta:
+        raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
     graph_feat = torch.cat([
         batch.n_hits.view(-1, 1),
         batch.total_energy.view(-1, 1),
@@ -137,6 +142,11 @@ def build_graph_feat(batch, use_mc_beta: bool = False) -> torch.Tensor:
             [graph_feat, batch.mc_beta.view(-1, 1).float()],
             dim=1,
         )
+    elif use_tof_beta:
+        graph_feat = torch.cat([
+            graph_feat,
+            reconstruct_tof_beta(batch.tof_feat.view(-1, 11).float()),
+        ], dim=1)
     return graph_feat
 
 
@@ -313,7 +323,8 @@ def pkl_to_pt(pkl_path: str, cache_dir: Path) -> Path:
 def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size: int,
                                max_train_files: int = None, max_val_files: int = None,
                                num_workers: int = 0, prefetch_factor: int = 2,
-                               beta_min: float = None, beta_max: float = None):
+                               beta_min: float = None, beta_max: float = None,
+                               seed: int = 42):
     with open(manifest_path) as f:
         manifest = json.load(f)
 
@@ -335,9 +346,11 @@ def make_loaders_from_manifest(manifest_path: Path, cache_dir: Path, batch_size:
 
     train_ds = CachedStreamDataset(get_pt_files('train', max_train_files),
                                    shuffle_files=True, shuffle_events=True,
+                                   seed=seed,
                                    beta_min=beta_min, beta_max=beta_max)
     val_ds   = CachedStreamDataset(get_pt_files('val',   max_val_files),
                                    shuffle_files=False, shuffle_events=False,
+                                   seed=seed,
                                    beta_min=beta_min, beta_max=beta_max)
 
     train_loader = make_dataloader(
@@ -352,7 +365,8 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int,
                                   num_workers: int = 0,
                                   prefetch_factor: int = 2,
                                   beta_min: float = None,
-                                  beta_max: float = None):
+                                  beta_max: float = None,
+                                  seed: int = 42):
     """Load sharded or single-file caches created from split.pkl files.
 
     中文说明:
@@ -374,12 +388,14 @@ def make_loaders_from_split_cache(split_cache_dir: Path, batch_size: int,
         find_split_files('train'),
         shuffle_files=True,
         shuffle_events=True,
+        seed=seed,
         balance_tagged_classes=True,
         beta_min=beta_min,
         beta_max=beta_max,
     )
     val_ds = CachedStreamDataset(
         find_split_files('val'), shuffle_files=False, shuffle_events=False,
+        seed=seed,
         beta_min=beta_min, beta_max=beta_max)
     train_loader = make_dataloader(
         train_ds, batch_size, num_workers, prefetch_factor)
@@ -397,21 +413,31 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           dataset_tag: str = None, resume_checkpoint: Path = None,
           num_workers: int = 0, prefetch_factor: int = 2,
           use_mc_beta: bool = False,
+          use_tof_beta: bool = False,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
-          beta_min: float = None, beta_max: float = None):
+          beta_min: float = None, beta_max: float = None,
+          seed: int = 42):
+    if use_mc_beta and use_tof_beta:
+        raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
+
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
     if split_cache_dir is not None:
         print(f'split cache: {split_cache_dir}')
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_split_cache(
             split_cache_dir, batch_size, num_workers, prefetch_factor,
-            beta_min=beta_min, beta_max=beta_max)
+            beta_min=beta_min, beta_max=beta_max, seed=seed)
     else:
         train_loader, val_loader, train_ds, val_ds = make_loaders_from_manifest(
             manifest_path, cache_dir, batch_size,
             max_train_files=max_train_files, max_val_files=max_val_files,
             num_workers=num_workers, prefetch_factor=prefetch_factor,
-            beta_min=beta_min, beta_max=beta_max)
+            beta_min=beta_min, beta_max=beta_max, seed=seed)
 
     train_approx = train_ds.approx_len()
     val_approx   = val_ds.approx_len()
@@ -431,9 +457,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'dataloader: num_workers={num_workers}, '
         f'pin_memory={DEVICE.type == "cuda"}, '
         f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
-    graph_feat_dim = 46 if use_mc_beta else 45
+    print(f'random seed: {seed}')
+    graph_feat_dim = 47 if use_tof_beta else (46 if use_mc_beta else 45)
     print(
         f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
+        f'| TOF beta input: {"enabled" if use_tof_beta else "disabled"} '
         f'(graph_feat_dim={graph_feat_dim})')
 
     if dataset_tag is None:
@@ -493,6 +521,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint use_mc_beta={checkpoint_use_mc_beta}, '
                 f'requested use_mc_beta={use_mc_beta}')
+        checkpoint_use_tof_beta = bool(checkpoint.get('use_tof_beta', False))
+        if checkpoint_use_tof_beta != use_tof_beta:
+            raise ValueError(
+                f'checkpoint use_tof_beta={checkpoint_use_tof_beta}, '
+                f'requested use_tof_beta={use_tof_beta}')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
@@ -539,10 +572,14 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 break
             batch = batch.to(DEVICE)
             optimizer.zero_grad()
-            # 图级特征 45维；--use-mc-beta 时追加 MC truth beta 变成 46维。
+            # 图级特征 45维；MC beta 追加 1 维，TOF beta 追加 beta 和有效标记 2 维。
             # 节点特征 batch.x 已经在 graph cache 中，
             # 这里把 event-level summary 拼成 graph_feat 后交给 GravNet。
-            graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
+            graph_feat = build_graph_feat(
+                batch,
+                use_mc_beta=use_mc_beta,
+                use_tof_beta=use_tof_beta,
+            )
             if model_name == 'gravnet_tof':
                 if not hasattr(batch, 'tof_paddle_energy'):
                     raise ValueError(
@@ -592,7 +629,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     break
                 batch = batch.to(DEVICE)
                 # 验证阶段使用同样的图级特征。
-                graph_feat = build_graph_feat(batch, use_mc_beta=use_mc_beta)
+                graph_feat = build_graph_feat(
+                    batch,
+                    use_mc_beta=use_mc_beta,
+                    use_tof_beta=use_tof_beta,
+                )
                 if model_name == 'gravnet_tof':
                     logits = model(
                         batch.x, batch.edge_index, batch.batch,
@@ -639,7 +680,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'epoch': epoch,
             'model_name': model_name,
             'dataset_tag': dataset_tag,
+            'seed': seed,
             'use_mc_beta': use_mc_beta,
+            'use_tof_beta': use_tof_beta,
             'graph_feat_dim': graph_feat_dim,
             'model_state': model.state_dict(),
             'optimizer_state': optimizer.state_dict(),
@@ -672,6 +715,8 @@ if __name__ == '__main__':
                     help='DataLoader worker数。0なら従来通り単一プロセス')
     ap.add_argument('--prefetch-factor', type=int, default=2,
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
+    ap.add_argument('--seed', type=int, default=42,
+                    help='model initialization and data shuffling seed')
     ap.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
@@ -694,6 +739,8 @@ if __name__ == '__main__':
                     help='验证batch数上限（smoke test用）')
     ap.add_argument('--use-mc-beta', action='store_true',
                     help='append TreeMc primary beta to graph-level features')
+    ap.add_argument('--use-tof-beta', action='store_true',
+                    help='append beta reconstructed from TreeRec TOF hits and a validity mask')
     ap.add_argument('--beta-weighted-loss', action='store_true',
                     help='train loss に beta-bin ごとの重みを掛ける')
     ap.add_argument('--beta-bins', default=DEFAULT_BETA_BINS,
@@ -719,8 +766,10 @@ if __name__ == '__main__':
           num_workers=args.num_workers,
           prefetch_factor=args.prefetch_factor,
           use_mc_beta=args.use_mc_beta,
+          use_tof_beta=args.use_tof_beta,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
           beta_bin_weights_arg=args.beta_bin_weights,
           beta_min=args.beta_min,
-          beta_max=args.beta_max)
+          beta_max=args.beta_max,
+          seed=args.seed)

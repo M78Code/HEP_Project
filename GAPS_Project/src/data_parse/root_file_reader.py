@@ -234,7 +234,9 @@ def convert_root_to_pickle(root_path: Path, output_dir: Path):
         all_times = tree_rec["Rec/hitseries_/hitseries_.hit_time_"].array()
         all_volume_ids = tree_rec["Rec/hitseries_/hitseries_.volume_id_"].array()
         all_event_quality = tree_rec["Rec/event_quality"].array()
-        all_rec_betas = tree_rec["Rec/primaryBeta_/primaryBeta_.first"].array()
+        # ``primaryBeta_`` is a name/value pair. ``first`` stores the name;
+        # the numeric reconstructed-beta candidates are in ``second``.
+        all_rec_betas = tree_rec["Rec/primaryBeta_/primaryBeta_.second"].array()
         all_mc_energies = tree_mc["Mc/totalEnergyDeposition_"].array()
         all_mc_vids = tree_mc["Mc/volumeId_"].array()
         all_labels = tree_mc["Mc/primaryPdg_"].array()
