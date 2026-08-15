@@ -1,0 +1,64 @@
+{
+  "n_events": 40000,
+  "label_counts": {
+    "0": 20000,
+    "1": 20000
+  },
+  "accuracy_at_0.5": 0.9937,
+  "auc": 0.9994020475000002,
+  "score_min": 7.040521052444071e-13,
+  "score_max": 1.0,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.7445,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.7445,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.80025,
+      "fpr": 0.0,
+      "rejection": Infinity,
+      "threshold": 0.9999992847442627
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.90005,
+      "fpr": 5e-05,
+      "rejection": 20000.0,
+      "threshold": 0.9999070167541504
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.95,
+      "fpr": 0.0003,
+      "rejection": 3333.3333333333335,
+      "threshold": 0.9981687068939209
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.98,
+      "fpr": 0.00095,
+      "rejection": 1052.6315789473683,
+      "threshold": 0.9664689302444458
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.99,
+      "fpr": 0.0025,
+      "rejection": 400.0,
+      "threshold": 0.8207183480262756
+    }
+  ],
+  "labels_path": "/home/m78code/HEP_Project/GAPS_Project/results/20260717-184553_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gnn_200k_std_beta/evaluation_test/labels.npy",
+  "scores_path": "/home/m78code/HEP_Project/GAPS_Project/results/20260717-184553_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gnn_200k_std_beta/evaluation_test/scores.npy"
+}
