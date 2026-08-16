@@ -45,10 +45,34 @@ class GraphBuilder:
     图级特征（45维）：n_hits(1) + total_energy(1) + sili_profile(16) + tof_profile(16) + tof_feat(11)
     """
     def __init__(self, k: int = 8, normalize: bool = True,
-                 tof_paddle_index: dict[int, int] | None = None):
+                 tof_paddle_index: dict[int, int] | None = None,
+                 normalization_mode: str = 'event_zscore',
+                 global_feature_mean: np.ndarray | None = None,
+                 global_feature_std: np.ndarray | None = None):
         self.k = k
         self.normalize = normalize
         self.tof_paddle_index = tof_paddle_index
+        self.normalization_mode = normalization_mode
+        self.global_feature_mean = None
+        self.global_feature_std = None
+
+        if normalization_mode not in {'event_zscore', 'global_log'}:
+            raise ValueError(
+                'normalization_mode must be event_zscore or global_log, '
+                f'got {normalization_mode!r}')
+        if normalization_mode == 'global_log':
+            if global_feature_mean is None or global_feature_std is None:
+                raise ValueError(
+                    'global_log normalization requires global_feature_mean '
+                    'and global_feature_std')
+            mean = np.asarray(global_feature_mean, dtype=np.float32).reshape(-1)
+            std = np.asarray(global_feature_std, dtype=np.float32).reshape(-1)
+            if mean.shape != (6,) or std.shape != (6,):
+                raise ValueError(
+                    'global_log mean/std must each have shape (6,), for '
+                    '[x, y, z, log1p(energy), log1p(time), log1p(dE/dx)]')
+            self.global_feature_mean = mean
+            self.global_feature_std = np.where(std > 0.0, std, 1.0)
 
     def build_from_dict(self, event: dict) -> Data:
         """
@@ -56,48 +80,11 @@ class GraphBuilder:
         ::param event: {'energy': array(N,), 'positions': array(N,3), 'times': array(N,), 'volume_id': array(N,), 'label': int, 'beta': float, ...}
         """
 
-        # ── 1. 读取数据 ──────────────────────────
-        energies = event['energy']  # (N,)
-        positions = event['positions']  # (N, 3)
-        times = event['times']  # (N,)
-        volume_ids = event.get('volume_id', np.zeros(len(energies), dtype=np.int64))
-        label = event['label']
+        x, energies, positions, volume_ids, raw_times, label = \
+            self._raw_event_features(event)
         N = len(energies)
-
-        # ── 2. 处理NaN时间（填0）────────────────────
-        times = np.where(np.isnan(times), 0.0, times)
-
-        # ── 3. 图级标量 ────────────────────────────
         n_hits = float(N)
         total_energy = float(energies.sum())
-
-        # ── 4. 计算 dE/dx（每个hit能量 / k近邻平均距离）──
-        # Bethe-Bloch: dE/dx ∝ 1/β²，antiD β更低 → dE/dx更大，是关键判别量
-        if N > 1:
-            tree = cKDTree(positions)
-            k_query = min(self.k + 1, N)    # 防止N < k+1
-            dists, _ = tree.query(positions, k=k_query)
-            mean_dists = dists[:, 1:].mean(axis=1)  # 去掉自身（距离=0）
-            dEdx = (energies / (mean_dists + 1e-6)).astype(np.float32)
-        else:
-            dEdx = np.zeros(N, dtype=np.float32)
-
-        # ── 5. volume_id → det_type, layer_norm ──
-        layer_idx = (volume_ids // 1000000).astype(np.int64)  # e.g. 200,201,...
-        det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
-        layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
-
-        # ── 6. 构建节点特征矩阵（8维，纯Rec特征）───────────────
-        x = np.stack([
-            positions[:, 0],  # fX
-            positions[:, 1],  # fY
-            positions[:, 2],  # fZ
-            energies,  # energy
-            times,  # time
-            dEdx,  # dE/dx
-            det_type,  # 探测器类型
-            layer_norm,  # 层号归一化
-        ], axis=1).astype(np.float32)
 
         if self.normalize:
             x = self._normalize(x)
@@ -115,7 +102,7 @@ class GraphBuilder:
 
         # TOF特征（inner/outer分离，11维）
         tof_features = self._tof_features(energies, volume_ids, positions,
-                                          np.where(np.isnan(event['times']), np.nan, event['times']))
+                                          raw_times)
         tof_features = np.nan_to_num(tof_features, nan=0.0, posinf=0.0, neginf=0.0)
 
         tof_paddle_energy = None
@@ -153,6 +140,43 @@ class GraphBuilder:
             data.tof_paddle_energy = torch.tensor(
                 tof_paddle_energy, dtype=torch.float32)
         return data
+
+    def raw_node_features_from_dict(self, event: dict) -> np.ndarray:
+        """Return unnormalized 8D TreeRec node features without building edges."""
+        x, *_ = self._raw_event_features(event)
+        return x
+
+    def _raw_event_features(self, event: dict):
+        """Build raw node features shared by cache construction and audits."""
+        energies = np.asarray(event['energy'], dtype=np.float32)
+        positions = np.asarray(event['positions'], dtype=np.float32)
+        raw_times = np.asarray(event['times'], dtype=np.float32)
+        volume_ids = np.asarray(
+            event.get('volume_id', np.zeros(len(energies), dtype=np.int64)),
+            dtype=np.int64,
+        )
+        label = event['label']
+        N = len(energies)
+        times = np.where(np.isnan(raw_times), 0.0, raw_times)
+
+        # Bethe-Bloch: dE/dx is a useful low-beta discriminator.
+        if N > 1:
+            tree = cKDTree(positions)
+            k_query = min(self.k + 1, N)
+            dists, _ = tree.query(positions, k=k_query)
+            mean_dists = dists[:, 1:].mean(axis=1)
+            d_edx = (energies / (mean_dists + 1e-6)).astype(np.float32)
+        else:
+            d_edx = np.zeros(N, dtype=np.float32)
+
+        layer_idx = (volume_ids // 1_000_000).astype(np.int64)
+        det_type = np.where(layer_idx >= 200, 1.0, 0.0).astype(np.float32)
+        layer_norm = (layer_idx % 100).astype(np.float32) / 16.0
+        x = np.stack([
+            positions[:, 0], positions[:, 1], positions[:, 2], energies,
+            times, d_edx, det_type, layer_norm,
+        ], axis=1).astype(np.float32)
+        return x, energies, positions, volume_ids, raw_times, label
 
     # TOF layer分组（基于volume_id空间分布分析）
     # 官方volume_id規則: digit2=0→outer, digit2=1→inner
@@ -271,11 +295,24 @@ class GraphBuilder:
         return sili, tof
 
     def _normalize(self, x):
-        """各特征减均值除标准差，std=0时跳过"""
+        """Apply the selected node-feature normalization without changing raw metadata."""
+        if self.normalization_mode == 'global_log':
+            return self._normalize_global_log(x)
+
+        # Historical default: independently z-score all eight columns per event.
         mean = x.mean(axis=0)
         std = x.std(axis=0)
         std[std == 0] = 1.0
         return (x - mean) / std
+
+    def _normalize_global_log(self, x: np.ndarray) -> np.ndarray:
+        """Train-set global scaling, retaining raw detector type and layer encoding."""
+        transformed = x.copy()
+        transformed[:, 3:6] = np.log1p(np.clip(transformed[:, 3:6], 0.0, None))
+        transformed[:, :6] = (
+            transformed[:, :6] - self.global_feature_mean
+        ) / self.global_feature_std
+        return transformed
 
 
 
