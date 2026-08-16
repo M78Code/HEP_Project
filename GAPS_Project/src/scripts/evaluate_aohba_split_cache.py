@@ -13,7 +13,10 @@ from torch.utils.data import IterableDataset
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.gravnet import (
+    DetectorAwareGravNetClassifier,
+    GravNetClassifier,
+)
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 from GAPS_Project.src.models.tree_rec_features import reconstruct_tof_beta
@@ -131,7 +134,9 @@ def main():
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--batch-size', type=int, default=512)
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
-    parser.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'dgcnn'],
+    parser.add_argument(
+        '--model',
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -177,6 +182,9 @@ def main():
 
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_detector':
+        model = DetectorAwareGravNetClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'dgcnn':
         model = DGCNNClassifier(
