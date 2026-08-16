@@ -22,7 +22,12 @@ from GAPS_Project.src.data_parse.graph_builder import GraphBuilder
 
 
 SPLITS = ('train', 'val', 'test')
-META_FIELDS = ('event_id', 'random_seed', 'source_event_index')
+# Keep provenance plus optional legacy TOF-paddle data.  The standard GravNet
+# path does not consume tof_paddle_energy, but preserving it keeps rebuilt
+# caches compatible with the GravNetTOF path as well.
+COPY_FIELDS = (
+    'event_id', 'random_seed', 'source_event_index', 'tof_paddle_energy',
+)
 
 
 def scalar(value) -> int:
@@ -121,7 +126,7 @@ def rebuild_split(
             if scalar(data.y) != scalar(graph.y):
                 raise RuntimeError(
                     f'label mismatch in {source_shard.name} at source event {source_index}')
-            for field in META_FIELDS:
+            for field in COPY_FIELDS:
                 if hasattr(graph, field):
                     setattr(data, field, getattr(graph, field))
             rebuilt.append(data)
