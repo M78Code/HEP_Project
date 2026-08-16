@@ -35,6 +35,9 @@ def main():
             'nodes_tof': 0,
             'nodes_sili': 0,
             'nodes_zero': 0,
+            'zero_type_tof_profile_only': 0,
+            'zero_type_sili_profile_only': 0,
+            'zero_type_both_or_empty_profile': 0,
         }
         label_counts = {0: 0, 1: 0}
 
@@ -60,6 +63,14 @@ def main():
                     stats['sili_only'] += 1
                 else:
                     stats['all_zero_type'] += 1
+                    sili_energy = float(graph.sili_profile.abs().sum())
+                    tof_energy = float(graph.tof_profile.abs().sum())
+                    if tof_energy > 0 and sili_energy == 0:
+                        stats['zero_type_tof_profile_only'] += 1
+                    elif sili_energy > 0 and tof_energy == 0:
+                        stats['zero_type_sili_profile_only'] += 1
+                    else:
+                        stats['zero_type_both_or_empty_profile'] += 1
 
         total = max(stats['graphs'], 1)
         print(f'\n[{split}]')
@@ -71,6 +82,11 @@ def main():
         print(f'TOF-only      : {stats["tof_only"]:,}')
         print(f'Si(Li)-only   : {stats["sili_only"]:,}')
         print(f'all-zero type : {stats["all_zero_type"]:,}')
+        print(
+            'all-zero routing (TOF-only / Si(Li)-only / unresolved): '
+            f'{stats["zero_type_tof_profile_only"]:,} / '
+            f'{stats["zero_type_sili_profile_only"]:,} / '
+            f'{stats["zero_type_both_or_empty_profile"]:,}')
         print(
             'nodes (TOF / Si(Li) / zero): '
             f'{stats["nodes_tof"]:,} / {stats["nodes_sili"]:,} / {stats["nodes_zero"]:,}')

@@ -162,6 +162,25 @@ class DetectorAwareGravNetClassifier(GravNetClassifier):
         detector_type = x[:, 6]
         tof_mask = detector_type < 0
         sili_mask = detector_type > 0
+
+        # Per-event standardization makes detector_type exactly zero when an
+        # event contains only one detector type. Use the already cached layer
+        # profiles to route those nodes instead of dropping their embedding.
+        zero_mask = detector_type == 0
+        if bool(zero_mask.any()):
+            if graph_feat is None:
+                raise ValueError(
+                    'DetectorAwareGravNetClassifier requires graph_feat')
+            sili_energy = graph_feat[:, 2:18].abs().sum(dim=1)
+            tof_energy = graph_feat[:, 18:34].abs().sum(dim=1)
+            zero_tof = zero_mask & (tof_energy[batch] > 0) & (
+                sili_energy[batch] == 0)
+            zero_sili = zero_mask & (sili_energy[batch] > 0) & (
+                tof_energy[batch] == 0)
+            unresolved = zero_mask & ~(zero_tof | zero_sili)
+            tof_mask = tof_mask | zero_tof | unresolved
+            sili_mask = sili_mask | zero_sili | unresolved
+
         tof_mean, tof_max = self._masked_readout(
             node_embedding, batch, tof_mask, num_graphs)
         sili_mean, sili_max = self._masked_readout(
