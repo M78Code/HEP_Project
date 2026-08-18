@@ -33,11 +33,6 @@ int main(int argc, char** argv) {
     std::cerr << "TreeRec not found: " << input_path << "\n";
     return 3;
   }
-  if (tree->GetBranch(branch_name) == nullptr) {
-    std::cerr << "branch not found: " << branch_name << "\n";
-    return 4;
-  }
-
   const Long64_t entries_total = tree->GetEntries();
   const Long64_t entries_requested = std::min(entries_total, max_entries);
   TTreeReader reader(tree);
@@ -67,7 +62,8 @@ int main(int argc, char** argv) {
   }
 
   if (events_read == 0 && entries_requested > 0) {
-    std::cerr << "failed to read " << branch_name << "\n";
+    std::cerr << "failed to read " << branch_name
+              << " (TTreeReader status=" << reader.GetEntryStatus() << ")\n";
     return 5;
   }
 
