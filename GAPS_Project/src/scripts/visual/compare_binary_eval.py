@@ -140,8 +140,23 @@ def main() -> None:
     for efficiency in args.mark_efficiencies:
         ax.axvline(efficiency, color="0.45", linestyle="--", linewidth=0.8, alpha=0.7)
 
-    x_ticks = sorted(set(ax.get_xticks()).union(args.mark_efficiencies))
-    ax.set_xticks([tick for tick in x_ticks if args.x_min <= tick <= 1.0])
+    base_ticks = [round(tick, 1) for tick in np.arange(0.0, 1.01, 0.1)]
+    x_ticks = sorted(set(base_ticks).union(args.mark_efficiencies))
+    x_ticks = [tick for tick in x_ticks if args.x_min <= tick <= 1.0]
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels(
+        [
+            f"{tick:.2f}" if any(np.isclose(tick, mark) for mark in args.mark_efficiencies)
+            else f"{tick:.1f}"
+            for tick in x_ticks
+        ],
+        fontsize=11,
+    )
+    for tick, label in zip(x_ticks, ax.get_xticklabels()):
+        if any(np.isclose(tick, mark) for mark in args.mark_efficiencies):
+            label.set_fontsize(9)
+            label.set_rotation(45)
+            label.set_horizontalalignment("right")
     ax.set_yscale("log")
     ax.set_xlim(args.x_min, 1.0)
     ax.set_ylim(1, args.y_max)
