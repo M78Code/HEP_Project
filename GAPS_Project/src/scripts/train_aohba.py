@@ -71,9 +71,17 @@ from tqdm import tqdm
 
 import GAPS_Project
 from GAPS_Project.src.losses import FocalLoss
-from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.gravnet import (
+    DetectorAwareGravNetClassifier,
+    GravNetClassifier,
+)
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
-from GAPS_Project.src.models.tree_rec_features import reconstruct_tof_beta
+from GAPS_Project.src.models.tree_rec_features import (
+    build_base_graph_feat,
+    load_graph_feature_normalizer,
+    normalize_base_graph_feat,
+    reconstruct_tof_beta,
+)
 
 PROJECT_ROOT = Path(GAPS_Project.__file__).parent
 
@@ -124,17 +132,18 @@ def beta_bin_weights(
 
 def build_graph_feat(
         batch, use_mc_beta: bool = False,
-        use_tof_beta: bool = False) -> torch.Tensor:
+        use_tof_beta: bool = False,
+        graph_feature_mean: torch.Tensor | None = None,
+        graph_feature_std: torch.Tensor | None = None) -> torch.Tensor:
     """Build event-level graph features with one optional beta source."""
     if use_mc_beta and use_tof_beta:
         raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
-    graph_feat = torch.cat([
-        batch.n_hits.view(-1, 1),
-        batch.total_energy.view(-1, 1),
-        batch.sili_profile.view(-1, 16),
-        batch.tof_profile.view(-1, 16),
-        batch.tof_feat.view(-1, 11),
-    ], dim=1)
+    graph_feat = build_base_graph_feat(batch)
+    if (graph_feature_mean is None) != (graph_feature_std is None):
+        raise ValueError('graph-feature mean/std must be provided together')
+    if graph_feature_mean is not None:
+        graph_feat = normalize_base_graph_feat(
+            graph_feat, graph_feature_mean, graph_feature_std)
     if use_mc_beta:
         if not hasattr(batch, 'mc_beta'):
             raise ValueError('--use-mc-beta requires mc_beta in graph cache')
@@ -418,9 +427,18 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
           beta_min: float = None, beta_max: float = None,
+          graph_feature_normalizer: Path = None,
           seed: int = 42):
     if use_mc_beta and use_tof_beta:
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
+
+    graph_feature_mean = None
+    graph_feature_std = None
+    if graph_feature_normalizer is not None:
+        graph_feature_mean, graph_feature_std = load_graph_feature_normalizer(
+            graph_feature_normalizer)
+        graph_feature_mean = graph_feature_mean.to(DEVICE)
+        graph_feature_std = graph_feature_std.to(DEVICE)
 
     random.seed(seed)
     torch.manual_seed(seed)
@@ -458,6 +476,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'pin_memory={DEVICE.type == "cuda"}, '
         f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
     print(f'random seed: {seed}')
+    print(
+        'graph feature normalization: '
+        f'{graph_feature_normalizer if graph_feature_normalizer is not None else "disabled"}')
     graph_feat_dim = 47 if use_tof_beta else (46 if use_mc_beta else 45)
     print(
         f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
@@ -469,6 +490,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     if model_name == 'gravnet_tof':
         exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetTOFClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_detector':
+        exp_name = f'GravNetDetector_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = DetectorAwareGravNetClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
             graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     else:
@@ -579,6 +605,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 batch,
                 use_mc_beta=use_mc_beta,
                 use_tof_beta=use_tof_beta,
+                graph_feature_mean=graph_feature_mean,
+                graph_feature_std=graph_feature_std,
             )
             if model_name == 'gravnet_tof':
                 if not hasattr(batch, 'tof_paddle_energy'):
@@ -633,6 +661,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     batch,
                     use_mc_beta=use_mc_beta,
                     use_tof_beta=use_tof_beta,
+                    graph_feature_mean=graph_feature_mean,
+                    graph_feature_std=graph_feature_std,
                 )
                 if model_name == 'gravnet_tof':
                     logits = model(
@@ -683,6 +713,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'seed': seed,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
+            'graph_feature_normalizer': (
+                str(graph_feature_normalizer)
+                if graph_feature_normalizer is not None else None),
             'graph_feat_dim': graph_feat_dim,
             'model_state': model.state_dict(),
             'optimizer_state': optimizer.state_dict(),
@@ -717,7 +750,7 @@ if __name__ == '__main__':
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
-    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof'],
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument(
@@ -751,6 +784,10 @@ if __name__ == '__main__':
                     help='keep graphs with mc_beta >= beta_min')
     ap.add_argument('--beta-max', type=float, default=None,
                     help='keep graphs with mc_beta < beta_max')
+    ap.add_argument(
+        '--graph-feature-normalizer', type=Path, default=None,
+        help='JSON fitted on this dataset\'s train split: log1p first 38 graph features, then z-score all 45',
+    )
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files,
@@ -772,4 +809,5 @@ if __name__ == '__main__':
           beta_bin_weights_arg=args.beta_bin_weights,
           beta_min=args.beta_min,
           beta_max=args.beta_max,
+          graph_feature_normalizer=args.graph_feature_normalizer,
           seed=args.seed)

@@ -1,0 +1,50 @@
+{
+  "accuracy": 0.9419320661102107,
+  "auc": 0.9886723573428282,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.5014637423813408,
+      "fpr": 5.906652736810629e-05,
+      "rejection": 16930.0625,
+      "threshold": 1.0
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.7025003599366512,
+      "fpr": 0.0005205237724314367,
+      "rejection": 1921.1418439716313,
+      "threshold": 0.9921875
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.8002591543888276,
+      "fpr": 0.0033889420077450982,
+      "rejection": 295.0773420479303,
+      "threshold": 0.9345703125
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.9000742023250062,
+      "fpr": 0.024748874967236534,
+      "rejection": 40.40587708830549,
+      "threshold": 0.62060546875
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.9500038762408586,
+      "fpr": 0.07055496694120296,
+      "rejection": 14.173346588530768,
+      "threshold": 0.36328125
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.980020747117738,
+      "fpr": 0.14736360246750418,
+      "rejection": 6.78593616914675,
+      "threshold": 0.1806640625
+    }
+  ],
+  "best_epoch": 37,
+  "best_val_auc": 0.9886958941835872
+}

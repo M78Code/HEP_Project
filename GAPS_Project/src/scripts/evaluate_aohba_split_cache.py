@@ -13,10 +13,18 @@ from torch.utils.data import IterableDataset
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-from GAPS_Project.src.models.gravnet import GravNetClassifier
+from GAPS_Project.src.models.gravnet import (
+    DetectorAwareGravNetClassifier,
+    GravNetClassifier,
+)
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
-from GAPS_Project.src.models.tree_rec_features import reconstruct_tof_beta
+from GAPS_Project.src.models.tree_rec_features import (
+    build_base_graph_feat,
+    load_graph_feature_normalizer,
+    normalize_base_graph_feat,
+    reconstruct_tof_beta,
+)
 
 
 class ShardedGraphDataset(IterableDataset):
@@ -52,16 +60,17 @@ def rejection_at_efficiency(labels, scores, target):
     }
 
 
-def build_graph_feat(batch, use_mc_beta=False, use_tof_beta=False):
+def build_graph_feat(
+        batch, use_mc_beta=False, use_tof_beta=False,
+        graph_feature_mean=None, graph_feature_std=None):
     if use_mc_beta and use_tof_beta:
         raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
-    graph_feat = torch.cat([
-        batch.n_hits.view(-1, 1),
-        batch.total_energy.view(-1, 1),
-        batch.sili_profile.view(-1, 16),
-        batch.tof_profile.view(-1, 16),
-        batch.tof_feat.view(-1, 11),
-    ], dim=1)
+    graph_feat = build_base_graph_feat(batch)
+    if (graph_feature_mean is None) != (graph_feature_std is None):
+        raise ValueError('graph-feature mean/std must be provided together')
+    if graph_feature_mean is not None:
+        graph_feat = normalize_base_graph_feat(
+            graph_feat, graph_feature_mean, graph_feature_std)
     if use_mc_beta:
         if not hasattr(batch, 'mc_beta'):
             raise ValueError('--use-mc-beta requires mc_beta in graph cache')
@@ -80,7 +89,8 @@ def build_graph_feat(batch, use_mc_beta=False, use_tof_beta=False):
 @torch.no_grad()
 def infer(
         model, loader, device, total_batches, model_name,
-        tof_mode='normal', use_mc_beta=False, use_tof_beta=False):
+        tof_mode='normal', use_mc_beta=False, use_tof_beta=False,
+        graph_feature_mean=None, graph_feature_std=None):
     labels, scores, betas = [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
@@ -89,6 +99,8 @@ def infer(
             batch,
             use_mc_beta=use_mc_beta,
             use_tof_beta=use_tof_beta,
+            graph_feature_mean=graph_feature_mean,
+            graph_feature_std=graph_feature_std,
         )
         if model_name == 'gravnet_tof':
             tof_paddle_energy = batch.tof_paddle_energy.view(-1, 172)
@@ -131,7 +143,9 @@ def main():
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--batch-size', type=int, default=512)
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
-    parser.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'dgcnn'],
+    parser.add_argument(
+        '--model',
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -150,6 +164,10 @@ def main():
         help='append beta reconstructed from TreeRec TOF hits and a validity mask',
     )
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument(
+        '--graph-feature-normalizer', type=Path, default=None,
+        help='same train-only JSON used for training',
+    )
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -168,6 +186,13 @@ def main():
         raise FileNotFoundError(f'no test_*.pt under {args.cache_dir}')
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    graph_feature_mean = None
+    graph_feature_std = None
+    if args.graph_feature_normalizer is not None:
+        graph_feature_mean, graph_feature_std = load_graph_feature_normalizer(
+            args.graph_feature_normalizer)
+        graph_feature_mean = graph_feature_mean.to(device)
+        graph_feature_std = graph_feature_std.to(device)
     dataset = ShardedGraphDataset(files)
     n_events = dataset.approx_len()
     n_batches = (n_events + args.batch_size - 1) // args.batch_size
@@ -177,6 +202,9 @@ def main():
 
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_detector':
+        model = DetectorAwareGravNetClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'dgcnn':
         model = DGCNNClassifier(
@@ -200,6 +228,7 @@ def main():
     print(f'TOF mode   : {args.tof_mode}')
     print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
     print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
+    print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
 
     labels, scores, betas = infer(
@@ -211,6 +240,8 @@ def main():
         tof_mode=args.tof_mode,
         use_mc_beta=args.use_mc_beta,
         use_tof_beta=args.use_tof_beta,
+        graph_feature_mean=graph_feature_mean,
+        graph_feature_std=graph_feature_std,
     )
 
     predictions = (scores >= 0.5).astype(np.int64)

@@ -8,7 +8,7 @@ GNN 更适合不规则探测器几何的原因。
 
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GravNetConv, global_mean_pool
+from torch_geometric.nn import GravNetConv, global_max_pool, global_mean_pool
 
 
 class GravNetClassifier(nn.Module):
@@ -66,7 +66,8 @@ class GravNetClassifier(nn.Module):
         # ── 分类头 ─────────────────────────────────────────
         # concat 4个block输出 + 原始特征的线性映射
         self.skip_linear = nn.Linear(in_channels, hidden_dim)
-        concat_dim = hidden_dim * self.num_blocks + hidden_dim + graph_feat_dim
+        self.node_embedding_dim = hidden_dim * (self.num_blocks + 1)
+        concat_dim = self.node_embedding_dim + graph_feat_dim
 
         self.classifier = nn.Sequential(
             nn.Linear(concat_dim, hidden_dim),
@@ -78,6 +79,21 @@ class GravNetClassifier(nn.Module):
             nn.Linear(hidden_dim // 2, num_classes),
         )
 
+    def encode_nodes(self, x, batch):
+        """Return the concatenated per-node GravNet embedding."""
+        x_skip = self.skip_linear(x)
+        block_outputs = []
+
+        x_cur = x
+        for pre_linear, gravnet, norm in zip(
+                self.pre_linears, self.gravnet_layers, self.post_norms):
+            x_cur = pre_linear(x_cur)
+            x_cur = gravnet(x_cur, batch=batch)
+            x_cur = norm(x_cur).relu()
+            block_outputs.append(x_cur)
+
+        return torch.cat(block_outputs + [x_skip], dim=1)
+
     def forward(self, x, edge_index, batch, graph_feat=None):
         """
         Args:
@@ -87,21 +103,91 @@ class GravNetClassifier(nn.Module):
         Returns:
             logits      : [batch_size, num_classes]
         """
-        x_skip = self.skip_linear(x)  # 原始特征映射
-        block_outputs = []
-
-        x_cur = x
-        for pre_linear, gravnet, norm in zip(self.pre_linears, self.gravnet_layers, self.post_norms):
-            x_cur = pre_linear(x_cur)
-            x_cur = gravnet(x_cur, batch=batch)
-            x_cur = norm(x_cur).relu()
-            block_outputs.append(x_cur)
-
-        # 拼接所有block输出 + skip
-        x_cat = torch.cat(block_outputs + [x_skip], dim=1)
+        x_cat = self.encode_nodes(x, batch)
 
         # 节点级 → 图级
         x_graph = global_mean_pool(x_cat, batch)
+        if graph_feat is not None:
+            x_graph = torch.cat([x_graph, graph_feat], dim=1)
+        return self.classifier(x_graph)
+
+
+class DetectorAwareGravNetClassifier(GravNetClassifier):
+    """GravNet with separate TOF and Si(Li) mean/max readout.
+
+    The cached TreeRec node feature at index 6 is the per-event normalized
+    detector type. For events containing both detector types, TOF is negative
+    and Si(Li) is positive. The cache audit verifies this assumption before
+    this model is used for training.
+    """
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 **kwargs):
+        super().__init__(
+            *args,
+            hidden_dim=hidden_dim,
+            graph_feat_dim=graph_feat_dim,
+            **kwargs,
+        )
+        self.readout_projection = nn.Sequential(
+            nn.Linear(self.node_embedding_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(hidden_dim * 4 + graph_feat_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim // 2, 2),
+        )
+
+    @staticmethod
+    def _masked_readout(x, batch, mask, num_graphs):
+        """Return zero-filled mean/max pooling for one detector type."""
+        out_dim = x.size(1)
+        if not bool(mask.any()):
+            zeros = x.new_zeros((num_graphs, out_dim))
+            return zeros, zeros
+
+        mean = global_mean_pool(x[mask], batch[mask], size=num_graphs)
+        maximum = global_max_pool(x[mask], batch[mask], size=num_graphs)
+        return mean, maximum
+
+    def forward(self, x, edge_index, batch, graph_feat=None):
+        node_embedding = self.readout_projection(self.encode_nodes(x, batch))
+        num_graphs = int(batch[-1].item()) + 1 if batch.numel() else 0
+
+        detector_type = x[:, 6]
+        tof_mask = detector_type < 0
+        sili_mask = detector_type > 0
+
+        # Per-event standardization makes detector_type exactly zero when an
+        # event contains only one detector type. Use the already cached layer
+        # profiles to route those nodes instead of dropping their embedding.
+        zero_mask = detector_type == 0
+        if bool(zero_mask.any()):
+            if graph_feat is None:
+                raise ValueError(
+                    'DetectorAwareGravNetClassifier requires graph_feat')
+            sili_energy = graph_feat[:, 2:18].abs().sum(dim=1)
+            tof_energy = graph_feat[:, 18:34].abs().sum(dim=1)
+            zero_tof = zero_mask & (tof_energy[batch] > 0) & (
+                sili_energy[batch] == 0)
+            zero_sili = zero_mask & (sili_energy[batch] > 0) & (
+                tof_energy[batch] == 0)
+            unresolved = zero_mask & ~(zero_tof | zero_sili)
+            tof_mask = tof_mask | zero_tof | unresolved
+            sili_mask = sili_mask | zero_sili | unresolved
+
+        tof_mean, tof_max = self._masked_readout(
+            node_embedding, batch, tof_mask, num_graphs)
+        sili_mean, sili_max = self._masked_readout(
+            node_embedding, batch, sili_mask, num_graphs)
+
+        x_graph = torch.cat(
+            [tof_mean, tof_max, sili_mean, sili_max], dim=1)
         if graph_feat is not None:
             x_graph = torch.cat([x_graph, graph_feat], dim=1)
         return self.classifier(x_graph)
