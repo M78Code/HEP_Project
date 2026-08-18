@@ -32,6 +32,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--x-min", type=float, default=0.45)
     p.add_argument("--y-max", type=float, default=1e5)
     p.add_argument("--zero-fpr-mode", choices=["cap", "drop"], default="cap")
+    p.add_argument(
+        "--mark-efficiencies",
+        nargs="*",
+        type=float,
+        default=[0.95, 0.98],
+        metavar="EFF",
+        help="Signal efficiencies to show with vertical guides and curve markers.",
+    )
     return p.parse_args()
 
 
@@ -87,7 +95,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     summary = []
-    plt.figure(figsize=(7.0, 5.0), dpi=args.dpi)
+    fig, ax = plt.subplots(figsize=(7.0, 5.0), dpi=args.dpi)
 
     for label, result_dir_text in args.item:
         result_dir = Path(result_dir_text)
@@ -95,7 +103,7 @@ def main() -> None:
         auc = float(roc_auc_score(labels, scores))
         acc = float(accuracy_score(labels, scores >= 0.5))
         tpr, rejection = rejection_curve(labels, scores, args.zero_fpr_mode)
-        plt.plot(tpr, rejection, label=f"{label} AUC={auc:.4f}")
+        (line,) = ax.plot(tpr, rejection, label=f"{label} AUC={auc:.4f}")
 
         row = {
             "label": label,
@@ -114,16 +122,36 @@ def main() -> None:
         }
         summary.append(row)
 
-    plt.yscale("log")
-    plt.xlim(args.x_min, 1.0)
-    plt.ylim(1, args.y_max)
-    plt.xlabel("Signal efficiency")
-    plt.ylabel("Background rejection")
-    plt.grid(True, which="both", linestyle=":", alpha=0.6)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(args.out_dir / "rejection_compare.png")
-    plt.close()
+        n_background = int((labels == 0).sum())
+        for point in row["rejection"]:
+            target = point["target_efficiency"]
+            if target not in args.mark_efficiencies or not np.isfinite(point["fpr"]):
+                continue
+            rejection_value = 1.0 / max(point["fpr"], 1.0 / n_background)
+            ax.plot(
+                point["actual_efficiency"],
+                rejection_value,
+                marker="o",
+                markersize=4.5,
+                color=line.get_color(),
+                zorder=3,
+            )
+
+    for efficiency in args.mark_efficiencies:
+        ax.axvline(efficiency, color="0.45", linestyle="--", linewidth=0.8, alpha=0.7)
+
+    x_ticks = sorted(set(ax.get_xticks()).union(args.mark_efficiencies))
+    ax.set_xticks([tick for tick in x_ticks if args.x_min <= tick <= 1.0])
+    ax.set_yscale("log")
+    ax.set_xlim(args.x_min, 1.0)
+    ax.set_ylim(1, args.y_max)
+    ax.set_xlabel("Signal efficiency")
+    ax.set_ylabel("Background rejection")
+    ax.grid(True, which="both", linestyle=":", alpha=0.6)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(args.out_dir / "rejection_compare.png")
+    plt.close(fig)
 
     (args.out_dir / "metrics_compare.json").write_text(
         json.dumps(summary, indent=2, allow_nan=True),
