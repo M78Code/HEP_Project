@@ -25,26 +25,10 @@ import numpy as np
 import torch
 from sklearn.metrics import roc_auc_score
 
-
-FEATURE_NAMES = (
-    'log_spatial_eig_small',
-    'log_spatial_eig_middle',
-    'log_spatial_eig_large',
-    'log_energy_weighted_spatial_rms',
-    'log_time_span_ns',
-    'log_time_iqr_ns',
-    'energy_weighted_time_std_ns_log',
-    'energy_top1_fraction',
-    'energy_top3_fraction',
-    'late_quartile_energy_fraction',
-    'log_energy_mean',
-    'log_energy_std',
-    'log_energy_q10',
-    'log_energy_q50',
-    'log_energy_q90',
-    'log_energy_q90_minus_q10',
-    'tof_sili_centroid_distance_log',
-    'tof_sili_time_gap_ns_log',
+from GAPS_Project.src.data_parse.treerec_hit_topology import (
+    ALL_FEATURE_NAMES as FEATURE_NAMES,
+    load_node_normalizer,
+    topology_features,
 )
 
 
@@ -52,111 +36,6 @@ def scalar(value) -> int:
     if isinstance(value, torch.Tensor):
         return int(value.reshape(-1)[0].item())
     return int(value)
-
-
-def load_global_log_normalizer(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
-    if payload.get('mode') != 'global_log':
-        raise ValueError(f'{path} is not a global_log node normalizer')
-    mean = np.asarray(payload['mean'], dtype=np.float64)
-    std = np.asarray(payload['std'], dtype=np.float64)
-    if mean.shape != (6,) or std.shape != (6,):
-        raise ValueError('expected six continuous node-feature constants')
-    if np.any(std <= 0.0):
-        raise ValueError('node normalizer has non-positive standard deviation')
-    return mean, std
-
-
-def recovered_raw_features(graph, mean: np.ndarray, std: np.ndarray):
-    """Recover observable energy/time from the cached global-log node tensor."""
-    x = graph.x.detach().cpu().numpy().astype(np.float64, copy=False)
-    pos = graph.pos.detach().cpu().numpy().astype(np.float64, copy=False)
-    if x.ndim != 2 or x.shape[1] != 8 or pos.shape != (len(x), 3):
-        raise ValueError(f'unexpected graph shapes: x={x.shape}, pos={pos.shape}')
-
-    log_energy = x[:, 3] * std[3] + mean[3]
-    log_time = x[:, 4] * std[4] + mean[4]
-    energy = np.expm1(np.clip(log_energy, 0.0, 50.0))
-    time = np.expm1(np.clip(log_time, 0.0, 50.0))
-    det_type = x[:, 6]
-    return pos, energy, time, det_type
-
-
-def topology_features(graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
-    pos, energy, time, det_type = recovered_raw_features(graph, mean, std)
-    n_hits = len(energy)
-    if n_hits == 0:
-        raise ValueError('empty graph')
-
-    weights = np.maximum(energy, 0.0)
-    if not np.isfinite(weights).all() or weights.sum() <= 0.0:
-        weights = np.ones(n_hits, dtype=np.float64)
-    weights /= weights.sum()
-
-    center = np.sum(pos * weights[:, None], axis=0)
-    delta = pos - center
-    covariance = (delta * weights[:, None]).T @ delta
-    eigenvalues = np.linalg.eigvalsh(covariance)
-    eigenvalues = np.maximum(eigenvalues, 0.0)
-    spatial_rms = float(np.sqrt(np.sum(weights * np.sum(delta * delta, axis=1))))
-
-    sorted_time = np.sort(time)
-    time_span = float(sorted_time[-1] - sorted_time[0]) if n_hits > 1 else 0.0
-    time_iqr = float(np.quantile(time, 0.75) - np.quantile(time, 0.25))
-    weighted_time_mean = float(np.sum(weights * time))
-    weighted_time_std = float(np.sqrt(np.sum(weights * (time - weighted_time_mean) ** 2)))
-
-    ranked_energy = np.sort(energy)[::-1]
-    total_energy = max(float(energy.sum()), 1e-12)
-    top1_fraction = float(ranked_energy[:1].sum() / total_energy)
-    top3_fraction = float(ranked_energy[:3].sum() / total_energy)
-    time_q75 = float(np.quantile(time, 0.75))
-    late_energy_fraction = float(energy[time >= time_q75].sum() / total_energy)
-
-    # TreeMc strict studies found the event-level energy-deposition shape to
-    # be highly informative.  These are detector-level TreeRec hit summaries,
-    # not primary-track quantities and not MC truth.
-    energy_q10, energy_q50, energy_q90 = np.quantile(energy, (0.10, 0.50, 0.90))
-    energy_mean = float(np.mean(energy))
-    energy_std = float(np.std(energy))
-
-    tof_mask = det_type < 0.5
-    sili_mask = ~tof_mask
-    if tof_mask.any() and sili_mask.any():
-        tof_weight = weights[tof_mask]
-        sili_weight = weights[sili_mask]
-        tof_weight /= tof_weight.sum()
-        sili_weight /= sili_weight.sum()
-        tof_center = np.sum(pos[tof_mask] * tof_weight[:, None], axis=0)
-        sili_center = np.sum(pos[sili_mask] * sili_weight[:, None], axis=0)
-        centroid_distance = float(np.linalg.norm(tof_center - sili_center))
-        tof_time = float(np.sum(time[tof_mask] * tof_weight))
-        sili_time = float(np.sum(time[sili_mask] * sili_weight))
-        tof_sili_time_gap = abs(tof_time - sili_time)
-    else:
-        centroid_distance = 0.0
-        tof_sili_time_gap = 0.0
-
-    return np.asarray([
-        np.log1p(eigenvalues[0]),
-        np.log1p(eigenvalues[1]),
-        np.log1p(eigenvalues[2]),
-        np.log1p(spatial_rms),
-        np.log1p(max(time_span, 0.0)),
-        np.log1p(max(time_iqr, 0.0)),
-        np.log1p(max(weighted_time_std, 0.0)),
-        top1_fraction,
-        top3_fraction,
-        late_energy_fraction,
-        np.log1p(max(energy_mean, 0.0)),
-        np.log1p(max(energy_std, 0.0)),
-        np.log1p(max(float(energy_q10), 0.0)),
-        np.log1p(max(float(energy_q50), 0.0)),
-        np.log1p(max(float(energy_q90), 0.0)),
-        np.log1p(max(float(energy_q90 - energy_q10), 0.0)),
-        np.log1p(centroid_distance),
-        np.log1p(max(tof_sili_time_gap, 0.0)),
-    ], dtype=np.float32)
 
 
 def direction_independent_auc(labels: np.ndarray, values: np.ndarray) -> float:
@@ -217,7 +96,7 @@ def main() -> None:
     if args.max_graphs_per_shard is not None and args.max_graphs_per_shard < 1:
         raise ValueError('--max-graphs-per-shard must be positive')
     normalizer_path = args.node_normalizer or args.cache_dir / 'node_feature_normalizer.json'
-    mean, std = load_global_log_normalizer(normalizer_path)
+    mean, std = load_node_normalizer(normalizer_path)
     if args.out_dir.exists() and any(args.out_dir.iterdir()):
         raise FileExistsError(f'output directory is not empty: {args.out_dir}')
     args.out_dir.mkdir(parents=True, exist_ok=True)

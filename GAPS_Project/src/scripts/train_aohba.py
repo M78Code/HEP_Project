@@ -77,6 +77,8 @@ from GAPS_Project.src.models.gravnet import (
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.tree_rec_features import (
+    HIT_TOPOLOGY_FEATURE_DIM,
+    append_hit_topology,
     build_base_graph_feat,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
@@ -133,6 +135,7 @@ def beta_bin_weights(
 def build_graph_feat(
         batch, use_mc_beta: bool = False,
         use_tof_beta: bool = False,
+        use_hit_topology: bool = False,
         graph_feature_mean: torch.Tensor | None = None,
         graph_feature_std: torch.Tensor | None = None) -> torch.Tensor:
     """Build event-level graph features with one optional beta source."""
@@ -156,6 +159,8 @@ def build_graph_feat(
             graph_feat,
             reconstruct_tof_beta(batch.tof_feat.view(-1, 11).float()),
         ], dim=1)
+    if use_hit_topology:
+        graph_feat = append_hit_topology(graph_feat, batch)
     return graph_feat
 
 
@@ -423,6 +428,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           num_workers: int = 0, prefetch_factor: int = 2,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
+          use_hit_topology: bool = False,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
@@ -479,10 +485,13 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(
         'graph feature normalization: '
         f'{graph_feature_normalizer if graph_feature_normalizer is not None else "disabled"}')
-    graph_feat_dim = 47 if use_tof_beta else (46 if use_mc_beta else 45)
+    graph_feat_dim = 45 + (2 if use_tof_beta else (1 if use_mc_beta else 0))
+    if use_hit_topology:
+        graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
     print(
         f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
         f'| TOF beta input: {"enabled" if use_tof_beta else "disabled"} '
+        f'| hit topology input: {"enabled" if use_hit_topology else "disabled"} '
         f'(graph_feat_dim={graph_feat_dim})')
 
     if dataset_tag is None:
@@ -552,6 +561,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint use_tof_beta={checkpoint_use_tof_beta}, '
                 f'requested use_tof_beta={use_tof_beta}')
+        checkpoint_use_hit_topology = bool(
+            checkpoint.get('use_hit_topology', False))
+        if checkpoint_use_hit_topology != use_hit_topology:
+            raise ValueError(
+                f'checkpoint use_hit_topology={checkpoint_use_hit_topology}, '
+                f'requested use_hit_topology={use_hit_topology}')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
@@ -605,6 +620,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 batch,
                 use_mc_beta=use_mc_beta,
                 use_tof_beta=use_tof_beta,
+                use_hit_topology=use_hit_topology,
                 graph_feature_mean=graph_feature_mean,
                 graph_feature_std=graph_feature_std,
             )
@@ -661,6 +677,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     batch,
                     use_mc_beta=use_mc_beta,
                     use_tof_beta=use_tof_beta,
+                    use_hit_topology=use_hit_topology,
                     graph_feature_mean=graph_feature_mean,
                     graph_feature_std=graph_feature_std,
                 )
@@ -713,6 +730,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'seed': seed,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
+            'use_hit_topology': use_hit_topology,
             'graph_feature_normalizer': (
                 str(graph_feature_normalizer)
                 if graph_feature_normalizer is not None else None),
@@ -774,6 +792,8 @@ if __name__ == '__main__':
                     help='append TreeMc primary beta to graph-level features')
     ap.add_argument('--use-tof-beta', action='store_true',
                     help='append beta reconstructed from TreeRec TOF hits and a validity mask')
+    ap.add_argument('--use-hit-topology', action='store_true',
+                    help='append six precomputed TreeRec hit-level topology summaries')
     ap.add_argument('--beta-weighted-loss', action='store_true',
                     help='train loss に beta-bin ごとの重みを掛ける')
     ap.add_argument('--beta-bins', default=DEFAULT_BETA_BINS,
@@ -804,6 +824,7 @@ if __name__ == '__main__':
           prefetch_factor=args.prefetch_factor,
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
+          use_hit_topology=args.use_hit_topology,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
           beta_bin_weights_arg=args.beta_bin_weights,

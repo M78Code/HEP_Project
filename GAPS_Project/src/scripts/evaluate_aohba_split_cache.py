@@ -20,6 +20,8 @@ from GAPS_Project.src.models.gravnet import (
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 from GAPS_Project.src.models.tree_rec_features import (
+    HIT_TOPOLOGY_FEATURE_DIM,
+    append_hit_topology,
     build_base_graph_feat,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
@@ -62,6 +64,7 @@ def rejection_at_efficiency(labels, scores, target):
 
 def build_graph_feat(
         batch, use_mc_beta=False, use_tof_beta=False,
+        use_hit_topology=False,
         graph_feature_mean=None, graph_feature_std=None):
     if use_mc_beta and use_tof_beta:
         raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
@@ -83,6 +86,8 @@ def build_graph_feat(
             graph_feat,
             reconstruct_tof_beta(batch.tof_feat.view(-1, 11).float()),
         ], dim=1)
+    if use_hit_topology:
+        graph_feat = append_hit_topology(graph_feat, batch)
     return graph_feat
 
 
@@ -90,6 +95,7 @@ def build_graph_feat(
 def infer(
         model, loader, device, total_batches, model_name,
         tof_mode='normal', use_mc_beta=False, use_tof_beta=False,
+        use_hit_topology=False,
         graph_feature_mean=None, graph_feature_std=None):
     labels, scores, betas = [], [], []
     model.eval()
@@ -99,6 +105,7 @@ def infer(
             batch,
             use_mc_beta=use_mc_beta,
             use_tof_beta=use_tof_beta,
+            use_hit_topology=use_hit_topology,
             graph_feature_mean=graph_feature_mean,
             graph_feature_std=graph_feature_std,
         )
@@ -163,6 +170,10 @@ def main():
         action='store_true',
         help='append beta reconstructed from TreeRec TOF hits and a validity mask',
     )
+    parser.add_argument(
+        '--use-hit-topology', action='store_true',
+        help='append six precomputed TreeRec hit-level topology summaries',
+    )
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument(
         '--graph-feature-normalizer', type=Path, default=None,
@@ -198,7 +209,9 @@ def main():
     n_batches = (n_events + args.batch_size - 1) // args.batch_size
     loader = DataLoader(
         dataset, batch_size=args.batch_size, num_workers=0, pin_memory=True)
-    graph_feat_dim = 47 if args.use_tof_beta else (46 if args.use_mc_beta else 45)
+    graph_feat_dim = 45 + (2 if args.use_tof_beta else (1 if args.use_mc_beta else 0))
+    if args.use_hit_topology:
+        graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
 
     if args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
@@ -228,6 +241,7 @@ def main():
     print(f'TOF mode   : {args.tof_mode}')
     print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
     print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
+    print(f'hit topology: {"enabled" if args.use_hit_topology else "disabled"}')
     print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
 
@@ -240,6 +254,7 @@ def main():
         tof_mode=args.tof_mode,
         use_mc_beta=args.use_mc_beta,
         use_tof_beta=args.use_tof_beta,
+        use_hit_topology=args.use_hit_topology,
         graph_feature_mean=graph_feature_mean,
         graph_feature_std=graph_feature_std,
     )
@@ -259,6 +274,7 @@ def main():
         'tof_mode': args.tof_mode,
         'use_mc_beta': bool(args.use_mc_beta),
         'use_tof_beta': bool(args.use_tof_beta),
+        'use_hit_topology': bool(args.use_hit_topology),
         'graph_feat_dim': int(graph_feat_dim),
     }
 

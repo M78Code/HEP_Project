@@ -18,6 +18,7 @@ TOF_POSITION_SCALE_MM = 1000.0
 # TOF flight time and two 3D positions can be signed, so they are only z-scored.
 BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
+HIT_TOPOLOGY_FEATURE_DIM = 6
 
 
 def build_base_graph_feat(batch) -> torch.Tensor:
@@ -66,6 +67,18 @@ def normalize_base_graph_feat(
     """Apply the fitted train-only transform without changing feature order."""
     transformed = transform_base_graph_feat(graph_feat)
     return (transformed - mean) / std
+
+
+def append_hit_topology(graph_feat: torch.Tensor, batch) -> torch.Tensor:
+    """Append six precomputed, train-normalized TreeRec topology summaries."""
+    if not hasattr(batch, 'hit_topology_z'):
+        raise ValueError(
+            '--use-hit-topology requires a cache created by '
+            'attach_treerec_hit_topology.py')
+    topology = batch.hit_topology_z.view(-1, HIT_TOPOLOGY_FEATURE_DIM).float()
+    if not torch.isfinite(topology).all():
+        raise ValueError('hit_topology_z contains non-finite values')
+    return torch.cat([graph_feat, topology], dim=1)
 
 
 def reconstruct_tof_beta(tof_feat: torch.Tensor) -> torch.Tensor:
