@@ -121,7 +121,8 @@ class GravNetMultiTaskClassifier(GravNetClassifier):
     """
 
     def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
-                 dropout: float = 0.3, **kwargs):
+                 dropout: float = 0.3,
+                 classify_with_predicted_beta: bool = False, **kwargs):
         super().__init__(
             *args,
             hidden_dim=hidden_dim,
@@ -130,6 +131,17 @@ class GravNetMultiTaskClassifier(GravNetClassifier):
             **kwargs,
         )
         concat_dim = self.node_embedding_dim + graph_feat_dim
+        self.classify_with_predicted_beta = classify_with_predicted_beta
+        if self.classify_with_predicted_beta:
+            self.classifier = nn.Sequential(
+                nn.Linear(concat_dim + 1, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim, hidden_dim // 2),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim // 2, 2),
+            )
         self.beta_regressor = nn.Sequential(
             nn.Linear(concat_dim, hidden_dim),
             nn.ReLU(),
@@ -145,7 +157,10 @@ class GravNetMultiTaskClassifier(GravNetClassifier):
         x_graph = global_mean_pool(x_cat, batch)
         if graph_feat is not None:
             x_graph = torch.cat([x_graph, graph_feat], dim=1)
-        return self.classifier(x_graph), self.beta_regressor(x_graph).squeeze(1)
+        beta_prediction = self.beta_regressor(x_graph).squeeze(1)
+        if self.classify_with_predicted_beta:
+            x_graph = torch.cat([x_graph, beta_prediction.unsqueeze(1)], dim=1)
+        return self.classifier(x_graph), beta_prediction
 
 
 class DetectorAwareGravNetClassifier(GravNetClassifier):

@@ -432,6 +432,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
           multi_task_beta: bool = False,
+          classify_with_predicted_beta: bool = False,
           beta_loss_weight: float = 0.1,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
@@ -445,6 +446,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         raise ValueError(
             '--multi-task-beta predicts beta from TreeRec and cannot be combined '
             'with --use-mc-beta')
+    if classify_with_predicted_beta and not multi_task_beta:
+        raise ValueError(
+            '--classify-with-predicted-beta requires --multi-task-beta')
     if multi_task_beta and beta_weighted_loss:
         raise ValueError(
             '--multi-task-beta is intentionally kept separate from '
@@ -517,7 +521,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'beta multi-task: enabled '
             f'| target=(beta-{beta_target_mean:.6g})/{beta_target_std:.6g} '
             f'| loss weight={beta_loss_weight:g} '
-            f'| train targets={beta_target_events:,}')
+            f'| train targets={beta_target_events:,} '
+            f'| classifier beta input={classify_with_predicted_beta}')
     else:
         print('beta multi-task: disabled')
 
@@ -529,7 +534,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         exp_name = f'GravNetMultiTask_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetMultiTaskClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
-            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS,
+            classify_with_predicted_beta=classify_with_predicted_beta).to(DEVICE)
     elif model_name == 'gravnet_tof':
         exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetTOFClassifier(
@@ -607,6 +613,13 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint multi_task_beta={checkpoint_multi_task_beta}, '
                 f'requested multi_task_beta={multi_task_beta}')
+        checkpoint_classify_with_predicted_beta = bool(
+            checkpoint.get('classify_with_predicted_beta', False))
+        if checkpoint_classify_with_predicted_beta != classify_with_predicted_beta:
+            raise ValueError(
+                'checkpoint classify_with_predicted_beta='
+                f'{checkpoint_classify_with_predicted_beta}, requested '
+                f'{classify_with_predicted_beta}')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
@@ -816,6 +829,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
             'multi_task_beta': multi_task_beta,
+            'classify_with_predicted_beta': classify_with_predicted_beta,
             'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
             'beta_target_mean': beta_target_mean,
             'beta_target_std': beta_target_std,
@@ -884,6 +898,8 @@ if __name__ == '__main__':
                     help='append six precomputed TreeRec hit-level topology summaries')
     ap.add_argument('--multi-task-beta', action='store_true',
                     help='jointly train a beta-regression head using mc_beta as a target, not an input')
+    ap.add_argument('--classify-with-predicted-beta', action='store_true',
+                    help='append the model-predicted beta to the classification head; requires --multi-task-beta')
     ap.add_argument('--beta-loss-weight', type=float, default=0.1,
                     help='weight for the standardized beta regression SmoothL1 loss')
     ap.add_argument('--beta-weighted-loss', action='store_true',
@@ -918,6 +934,7 @@ if __name__ == '__main__':
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
           multi_task_beta=args.multi_task_beta,
+          classify_with_predicted_beta=args.classify_with_predicted_beta,
           beta_loss_weight=args.beta_loss_weight,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,

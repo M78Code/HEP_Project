@@ -187,6 +187,8 @@ def main():
     )
     parser.add_argument('--multi-task-beta', action='store_true',
                         help='evaluate a joint classification and beta-regression model')
+    parser.add_argument('--classify-with-predicted-beta', action='store_true',
+                        help='classification head consumes the model-predicted beta; requires --multi-task-beta')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument(
         '--graph-feature-normalizer', type=Path, default=None,
@@ -206,6 +208,9 @@ def main():
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
     if args.multi_task_beta and args.use_mc_beta:
         raise ValueError('--multi-task-beta cannot be combined with --use-mc-beta')
+    if args.classify_with_predicted_beta and not args.multi_task_beta:
+        raise ValueError(
+            '--classify-with-predicted-beta requires --multi-task-beta')
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -240,7 +245,9 @@ def main():
             fit_mc_beta_normalizer(train_files)
     if args.multi_task_beta:
         model = GravNetMultiTaskClassifier(
-            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim,
+            num_blocks=6,
+            classify_with_predicted_beta=args.classify_with_predicted_beta)
     elif args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
@@ -274,7 +281,8 @@ def main():
         print(
             'beta multi-task: enabled '
             f'| target=(beta-{beta_target_mean:.6g})/{beta_target_std:.6g} '
-            f'| train targets={beta_target_events:,}')
+            f'| train targets={beta_target_events:,} '
+            f'| classifier beta input={args.classify_with_predicted_beta}')
     else:
         print('beta multi-task: disabled')
     print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
@@ -314,6 +322,8 @@ def main():
         'use_tof_beta': bool(args.use_tof_beta),
         'use_hit_topology': bool(args.use_hit_topology),
         'multi_task_beta': bool(args.multi_task_beta),
+        'classify_with_predicted_beta': bool(
+            args.classify_with_predicted_beta),
         'graph_feat_dim': int(graph_feat_dim),
     }
     if args.multi_task_beta:
@@ -355,6 +365,11 @@ def main():
 
     print(f'accuracy: {metrics["accuracy"]:.6f}')
     print(f'AUC     : {metrics["auc"]:.6f}')
+    if args.multi_task_beta:
+        beta_metrics = metrics['beta_regression']
+        print(f'beta MAE: {beta_metrics["mae"]:.6f}')
+        print(f'beta RMSE: {beta_metrics["rmse"]:.6f}')
+        print(f'beta Pearson: {beta_metrics["pearson_correlation"]:.6f}')
     for row in metrics['rejection']:
         print(
             f'Rej@{row["target_efficiency"]:.2f}: '
