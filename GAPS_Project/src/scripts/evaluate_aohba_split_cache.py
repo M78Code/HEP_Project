@@ -16,6 +16,7 @@ from tqdm import tqdm
 from GAPS_Project.src.models.gravnet import (
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
+    GravNetMultiTaskClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
@@ -23,6 +24,7 @@ from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
     append_hit_topology,
     build_base_graph_feat,
+    fit_mc_beta_normalizer,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
     reconstruct_tof_beta,
@@ -96,8 +98,10 @@ def infer(
         model, loader, device, total_batches, model_name,
         tof_mode='normal', use_mc_beta=False, use_tof_beta=False,
         use_hit_topology=False,
+        multi_task_beta=False,
+        beta_target_mean=None, beta_target_std=None,
         graph_feature_mean=None, graph_feature_std=None):
-    labels, scores, betas = [], [], []
+    labels, scores, betas, predicted_betas = [], [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
         batch = batch.to(device)
@@ -121,7 +125,7 @@ def infer(
                 )
                 tof_paddle_energy = tof_paddle_energy[permutation]
 
-            logits = model(
+            model_output = model(
                 batch.x,
                 batch.edge_index,
                 batch.batch,
@@ -129,8 +133,14 @@ def infer(
                 tof_paddle_energy=tof_paddle_energy,
             )
         else:
-            logits = model(
+            model_output = model(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+        if multi_task_beta:
+            logits, beta_prediction = model_output
+            predicted_betas.append(
+                (beta_prediction * beta_target_std + beta_target_mean).cpu().numpy())
+        else:
+            logits = model_output
         probs = torch.softmax(logits, dim=1)[:, 1]
         labels.append(batch.y.view(-1).cpu().numpy())
         scores.append(probs.cpu().numpy())
@@ -140,6 +150,7 @@ def infer(
         np.concatenate(labels),
         np.concatenate(scores),
         np.concatenate(betas) if betas else None,
+        np.concatenate(predicted_betas) if predicted_betas else None,
     )
 
 
@@ -174,6 +185,8 @@ def main():
         '--use-hit-topology', action='store_true',
         help='append six precomputed TreeRec hit-level topology summaries',
     )
+    parser.add_argument('--multi-task-beta', action='store_true',
+                        help='evaluate a joint classification and beta-regression model')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument(
         '--graph-feature-normalizer', type=Path, default=None,
@@ -191,6 +204,8 @@ def main():
         )
     if args.use_mc_beta and args.use_tof_beta:
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
+    if args.multi_task_beta and args.use_mc_beta:
+        raise ValueError('--multi-task-beta cannot be combined with --use-mc-beta')
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -213,7 +228,20 @@ def main():
     if args.use_hit_topology:
         graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
 
-    if args.model == 'gravnet_tof':
+    beta_target_mean = None
+    beta_target_std = None
+    if args.multi_task_beta:
+        if args.model != 'gravnet':
+            raise ValueError('--multi-task-beta currently supports --model gravnet only')
+        train_files = sorted(args.cache_dir.glob('train_*.pt'))
+        if not train_files:
+            raise FileNotFoundError('beta multi-task evaluation requires train_*.pt in cache')
+        beta_target_mean, beta_target_std, beta_target_events = \
+            fit_mc_beta_normalizer(train_files)
+    if args.multi_task_beta:
+        model = GravNetMultiTaskClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_tof':
         model = GravNetTOFClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'gravnet_detector':
@@ -242,10 +270,17 @@ def main():
     print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
     print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
     print(f'hit topology: {"enabled" if args.use_hit_topology else "disabled"}')
+    if args.multi_task_beta:
+        print(
+            'beta multi-task: enabled '
+            f'| target=(beta-{beta_target_mean:.6g})/{beta_target_std:.6g} '
+            f'| train targets={beta_target_events:,}')
+    else:
+        print('beta multi-task: disabled')
     print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
 
-    labels, scores, betas = infer(
+    labels, scores, betas, predicted_betas = infer(
         model,
         loader,
         device,
@@ -255,6 +290,9 @@ def main():
         use_mc_beta=args.use_mc_beta,
         use_tof_beta=args.use_tof_beta,
         use_hit_topology=args.use_hit_topology,
+        multi_task_beta=args.multi_task_beta,
+        beta_target_mean=beta_target_mean,
+        beta_target_std=beta_target_std,
         graph_feature_mean=graph_feature_mean,
         graph_feature_std=graph_feature_std,
     )
@@ -275,14 +313,26 @@ def main():
         'use_mc_beta': bool(args.use_mc_beta),
         'use_tof_beta': bool(args.use_tof_beta),
         'use_hit_topology': bool(args.use_hit_topology),
+        'multi_task_beta': bool(args.multi_task_beta),
         'graph_feat_dim': int(graph_feat_dim),
     }
+    if args.multi_task_beta:
+        if betas is None or predicted_betas is None:
+            raise ValueError('beta multi-task evaluation requires mc_beta metadata')
+        beta_error = predicted_betas - betas
+        metrics['beta_regression'] = {
+            'mae': float(np.mean(np.abs(beta_error))),
+            'rmse': float(np.sqrt(np.mean(np.square(beta_error)))),
+            'pearson_correlation': float(np.corrcoef(betas, predicted_betas)[0, 1]),
+        }
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     np.save(args.output_dir / 'labels.npy', labels)
     np.save(args.output_dir / 'scores.npy', scores)
     if betas is not None:
         np.save(args.output_dir / 'betas.npy', betas)
+    if predicted_betas is not None:
+        np.save(args.output_dir / 'predicted_betas.npy', predicted_betas)
     with open(args.output_dir / 'metrics.json', 'w', encoding='utf-8') as f:
         json.dump(metrics, f, indent=2, ensure_ascii=False)
 

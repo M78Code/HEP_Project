@@ -112,6 +112,42 @@ class GravNetClassifier(nn.Module):
         return self.classifier(x_graph)
 
 
+class GravNetMultiTaskClassifier(GravNetClassifier):
+    """Shared GravNet encoder with particle classification and beta regression heads.
+
+    The regression head is trained against simulated beta, but beta is never
+    appended to ``graph_feat``.  At inference both outputs use TreeRec inputs
+    only.
+    """
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 dropout: float = 0.3, **kwargs):
+        super().__init__(
+            *args,
+            hidden_dim=hidden_dim,
+            graph_feat_dim=graph_feat_dim,
+            dropout=dropout,
+            **kwargs,
+        )
+        concat_dim = self.node_embedding_dim + graph_feat_dim
+        self.beta_regressor = nn.Sequential(
+            nn.Linear(concat_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, 1),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None):
+        x_cat = self.encode_nodes(x, batch)
+        x_graph = global_mean_pool(x_cat, batch)
+        if graph_feat is not None:
+            x_graph = torch.cat([x_graph, graph_feat], dim=1)
+        return self.classifier(x_graph), self.beta_regressor(x_graph).squeeze(1)
+
+
 class DetectorAwareGravNetClassifier(GravNetClassifier):
     """GravNet with separate TOF and Si(Li) mean/max readout.
 

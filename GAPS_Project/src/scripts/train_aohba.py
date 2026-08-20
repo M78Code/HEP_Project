@@ -74,12 +74,14 @@ from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import (
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
+    GravNetMultiTaskClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
     append_hit_topology,
     build_base_graph_feat,
+    fit_mc_beta_normalizer,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
     reconstruct_tof_beta,
@@ -429,6 +431,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
+          multi_task_beta: bool = False,
+          beta_loss_weight: float = 0.1,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
@@ -437,6 +441,16 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           seed: int = 42):
     if use_mc_beta and use_tof_beta:
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
+    if multi_task_beta and use_mc_beta:
+        raise ValueError(
+            '--multi-task-beta predicts beta from TreeRec and cannot be combined '
+            'with --use-mc-beta')
+    if multi_task_beta and beta_weighted_loss:
+        raise ValueError(
+            '--multi-task-beta is intentionally kept separate from '
+            '--beta-weighted-loss for the first comparison')
+    if beta_loss_weight <= 0.0:
+        raise ValueError('--beta-loss-weight must be positive')
 
     graph_feature_mean = None
     graph_feature_std = None
@@ -493,10 +507,30 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'| TOF beta input: {"enabled" if use_tof_beta else "disabled"} '
         f'| hit topology input: {"enabled" if use_hit_topology else "disabled"} '
         f'(graph_feat_dim={graph_feat_dim})')
+    beta_target_mean = None
+    beta_target_std = None
+    if multi_task_beta:
+        beta_target_mean, beta_target_std, beta_target_events = \
+            fit_mc_beta_normalizer(
+                train_ds.pt_files, beta_min=beta_min, beta_max=beta_max)
+        print(
+            'beta multi-task: enabled '
+            f'| target=(beta-{beta_target_mean:.6g})/{beta_target_std:.6g} '
+            f'| loss weight={beta_loss_weight:g} '
+            f'| train targets={beta_target_events:,}')
+    else:
+        print('beta multi-task: disabled')
 
     if dataset_tag is None:
         dataset_tag = split_cache_dir.name if split_cache_dir is not None else 'aohba'
-    if model_name == 'gravnet_tof':
+    if multi_task_beta:
+        if model_name != 'gravnet':
+            raise ValueError('--multi-task-beta currently supports --model gravnet only')
+        exp_name = f'GravNetMultiTask_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetMultiTaskClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_tof':
         exp_name = f'GravNetTOF_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetTOFClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
@@ -519,6 +553,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
 
     criterion = FocalLoss(gamma=FOCAL_GAMMA)
     criterion_none = FocalLoss(gamma=FOCAL_GAMMA, reduction='none')
+    beta_criterion = torch.nn.SmoothL1Loss() if multi_task_beta else None
     beta_bin_edges = None
     beta_weights = None
     if beta_weighted_loss:
@@ -567,6 +602,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint use_hit_topology={checkpoint_use_hit_topology}, '
                 f'requested use_hit_topology={use_hit_topology}')
+        checkpoint_multi_task_beta = bool(checkpoint.get('multi_task_beta', False))
+        if checkpoint_multi_task_beta != multi_task_beta:
+            raise ValueError(
+                f'checkpoint multi_task_beta={checkpoint_multi_task_beta}, '
+                f'requested multi_task_beta={multi_task_beta}')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
@@ -605,7 +645,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
 
         # ── Train ────────────────────────────────────
         model.train()
-        total_loss, total_correct, total_samples = 0.0, 0, 0
+        total_loss, total_class_loss, total_beta_loss = 0.0, 0.0, 0.0
+        total_correct, total_samples = 0, 0
         train_bar = tqdm(train_loader, desc=f'Epoch {epoch:3d}/{epochs} [train]',
                          total=train_batches, leave=False)
         for batch_idx, batch in enumerate(train_bar):
@@ -628,15 +669,19 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 if not hasattr(batch, 'tof_paddle_energy'):
                     raise ValueError(
                         'GravNetTOF requires tof_paddle_energy in graph cache')
-                logits = model(
+                model_output = model(
                     batch.x, batch.edge_index, batch.batch,
                     graph_feat=graph_feat,
                     tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
                 )
             else:
-                logits = model(
+                model_output = model(
                     batch.x, batch.edge_index, batch.batch,
                     graph_feat=graph_feat)
+            if multi_task_beta:
+                logits, beta_prediction = model_output
+            else:
+                logits = model_output
             targets = batch.y.view(-1)
             if beta_weighted_loss:
                 if not hasattr(batch, 'mc_beta'):
@@ -647,24 +692,41 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     batch.mc_beta.view(-1).float(),
                     beta_bin_edges,
                     beta_weights)
-                loss = (losses * weights).sum() / weights.sum().clamp_min(1.0)
+                class_loss = (
+                    (losses * weights).sum() / weights.sum().clamp_min(1.0))
+                beta_loss = None
+                loss = class_loss
             else:
-                loss = criterion(logits, targets)
+                class_loss = criterion(logits, targets)
+                if multi_task_beta:
+                    beta_target = (
+                        batch.mc_beta.view(-1).float() - beta_target_mean
+                    ) / beta_target_std
+                    beta_loss = beta_criterion(beta_prediction, beta_target)
+                    loss = class_loss + beta_loss_weight * beta_loss
+                else:
+                    beta_loss = None
+                    loss = class_loss
             loss.backward()
             optimizer.step()
 
             total_loss    += loss.item() * batch.num_graphs
+            total_class_loss += class_loss.item() * batch.num_graphs
+            if beta_loss is not None:
+                total_beta_loss += beta_loss.item() * batch.num_graphs
             preds          = logits.argmax(dim=1)
             total_correct += (preds == targets).sum().item()
             total_samples += batch.num_graphs
             train_bar.set_postfix(loss=f'{loss.item():.4f}')
 
         train_loss = total_loss / total_samples
+        train_class_loss = total_class_loss / total_samples
+        train_beta_loss = total_beta_loss / total_samples if multi_task_beta else None
         train_acc  = total_correct / total_samples
 
         # ── Validation ───────────────────────────────
         model.eval()
-        val_loss, val_correct, val_samples = 0.0, 0, 0
+        val_loss, val_beta_loss, val_correct, val_samples = 0.0, 0.0, 0, 0
         with torch.no_grad():
             for batch_idx, batch in enumerate(tqdm(
                     val_loader, desc=f'Epoch {epoch:3d}/{epochs} [val]  ',
@@ -682,16 +744,26 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     graph_feature_std=graph_feature_std,
                 )
                 if model_name == 'gravnet_tof':
-                    logits = model(
+                    model_output = model(
                         batch.x, batch.edge_index, batch.batch,
                         graph_feat=graph_feat,
                         tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
                     )
                 else:
-                    logits = model(
+                    model_output = model(
                         batch.x, batch.edge_index, batch.batch,
                         graph_feat=graph_feat)
-                loss   = criterion(logits, batch.y.view(-1))
+                if multi_task_beta:
+                    logits, beta_prediction = model_output
+                else:
+                    logits = model_output
+                loss = criterion(logits, batch.y.view(-1))
+                if multi_task_beta:
+                    beta_target = (
+                        batch.mc_beta.view(-1).float() - beta_target_mean
+                    ) / beta_target_std
+                    beta_loss = beta_criterion(beta_prediction, beta_target)
+                    val_beta_loss += beta_loss.item() * batch.num_graphs
                 val_loss    += loss.item() * batch.num_graphs
                 preds        = logits.argmax(dim=1)
                 val_correct += (preds == batch.y.view(-1)).sum().item()
@@ -702,13 +774,25 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         scheduler.step()
         elapsed = time.time() - epoch_start
 
+        train_loss_text = (
+            f'train_loss: {train_loss:.4f} '
+            f'(class={train_class_loss:.4f}, beta={train_beta_loss:.4f})'
+            if multi_task_beta else f'train_loss: {train_loss:.4f}')
+        val_loss_text = (
+            f'val_loss: {val_loss:.4f} '
+            f'val_beta_loss: {val_beta_loss / val_samples:.4f}'
+            if multi_task_beta else f'val_loss: {val_loss:.4f}')
         print(f'Epoch {epoch:3d}/{epochs} | '
-              f'train_loss: {train_loss:.4f}  train_acc: {train_acc:.4f} | '
-              f'val_loss: {val_loss:.4f}  val_acc: {val_acc:.4f} | '
+              f'{train_loss_text}  train_acc: {train_acc:.4f} | '
+              f'{val_loss_text}  val_acc: {val_acc:.4f} | '
               f'lr: {scheduler.get_last_lr()[0]:.2e} | {elapsed:.0f}s')
 
         writer.add_scalar('Loss/train', train_loss, epoch)
+        writer.add_scalar('Loss/train_class', train_class_loss, epoch)
         writer.add_scalar('Loss/val',   val_loss,   epoch)
+        if multi_task_beta:
+            writer.add_scalar('Loss/train_beta', train_beta_loss, epoch)
+            writer.add_scalar('Loss/val_beta', val_beta_loss / val_samples, epoch)
         writer.add_scalar('Acc/train',  train_acc,  epoch)
         writer.add_scalar('Acc/val',    val_acc,    epoch)
 
@@ -731,6 +815,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
+            'multi_task_beta': multi_task_beta,
+            'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
+            'beta_target_mean': beta_target_mean,
+            'beta_target_std': beta_target_std,
             'graph_feature_normalizer': (
                 str(graph_feature_normalizer)
                 if graph_feature_normalizer is not None else None),
@@ -794,6 +882,10 @@ if __name__ == '__main__':
                     help='append beta reconstructed from TreeRec TOF hits and a validity mask')
     ap.add_argument('--use-hit-topology', action='store_true',
                     help='append six precomputed TreeRec hit-level topology summaries')
+    ap.add_argument('--multi-task-beta', action='store_true',
+                    help='jointly train a beta-regression head using mc_beta as a target, not an input')
+    ap.add_argument('--beta-loss-weight', type=float, default=0.1,
+                    help='weight for the standardized beta regression SmoothL1 loss')
     ap.add_argument('--beta-weighted-loss', action='store_true',
                     help='train loss に beta-bin ごとの重みを掛ける')
     ap.add_argument('--beta-bins', default=DEFAULT_BETA_BINS,
@@ -825,6 +917,8 @@ if __name__ == '__main__':
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
+          multi_task_beta=args.multi_task_beta,
+          beta_loss_weight=args.beta_loss_weight,
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
           beta_bin_weights_arg=args.beta_bin_weights,

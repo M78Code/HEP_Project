@@ -81,6 +81,34 @@ def append_hit_topology(graph_feat: torch.Tensor, batch) -> torch.Tensor:
     return torch.cat([graph_feat, topology], dim=1)
 
 
+def fit_mc_beta_normalizer(
+        pt_files, beta_min: float | None = None,
+        beta_max: float | None = None) -> tuple[float, float, int]:
+    """Return train-only mean/std for the beta regression target."""
+    total = 0.0
+    total_squared = 0.0
+    n_events = 0
+    for path in pt_files:
+        graphs = torch.load(path, map_location='cpu', weights_only=False)
+        for graph in graphs:
+            if not hasattr(graph, 'mc_beta'):
+                raise ValueError(
+                    f'beta multi-task learning requires mc_beta: {path}')
+            beta = float(graph.mc_beta.view(-1)[0])
+            if beta_min is not None and beta < beta_min:
+                continue
+            if beta_max is not None and beta >= beta_max:
+                continue
+            total += beta
+            total_squared += beta * beta
+            n_events += 1
+    if n_events == 0:
+        raise ValueError('no beta targets remain after beta filtering')
+    mean = total / n_events
+    variance = max(total_squared / n_events - mean * mean, 0.0)
+    return mean, max(variance ** 0.5, 1e-6), n_events
+
+
 def reconstruct_tof_beta(tof_feat: torch.Tensor) -> torch.Tensor:
     """Return ``[beta_tof, valid]`` from the 11-D TreeRec TOF features.
 
