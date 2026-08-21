@@ -144,6 +144,52 @@ def feature_comparison(
     return sorted(rows, key=lambda row: row['absolute_standardized_mean_difference'], reverse=True)
 
 
+def tof_dt_matched_signal_mask(
+        labels: np.ndarray, feature_matrix: np.ndarray, hard_mask: np.ndarray,
+        tof_dt_index: int, bins: int, rng: np.random.Generator) -> tuple[np.ndarray, dict]:
+    """Select antiD events with the hard antiP TOF-time distribution.
+
+    The raw TreeRec TOF flight time is the dominant hard-background difference.
+    Matching it before comparing antiP with antiD prevents that one variable
+    from hiding secondary observables.  Events are sampled without replacement
+    inside quantile bins whenever sufficient antiD events are available.
+    """
+    hard_dt = feature_matrix[hard_mask, tof_dt_index]
+    signal_indices = np.flatnonzero(labels == 1)
+    signal_dt = feature_matrix[signal_indices, tof_dt_index]
+    edges = np.quantile(hard_dt, np.linspace(0.0, 1.0, bins + 1))
+    edges = np.unique(edges)
+    if len(edges) < 2:
+        raise RuntimeError('hard antiP TOF-time distribution has no usable spread')
+
+    hard_bin = np.digitize(hard_dt, edges[1:-1], right=False)
+    signal_bin = np.digitize(signal_dt, edges[1:-1], right=False)
+    selected = []
+    bin_rows = []
+    for index in range(len(edges) - 1):
+        n_hard = int(np.count_nonzero(hard_bin == index))
+        candidates = signal_indices[signal_bin == index]
+        n_selected = min(n_hard, len(candidates))
+        if n_selected:
+            selected.extend(rng.choice(candidates, size=n_selected, replace=False).tolist())
+        bin_rows.append({
+            'bin': index,
+            'dt_min_ns': float(edges[index] * 50.0),
+            'dt_max_ns': float(edges[index + 1] * 50.0),
+            'hard_antiP': n_hard,
+            'available_antiD': int(len(candidates)),
+            'selected_antiD': int(n_selected),
+        })
+
+    matched = np.zeros(len(labels), dtype=bool)
+    matched[np.asarray(selected, dtype=np.int64)] = True
+    return matched, {
+        'requested_hard_antiP': int(hard_mask.sum()),
+        'matched_antiD': int(matched.sum()),
+        'bins': bin_rows,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache-dir', type=Path, required=True)
@@ -154,12 +200,16 @@ def main() -> None:
     parser.add_argument('--signal-efficiencies', type=float, nargs='+',
                         default=[0.95, 0.98])
     parser.add_argument('--top-features', type=int, default=15)
+    parser.add_argument('--tof-match-bins', type=int, default=20)
+    parser.add_argument('--seed', type=int, default=20260821)
     args = parser.parse_args()
 
     if not args.signal_efficiencies or any(not 0.0 < value < 1.0 for value in args.signal_efficiencies):
         raise ValueError('--signal-efficiencies must be in (0, 1)')
     if args.top_features < 1:
         raise ValueError('--top-features must be positive')
+    if args.tof_match_bins < 2:
+        raise ValueError('--tof-match-bins must be at least 2')
 
     labels_path = args.evaluation_dir / 'labels.npy'
     scores_path = args.evaluation_dir / 'scores.npy'
@@ -197,6 +247,8 @@ def main() -> None:
             'mc_beta below is diagnostic only and is not a candidate input.'),
         'thresholds': [],
     }
+    rng = np.random.default_rng(args.seed)
+    tof_dt_index = BASE_FEATURE_NAMES.index('tof_dt_scaled')
 
     for target in args.signal_efficiencies:
         threshold = rejection_threshold(labels, scores, target)
@@ -208,6 +260,11 @@ def main() -> None:
 
         comparisons = feature_comparison(
             feature_matrix, feature_names, hard_mask, rejected_mask)
+        matched_signal_mask, matching = tof_dt_matched_signal_mask(
+            labels, feature_matrix, hard_mask, tof_dt_index,
+            args.tof_match_bins, rng)
+        signal_comparisons = feature_comparison(
+            feature_matrix, feature_names, hard_mask, matched_signal_mask)
         row = {
             **threshold,
             'hard_antiP_count': int(hard_mask.sum()),
@@ -219,6 +276,10 @@ def main() -> None:
                 'rejected': summarize(mc_beta[rejected_mask], 'rejected').__dict__,
             },
             'feature_comparison': comparisons,
+            'tof_dt_matched_antiD_comparison': {
+                **matching,
+                'feature_comparison': signal_comparisons,
+            },
         }
         report['thresholds'].append(row)
 
@@ -239,6 +300,15 @@ def main() -> None:
             'MC beta diagnostic only: '
             f"median={row['mc_beta_diagnostic']['hard']['median']:.5f} vs "
             f"{row['mc_beta_diagnostic']['rejected']['median']:.5f}")
+        print(
+            'Top differences after matching hard antiP and antiD in TOF dt: '
+            f"matched antiD={matched_signal_mask.sum():,}/{hard_mask.sum():,}")
+        for feature in signal_comparisons[:args.top_features]:
+            print(
+                f"  {feature['feature']:34s} "
+                f"effect={feature['standardized_mean_difference']:+.3f} "
+                f"median={feature['hard_median']:.5g} vs "
+                f"{feature['rejected_median']:.5g}")
 
         suffix = f"eff_{target:.2f}".replace('.', 'p')
         with (args.output_dir / f'feature_comparison_{suffix}.csv').open(
@@ -246,6 +316,11 @@ def main() -> None:
             writer = csv.DictWriter(handle, fieldnames=comparisons[0].keys())
             writer.writeheader()
             writer.writerows(comparisons)
+        with (args.output_dir / f'hard_antip_vs_tofmatched_antid_{suffix}.csv').open(
+                'w', newline='', encoding='utf-8') as handle:
+            writer = csv.DictWriter(handle, fieldnames=signal_comparisons[0].keys())
+            writer.writeheader()
+            writer.writerows(signal_comparisons)
 
     with (args.output_dir / 'residual_report.json').open('w', encoding='utf-8') as handle:
         json.dump(report, handle, indent=2, ensure_ascii=False)
