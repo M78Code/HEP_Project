@@ -49,6 +49,21 @@ def print_top_values(name: str, values: np.ndarray, limit: int = 12) -> None:
     print(f'  {name} top values: {top or "none"}')
 
 
+def association_summary(
+        left: np.ndarray, right: np.ndarray, left_name: str,
+        right_name: str) -> None:
+    """Report whether two candidate identifiers encode the same categories."""
+    mapping: dict[int, set[int]] = {}
+    for left_value, right_value in zip(left.tolist(), right.tolist()):
+        mapping.setdefault(int(left_value), set()).add(int(right_value))
+    widths = np.asarray([len(values) for values in mapping.values()])
+    deterministic = int(np.count_nonzero(widths == 1))
+    print(
+        f'{left_name} -> {right_name}: {deterministic:,}/{len(mapping):,} '
+        f'values map to one {right_name}; '
+        f'max alternatives={widths.max(initial=0)}')
+
+
 def audit_file(path: Path, max_events: int) -> None:
     with uproot.open(path) as root_file:
         tree = root_file['TreeRec']
@@ -85,8 +100,11 @@ def audit_file(path: Path, max_events: int) -> None:
         print_top_values(name, values[name])
 
     index_is_local_permutation = 0
+    index_is_unique_within_event = 0
     for event_index, event_ids in enumerate(arrays[BRANCHES['index']]):
         event_ids = np.asarray(event_ids, dtype=np.int64)
+        if len(event_ids) and len(np.unique(event_ids)) == len(event_ids):
+            index_is_unique_within_event += 1
         if len(event_ids) and np.array_equal(
                 np.sort(event_ids), np.arange(len(event_ids), dtype=np.int64)):
             index_is_local_permutation += 1
@@ -94,6 +112,9 @@ def audit_file(path: Path, max_events: int) -> None:
     print(
         'index is a 0..N-1 permutation: '
         f'{index_is_local_permutation:,}/{nonempty_events:,} nonempty events')
+    print(
+        'index has no duplicates within event: '
+        f'{index_is_unique_within_event:,}/{nonempty_events:,} nonempty events')
 
     volume_id = values['volume_id'].astype(np.int64, copy=False)
     coarse = volume_id // 1_000_000
@@ -106,6 +127,10 @@ def audit_file(path: Path, max_events: int) -> None:
             ('subchannel (currently omitted)', subchannel)):
         print(f'  {name}: {numeric_summary(component)}')
         print_top_values(name, component)
+
+    association_summary(values['index'], volume_id, 'index', 'volume_id')
+    association_summary(values['index'], coarse, 'index', 'coarse')
+    association_summary(values['index'], segment, 'index', 'segment')
 
 
 def main() -> None:
