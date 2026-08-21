@@ -166,10 +166,10 @@ class GravNetMultiTaskClassifier(GravNetClassifier):
 class DetectorAwareGravNetClassifier(GravNetClassifier):
     """GravNet with separate TOF and Si(Li) mean/max readout.
 
-    The cached TreeRec node feature at index 6 is the per-event normalized
-    detector type. For events containing both detector types, TOF is negative
-    and Si(Li) is positive. The cache audit verifies this assumption before
-    this model is used for training.
+    The cached TreeRec node feature at index 6 is the detector type.  Global
+    normalization caches retain the raw encoding (TOF=0, Si(Li)=1), while
+    legacy per-event z-score caches encode mixed-detector events as negative
+    TOF and positive Si(Li).  Both representations are supported here.
     """
 
     def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
@@ -206,19 +206,28 @@ class DetectorAwareGravNetClassifier(GravNetClassifier):
         maximum = global_max_pool(x[mask], batch[mask], size=num_graphs)
         return mean, maximum
 
+    @staticmethod
+    def _detector_masks(detector_type):
+        """Return TOF/Si(Li) masks for raw or legacy normalized encodings."""
+        raw_encoding = bool(torch.all(
+            (detector_type == 0) | (detector_type == 1)))
+        if raw_encoding:
+            return detector_type == 0, detector_type == 1, False
+        return detector_type < 0, detector_type > 0, True
+
     def forward(self, x, edge_index, batch, graph_feat=None):
         node_embedding = self.readout_projection(self.encode_nodes(x, batch))
         num_graphs = int(batch[-1].item()) + 1 if batch.numel() else 0
 
         detector_type = x[:, 6]
-        tof_mask = detector_type < 0
-        sili_mask = detector_type > 0
+        tof_mask, sili_mask, needs_legacy_zero_routing = \
+            self._detector_masks(detector_type)
 
         # Per-event standardization makes detector_type exactly zero when an
         # event contains only one detector type. Use the already cached layer
         # profiles to route those nodes instead of dropping their embedding.
         zero_mask = detector_type == 0
-        if bool(zero_mask.any()):
+        if needs_legacy_zero_routing and bool(zero_mask.any()):
             if graph_feat is None:
                 raise ValueError(
                     'DetectorAwareGravNetClassifier requires graph_feat')
