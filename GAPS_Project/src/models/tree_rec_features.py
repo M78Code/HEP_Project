@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import torch
@@ -107,6 +108,34 @@ def fit_mc_beta_normalizer(
     mean = total / n_events
     variance = max(total_squared / n_events - mean * mean, 0.0)
     return mean, max(variance ** 0.5, 1e-6), n_events
+
+
+def fit_short_tof_antip_profile(pt_files) -> tuple[float, float, int]:
+    """Fit a train-only short-TOF antiP weighting profile.
+
+    The profile is deliberately based only on reconstructed TreeRec TOF flight
+    time and the training particle label.  It never uses ``mc_beta``.  The
+    lower quartile is the centre of the extra background weight; the
+    interquartile range supplies a data-scale-aware smoothness parameter.
+    """
+    flight_times = []
+    for path in pt_files:
+        graphs = torch.load(path, map_location='cpu', weights_only=False)
+        for graph in graphs:
+            if int(graph.y.view(-1)[0]) != 0 or not hasattr(graph, 'tof_feat'):
+                continue
+            delta_t_ns = float(graph.tof_feat.view(-1)[4]) * TOF_TIME_SCALE_NS
+            if math.isfinite(delta_t_ns) and delta_t_ns > 0.0:
+                flight_times.append(delta_t_ns)
+    if not flight_times:
+        raise ValueError('no valid antiP TreeRec TOF flight times in training cache')
+    values = torch.tensor(flight_times, dtype=torch.float64)
+    q25, _, q75 = torch.quantile(
+        values, torch.tensor([0.25, 0.50, 0.75], dtype=torch.float64))
+    # A quarter-IQR makes the additional weight concentrate below q25 while
+    # keeping the weighting continuous rather than imposing a hard cut.
+    scale = max(float((q75 - q25) * 0.25), 1e-3)
+    return float(q25), scale, int(values.numel())
 
 
 def reconstruct_tof_beta(tof_feat: torch.Tensor) -> torch.Tensor:

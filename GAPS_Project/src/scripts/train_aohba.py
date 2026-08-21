@@ -82,6 +82,7 @@ from GAPS_Project.src.models.tree_rec_features import (
     append_hit_topology,
     build_base_graph_feat,
     fit_mc_beta_normalizer,
+    fit_short_tof_antip_profile,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
     reconstruct_tof_beta,
@@ -132,6 +133,19 @@ def beta_bin_weights(
             mask = (beta >= lo) & (beta < hi)
         weights[mask] = bin_weights[i]
     return weights
+
+
+def short_tof_antip_weights(
+        batch, targets: torch.Tensor, weight: float,
+        reference_ns: float, scale_ns: float) -> torch.Tensor:
+    """Upweight short-flight-time antiP examples using TreeRec observables."""
+    if not hasattr(batch, 'tof_feat'):
+        raise ValueError('--short-tof-antip-weight requires tof_feat in graph cache')
+    delta_t_ns = batch.tof_feat.view(-1, 11)[:, 4].float() * 50.0
+    valid = torch.isfinite(delta_t_ns) & (delta_t_ns > 0.0)
+    hardness = torch.sigmoid((reference_ns - delta_t_ns) / scale_ns)
+    extra = 1.0 + (weight - 1.0) * hardness
+    return torch.where((targets == 0) & valid, extra, torch.ones_like(extra))
 
 
 def build_graph_feat(
@@ -437,6 +451,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           beta_weighted_loss: bool = False,
           beta_bins: str = DEFAULT_BETA_BINS,
           beta_bin_weights_arg: str = DEFAULT_BETA_BIN_WEIGHTS,
+          short_tof_antip_weight: float = 1.0,
           beta_min: float = None, beta_max: float = None,
           graph_feature_normalizer: Path = None,
           seed: int = 42):
@@ -455,6 +470,16 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             '--beta-weighted-loss for the first comparison')
     if beta_loss_weight <= 0.0:
         raise ValueError('--beta-loss-weight must be positive')
+    if short_tof_antip_weight < 1.0:
+        raise ValueError('--short-tof-antip-weight must be at least 1.0')
+    if beta_weighted_loss and short_tof_antip_weight > 1.0:
+        raise ValueError(
+            '--beta-weighted-loss and --short-tof-antip-weight cannot be '
+            'combined in the first controlled comparison')
+    if multi_task_beta and short_tof_antip_weight > 1.0:
+        raise ValueError(
+            '--multi-task-beta and --short-tof-antip-weight cannot be '
+            'combined in the first controlled comparison')
 
     graph_feature_mean = None
     graph_feature_std = None
@@ -562,6 +587,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     beta_criterion = torch.nn.SmoothL1Loss() if multi_task_beta else None
     beta_bin_edges = None
     beta_weights = None
+    short_tof_reference_ns = None
+    short_tof_scale_ns = None
     if beta_weighted_loss:
         beta_bin_edges_list = parse_float_list(beta_bins)
         beta_weights_list = parse_float_list(beta_bin_weights_arg)
@@ -578,6 +605,18 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         print(f'  bin weights : {beta_weights_list}')
     else:
         print('beta weighted loss: disabled')
+    if short_tof_antip_weight > 1.0:
+        short_tof_reference_ns, short_tof_scale_ns, short_tof_events = \
+            fit_short_tof_antip_profile(train_ds.pt_files)
+        print('short-TOF antiP hard-negative loss: enabled')
+        print(
+            f'  max weight  : {short_tof_antip_weight:g} '
+            f'| train antiP with valid TOF={short_tof_events:,}')
+        print(
+            f'  q25 dt      : {short_tof_reference_ns:.6g} ns '
+            f'| sigmoid scale={short_tof_scale_ns:.6g} ns')
+    else:
+        print('short-TOF antiP hard-negative loss: disabled')
     optimizer = Adam(model.parameters(), lr=LR)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
@@ -709,6 +748,15 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     (losses * weights).sum() / weights.sum().clamp_min(1.0))
                 beta_loss = None
                 loss = class_loss
+            elif short_tof_antip_weight > 1.0:
+                losses = criterion_none(logits, targets)
+                weights = short_tof_antip_weights(
+                    batch, targets, short_tof_antip_weight,
+                    short_tof_reference_ns, short_tof_scale_ns)
+                class_loss = (
+                    (losses * weights).sum() / weights.sum().clamp_min(1.0))
+                beta_loss = None
+                loss = class_loss
             else:
                 class_loss = criterion(logits, targets)
                 if multi_task_beta:
@@ -833,6 +881,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
             'beta_target_mean': beta_target_mean,
             'beta_target_std': beta_target_std,
+            'short_tof_antip_weight': short_tof_antip_weight,
+            'short_tof_reference_ns': short_tof_reference_ns,
+            'short_tof_scale_ns': short_tof_scale_ns,
             'graph_feature_normalizer': (
                 str(graph_feature_normalizer)
                 if graph_feature_normalizer is not None else None),
@@ -908,6 +959,11 @@ if __name__ == '__main__':
                     help='comma-separated beta bin edges')
     ap.add_argument('--beta-bin-weights', default=DEFAULT_BETA_BIN_WEIGHTS,
                     help='comma-separated train loss weights for beta bins')
+    ap.add_argument(
+        '--short-tof-antip-weight', type=float, default=1.0,
+        help=(
+            'maximum smooth loss multiplier for short-flight-time antiP; '
+            '1.0 disables the train-only TreeRec hard-negative weighting'))
     ap.add_argument('--beta-min', type=float, default=None,
                     help='keep graphs with mc_beta >= beta_min')
     ap.add_argument('--beta-max', type=float, default=None,
@@ -939,6 +995,7 @@ if __name__ == '__main__':
           beta_weighted_loss=args.beta_weighted_loss,
           beta_bins=args.beta_bins,
           beta_bin_weights_arg=args.beta_bin_weights,
+          short_tof_antip_weight=args.short_tof_antip_weight,
           beta_min=args.beta_min,
           beta_max=args.beta_max,
           graph_feature_normalizer=args.graph_feature_normalizer,
