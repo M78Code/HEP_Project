@@ -72,6 +72,7 @@ from tqdm import tqdm
 import GAPS_Project
 from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import (
+    GravNetAttentionClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
     GravNetMultiTaskClassifier,
@@ -571,6 +572,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         model = DetectorAwareGravNetClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
             graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_attention':
+        exp_name = f'GravNetAttention_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetAttentionClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     else:
         exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetClassifier(
@@ -921,7 +927,7 @@ if __name__ == '__main__':
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
-    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector'],
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument(

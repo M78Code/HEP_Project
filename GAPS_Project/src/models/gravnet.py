@@ -8,7 +8,13 @@ GNN 更适合不规则探测器几何的原因。
 
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GravNetConv, global_max_pool, global_mean_pool
+from torch_geometric.nn import (
+    GravNetConv,
+    global_add_pool,
+    global_max_pool,
+    global_mean_pool,
+)
+from torch_geometric.utils import softmax
 
 
 class GravNetClassifier(nn.Module):
@@ -161,6 +167,53 @@ class GravNetMultiTaskClassifier(GravNetClassifier):
         if self.classify_with_predicted_beta:
             x_graph = torch.cat([x_graph, beta_prediction.unsqueeze(1)], dim=1)
         return self.classifier(x_graph), beta_prediction
+
+
+class GravNetAttentionClassifier(GravNetClassifier):
+    """GravNet with baseline mean pooling plus learned hit attention pooling.
+
+    The mean branch preserves the original event-level summary.  The attention
+    branch can give more weight to a small subset of informative TreeRec hits,
+    for example localized energy-deposition patterns, without hand-picking
+    features or using TreeMc information.
+    """
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 dropout: float = 0.3, num_classes: int = 2, **kwargs):
+        super().__init__(
+            *args,
+            hidden_dim=hidden_dim,
+            graph_feat_dim=graph_feat_dim,
+            dropout=dropout,
+            num_classes=num_classes,
+            **kwargs,
+        )
+        self.attention_gate = nn.Sequential(
+            nn.Linear(self.node_embedding_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+        )
+        concat_dim = self.node_embedding_dim * 2 + graph_feat_dim
+        self.classifier = nn.Sequential(
+            nn.Linear(concat_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, num_classes),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None):
+        node_embedding = self.encode_nodes(x, batch)
+        mean_embedding = global_mean_pool(node_embedding, batch)
+        attention = softmax(self.attention_gate(node_embedding).view(-1), batch)
+        attention_embedding = global_add_pool(
+            node_embedding * attention.unsqueeze(1), batch)
+        x_graph = torch.cat([mean_embedding, attention_embedding], dim=1)
+        if graph_feat is not None:
+            x_graph = torch.cat([x_graph, graph_feat], dim=1)
+        return self.classifier(x_graph)
 
 
 class DetectorAwareGravNetClassifier(GravNetClassifier):

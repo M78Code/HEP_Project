@@ -14,6 +14,7 @@ from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import (
+    GravNetAttentionClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
     GravNetMultiTaskClassifier,
@@ -163,7 +164,7 @@ def main():
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
     parser.add_argument(
         '--model',
-        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'dgcnn'],
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -253,6 +254,9 @@ def main():
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'gravnet_detector':
         model = DetectorAwareGravNetClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_attention':
+        model = GravNetAttentionClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'dgcnn':
         model = DGCNNClassifier(
