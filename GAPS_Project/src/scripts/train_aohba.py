@@ -80,7 +80,9 @@ from GAPS_Project.src.models.gravnet import (
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
+    TRACK_STAR_FEATURE_DIM,
     append_hit_topology,
+    append_track_star,
     build_base_graph_feat,
     fit_mc_beta_normalizer,
     fit_short_tof_antip_profile,
@@ -153,6 +155,7 @@ def build_graph_feat(
         batch, use_mc_beta: bool = False,
         use_tof_beta: bool = False,
         use_hit_topology: bool = False,
+        use_track_star: bool = False,
         graph_feature_mean: torch.Tensor | None = None,
         graph_feature_std: torch.Tensor | None = None) -> torch.Tensor:
     """Build event-level graph features with one optional beta source."""
@@ -178,6 +181,8 @@ def build_graph_feat(
         ], dim=1)
     if use_hit_topology:
         graph_feat = append_hit_topology(graph_feat, batch)
+    if use_track_star:
+        graph_feat = append_track_star(graph_feat, batch)
     return graph_feat
 
 
@@ -446,6 +451,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
+          use_track_star: bool = False,
           multi_task_beta: bool = False,
           classify_with_predicted_beta: bool = False,
           beta_loss_weight: float = 0.1,
@@ -532,10 +538,13 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     graph_feat_dim = 45 + (2 if use_tof_beta else (1 if use_mc_beta else 0))
     if use_hit_topology:
         graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
+    if use_track_star:
+        graph_feat_dim += TRACK_STAR_FEATURE_DIM
     print(
         f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
         f'| TOF beta input: {"enabled" if use_tof_beta else "disabled"} '
         f'| hit topology input: {"enabled" if use_hit_topology else "disabled"} '
+        f'| track/star input: {"enabled" if use_track_star else "disabled"} '
         f'(graph_feat_dim={graph_feat_dim})')
     beta_target_mean = None
     beta_target_std = None
@@ -653,6 +662,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint use_hit_topology={checkpoint_use_hit_topology}, '
                 f'requested use_hit_topology={use_hit_topology}')
+        checkpoint_use_track_star = bool(checkpoint.get('use_track_star', False))
+        if checkpoint_use_track_star != use_track_star:
+            raise ValueError(
+                f'checkpoint use_track_star={checkpoint_use_track_star}, '
+                f'requested use_track_star={use_track_star}')
         checkpoint_multi_task_beta = bool(checkpoint.get('multi_task_beta', False))
         if checkpoint_multi_task_beta != multi_task_beta:
             raise ValueError(
@@ -720,6 +734,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 use_mc_beta=use_mc_beta,
                 use_tof_beta=use_tof_beta,
                 use_hit_topology=use_hit_topology,
+                use_track_star=use_track_star,
                 graph_feature_mean=graph_feature_mean,
                 graph_feature_std=graph_feature_std,
             )
@@ -807,6 +822,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     use_mc_beta=use_mc_beta,
                     use_tof_beta=use_tof_beta,
                     use_hit_topology=use_hit_topology,
+                    use_track_star=use_track_star,
                     graph_feature_mean=graph_feature_mean,
                     graph_feature_std=graph_feature_std,
                 )
@@ -882,6 +898,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
+            'use_track_star': use_track_star,
             'multi_task_beta': multi_task_beta,
             'classify_with_predicted_beta': classify_with_predicted_beta,
             'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
@@ -953,6 +970,8 @@ if __name__ == '__main__':
                     help='append beta reconstructed from TreeRec TOF hits and a validity mask')
     ap.add_argument('--use-hit-topology', action='store_true',
                     help='append six precomputed TreeRec hit-level topology summaries')
+    ap.add_argument('--use-track-star', action='store_true',
+                    help='append six precomputed TreeRec track/star geometry candidates')
     ap.add_argument('--multi-task-beta', action='store_true',
                     help='jointly train a beta-regression head using mc_beta as a target, not an input')
     ap.add_argument('--classify-with-predicted-beta', action='store_true',
@@ -995,6 +1014,7 @@ if __name__ == '__main__':
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
+          use_track_star=args.use_track_star,
           multi_task_beta=args.multi_task_beta,
           classify_with_predicted_beta=args.classify_with_predicted_beta,
           beta_loss_weight=args.beta_loss_weight,

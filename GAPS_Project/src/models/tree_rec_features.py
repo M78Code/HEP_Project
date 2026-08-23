@@ -20,6 +20,7 @@ TOF_POSITION_SCALE_MM = 1000.0
 BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
 HIT_TOPOLOGY_FEATURE_DIM = 6
+TRACK_STAR_FEATURE_DIM = 6
 
 
 def build_base_graph_feat(batch) -> torch.Tensor:
@@ -80,6 +81,18 @@ def append_hit_topology(graph_feat: torch.Tensor, batch) -> torch.Tensor:
     if not torch.isfinite(topology).all():
         raise ValueError('hit_topology_z contains non-finite values')
     return torch.cat([graph_feat, topology], dim=1)
+
+
+def append_track_star(graph_feat: torch.Tensor, batch) -> torch.Tensor:
+    """Append six train-normalized TreeRec track/star geometry candidates."""
+    if not hasattr(batch, 'track_star_z'):
+        raise ValueError(
+            '--use-track-star requires a cache created by '
+            'attach_treerec_track_star_features.py')
+    features = batch.track_star_z.view(-1, TRACK_STAR_FEATURE_DIM).float()
+    if not torch.isfinite(features).all():
+        raise ValueError('track_star_z contains non-finite values')
+    return torch.cat([graph_feat, features], dim=1)
 
 
 def fit_mc_beta_normalizer(

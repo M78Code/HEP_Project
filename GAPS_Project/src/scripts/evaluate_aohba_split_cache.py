@@ -23,7 +23,9 @@ from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
+    TRACK_STAR_FEATURE_DIM,
     append_hit_topology,
+    append_track_star,
     build_base_graph_feat,
     fit_mc_beta_normalizer,
     load_graph_feature_normalizer,
@@ -68,6 +70,7 @@ def rejection_at_efficiency(labels, scores, target):
 def build_graph_feat(
         batch, use_mc_beta=False, use_tof_beta=False,
         use_hit_topology=False,
+        use_track_star=False,
         graph_feature_mean=None, graph_feature_std=None):
     if use_mc_beta and use_tof_beta:
         raise ValueError('MC beta and TOF-reconstructed beta are mutually exclusive')
@@ -91,6 +94,8 @@ def build_graph_feat(
         ], dim=1)
     if use_hit_topology:
         graph_feat = append_hit_topology(graph_feat, batch)
+    if use_track_star:
+        graph_feat = append_track_star(graph_feat, batch)
     return graph_feat
 
 
@@ -99,6 +104,7 @@ def infer(
         model, loader, device, total_batches, model_name,
         tof_mode='normal', use_mc_beta=False, use_tof_beta=False,
         use_hit_topology=False,
+        use_track_star=False,
         multi_task_beta=False,
         beta_target_mean=None, beta_target_std=None,
         graph_feature_mean=None, graph_feature_std=None):
@@ -111,6 +117,7 @@ def infer(
             use_mc_beta=use_mc_beta,
             use_tof_beta=use_tof_beta,
             use_hit_topology=use_hit_topology,
+            use_track_star=use_track_star,
             graph_feature_mean=graph_feature_mean,
             graph_feature_std=graph_feature_std,
         )
@@ -186,6 +193,10 @@ def main():
         '--use-hit-topology', action='store_true',
         help='append six precomputed TreeRec hit-level topology summaries',
     )
+    parser.add_argument(
+        '--use-track-star', action='store_true',
+        help='append six precomputed TreeRec track/star geometry candidates',
+    )
     parser.add_argument('--multi-task-beta', action='store_true',
                         help='evaluate a joint classification and beta-regression model')
     parser.add_argument('--classify-with-predicted-beta', action='store_true',
@@ -233,6 +244,8 @@ def main():
     graph_feat_dim = 45 + (2 if args.use_tof_beta else (1 if args.use_mc_beta else 0))
     if args.use_hit_topology:
         graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
+    if args.use_track_star:
+        graph_feat_dim += TRACK_STAR_FEATURE_DIM
 
     beta_target_mean = None
     beta_target_std = None
@@ -281,6 +294,7 @@ def main():
     print(f'MC beta    : {"enabled" if args.use_mc_beta else "disabled"}')
     print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
     print(f'hit topology: {"enabled" if args.use_hit_topology else "disabled"}')
+    print(f'track/star : {"enabled" if args.use_track_star else "disabled"}')
     if args.multi_task_beta:
         print(
             'beta multi-task: enabled '
@@ -302,6 +316,7 @@ def main():
         use_mc_beta=args.use_mc_beta,
         use_tof_beta=args.use_tof_beta,
         use_hit_topology=args.use_hit_topology,
+        use_track_star=args.use_track_star,
         multi_task_beta=args.multi_task_beta,
         beta_target_mean=beta_target_mean,
         beta_target_std=beta_target_std,
@@ -325,6 +340,7 @@ def main():
         'use_mc_beta': bool(args.use_mc_beta),
         'use_tof_beta': bool(args.use_tof_beta),
         'use_hit_topology': bool(args.use_hit_topology),
+        'use_track_star': bool(args.use_track_star),
         'multi_task_beta': bool(args.multi_task_beta),
         'classify_with_predicted_beta': bool(
             args.classify_with_predicted_beta),

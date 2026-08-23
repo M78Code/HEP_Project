@@ -29,7 +29,23 @@ FEATURE_NAMES = (
     'terminal_cluster_energy_fraction_100mm',
     'tof_sili_axis_alignment_abs',
     'log_tof_to_sili_axis_distance_mm',
+    'sili_transverse_to_longitudinal_rms_ratio',
+    'sili_components_per_hit_100mm',
 )
+
+# The Si(Li) hit times in the current production cache are frequently
+# degenerate.  These geometry-only quantities remain finite and are not simple
+# copies of the existing total event hit count or energy summary.
+STRUCTURAL_FEATURE_NAMES = (
+    'sili_linearity',
+    'sili_planarity',
+    'sili_transverse_to_longitudinal_rms_ratio',
+    'off_axis_energy_fraction_75mm',
+    'sili_components_per_hit_100mm',
+    'largest_sili_component_energy_fraction_100mm',
+)
+STRUCTURAL_FEATURE_INDICES = tuple(
+    FEATURE_NAMES.index(name) for name in STRUCTURAL_FEATURE_NAMES)
 
 _OFF_AXIS_RADIUS_MM = 75.0
 _COMPONENT_RADIUS_MM = 100.0
@@ -85,6 +101,7 @@ def _weighted_line(
         'residual': residual,
         'time_correlation': float(np.clip(correlation, 0.0, 1.0)),
         'time_slope': float(abs(slope)),
+        'longitudinal_rms': float(np.sqrt(largest)),
     }
 
 
@@ -197,6 +214,7 @@ def track_star_features(graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
     values[13] = largest_component
     values[14] = _terminal_cluster_fraction(sili_pos, sili_energy, sili_time)
 
+    tof_distance = 0.0
     if has_link:
         tof_pos = pos[tof_mask]
         tof_weights = _safe_weights(energy[tof_mask])
@@ -210,8 +228,17 @@ def track_star_features(graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
             abs(float(np.dot(direction, line['axis']))) / direction_norm
             if direction_norm > 1e-12 else 0.0)
         values[15] = alignment
-        values[16] = np.log1p(tof_distance)
+    values[16] = np.log1p(tof_distance)
+
+    values[17] = line['residual'] / max(line['longitudinal_rms'], 1e-8)
+    values[18] = component_count / max(len(sili_pos), 1)
 
     if not np.isfinite(values).all():
         raise ValueError('track/star feature calculation produced non-finite values')
     return values.astype(np.float32)
+
+
+def structural_track_star_features(
+        graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
+    """Return the six non-degenerate geometry candidates for strict A/B tests."""
+    return track_star_features(graph, mean, std)[list(STRUCTURAL_FEATURE_INDICES)]
