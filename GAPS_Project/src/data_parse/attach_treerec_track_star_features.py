@@ -2,7 +2,7 @@
 """Attach train-normalized TreeRec track/star geometry candidates to a cache.
 
 The source cache remains untouched.  This provides a strict same-events A/B
-against the global-log baseline, using only six non-degenerate hit geometry
+against the global-log baseline, using only four non-degenerate hit geometry
 features selected by the independent audit.
 """
 

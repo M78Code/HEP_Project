@@ -971,7 +971,7 @@ if __name__ == '__main__':
     ap.add_argument('--use-hit-topology', action='store_true',
                     help='append six precomputed TreeRec hit-level topology summaries')
     ap.add_argument('--use-track-star', action='store_true',
-                    help='append six precomputed TreeRec track/star geometry candidates')
+                    help='append four precomputed TreeRec track/star geometry candidates')
     ap.add_argument('--multi-task-beta', action='store_true',
                     help='jointly train a beta-regression head using mc_beta as a target, not an input')
     ap.add_argument('--classify-with-predicted-beta', action='store_true',

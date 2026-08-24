@@ -41,8 +41,6 @@ STRUCTURAL_FEATURE_NAMES = (
     'sili_planarity',
     'sili_transverse_to_longitudinal_rms_ratio',
     'off_axis_energy_fraction_75mm',
-    'sili_components_per_hit_100mm',
-    'largest_sili_component_energy_fraction_100mm',
 )
 STRUCTURAL_FEATURE_INDICES = tuple(
     FEATURE_NAMES.index(name) for name in STRUCTURAL_FEATURE_NAMES)
@@ -240,5 +238,5 @@ def track_star_features(graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
 
 def structural_track_star_features(
         graph, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
-    """Return the six non-degenerate geometry candidates for strict A/B tests."""
+    """Return four non-degenerate geometry candidates for strict A/B tests."""
     return track_star_features(graph, mean, std)[list(STRUCTURAL_FEATURE_INDICES)]

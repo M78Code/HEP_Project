@@ -20,7 +20,7 @@ TOF_POSITION_SCALE_MM = 1000.0
 BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
 HIT_TOPOLOGY_FEATURE_DIM = 6
-TRACK_STAR_FEATURE_DIM = 6
+TRACK_STAR_FEATURE_DIM = 4
 
 
 def build_base_graph_feat(batch) -> torch.Tensor:
@@ -84,7 +84,7 @@ def append_hit_topology(graph_feat: torch.Tensor, batch) -> torch.Tensor:
 
 
 def append_track_star(graph_feat: torch.Tensor, batch) -> torch.Tensor:
-    """Append six train-normalized TreeRec track/star geometry candidates."""
+    """Append four train-normalized TreeRec track/star geometry candidates."""
     if not hasattr(batch, 'track_star_z'):
         raise ValueError(
             '--use-track-star requires a cache created by '

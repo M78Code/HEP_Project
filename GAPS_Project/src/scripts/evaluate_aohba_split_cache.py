@@ -195,7 +195,7 @@ def main():
     )
     parser.add_argument(
         '--use-track-star', action='store_true',
-        help='append six precomputed TreeRec track/star geometry candidates',
+        help='append four precomputed TreeRec track/star geometry candidates',
     )
     parser.add_argument('--multi-task-beta', action='store_true',
                         help='evaluate a joint classification and beta-regression model')
