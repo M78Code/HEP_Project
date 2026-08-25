@@ -216,6 +216,84 @@ class GravNetAttentionClassifier(GravNetClassifier):
         return self.classifier(x_graph)
 
 
+class ClusterVertexTokenEncoder(nn.Module):
+    """Permutation-invariant encoder for one vertex and an outer-prong set."""
+
+    def __init__(self, vertex_dim: int = 3, prong_dim: int = 7,
+                 hidden_dim: int = 32, num_heads: int = 4):
+        super().__init__()
+        self.vertex_projection = nn.Linear(vertex_dim, hidden_dim)
+        self.prong_projection = nn.Linear(prong_dim, hidden_dim)
+        self.type_embedding = nn.Embedding(2, hidden_dim)
+        layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim, nhead=num_heads, dim_feedforward=hidden_dim * 2,
+            dropout=0.1, batch_first=True, activation='gelu', norm_first=True)
+        self.encoder = nn.TransformerEncoder(layer, num_layers=1)
+        self.hidden_dim = hidden_dim
+
+    def forward(self, vertex_token, prong_tokens, prong_mask):
+        if vertex_token.ndim != 2 or prong_tokens.ndim != 3 or prong_mask.ndim != 2:
+            raise ValueError('invalid cluster-token tensor ranks')
+        if vertex_token.size(0) != prong_tokens.size(0) or prong_mask.shape != prong_tokens.shape[:2]:
+            raise ValueError('cluster-token batch dimensions do not match')
+        vertex = self.vertex_projection(vertex_token).unsqueeze(1)
+        prongs = self.prong_projection(prong_tokens)
+        token_type = torch.cat([
+            torch.zeros((vertex.size(0), 1), dtype=torch.long, device=vertex.device),
+            torch.ones(prong_mask.shape, dtype=torch.long, device=vertex.device),
+        ], dim=1)
+        tokens = torch.cat([vertex, prongs], dim=1) + self.type_embedding(token_type)
+        valid = torch.cat([
+            torch.ones((vertex.size(0), 1), dtype=torch.bool, device=vertex.device),
+            prong_mask,
+        ], dim=1)
+        encoded = self.encoder(tokens, src_key_padding_mask=~valid)
+        return (encoded * valid.unsqueeze(-1)).sum(dim=1) / valid.sum(dim=1, keepdim=True)
+
+
+class ClusterVertexTokenClassifier(nn.Module):
+    """Token-only probe: tests vertex/prong structure without hit embeddings."""
+
+    def __init__(self, token_hidden_dim: int = 32, dropout: float = 0.3):
+        super().__init__()
+        self.token_encoder = ClusterVertexTokenEncoder(hidden_dim=token_hidden_dim)
+        self.classifier = nn.Sequential(
+            nn.Linear(token_hidden_dim, token_hidden_dim), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(token_hidden_dim, 2),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None,
+                vertex_token=None, prong_tokens=None, prong_mask=None):
+        del x, edge_index, batch, graph_feat
+        return self.classifier(self.token_encoder(vertex_token, prong_tokens, prong_mask))
+
+
+class GravNetClusterTokenClassifier(GravNetClassifier):
+    """Baseline GravNet readout fused with a vertex and outer-prong token set."""
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 token_hidden_dim: int = 32, dropout: float = 0.3, **kwargs):
+        super().__init__(
+            *args, hidden_dim=hidden_dim, graph_feat_dim=graph_feat_dim,
+            dropout=dropout, **kwargs)
+        self.token_encoder = ClusterVertexTokenEncoder(hidden_dim=token_hidden_dim)
+        concat_dim = self.node_embedding_dim + graph_feat_dim + token_hidden_dim
+        self.classifier = nn.Sequential(
+            nn.Linear(concat_dim, hidden_dim), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, 2),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None,
+                vertex_token=None, prong_tokens=None, prong_mask=None):
+        node_embedding = self.encode_nodes(x, batch)
+        graph_embedding = global_mean_pool(node_embedding, batch)
+        if graph_feat is not None:
+            graph_embedding = torch.cat([graph_embedding, graph_feat], dim=1)
+        token_embedding = self.token_encoder(vertex_token, prong_tokens, prong_mask)
+        return self.classifier(torch.cat([graph_embedding, token_embedding], dim=1))
+
+
 class DetectorAwareGravNetClassifier(GravNetClassifier):
     """GravNet with separate TOF and Si(Li) mean/max readout.
 

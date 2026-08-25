@@ -14,7 +14,9 @@ from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
 from GAPS_Project.src.models.gravnet import (
+    ClusterVertexTokenClassifier,
     GravNetAttentionClassifier,
+    GravNetClusterTokenClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
     GravNetMultiTaskClassifier,
@@ -27,6 +29,7 @@ from GAPS_Project.src.models.tree_rec_features import (
     append_hit_topology,
     append_track_star,
     build_base_graph_feat,
+    cluster_vertex_token_inputs,
     fit_mc_beta_normalizer,
     load_graph_feature_normalizer,
     normalize_base_graph_feat,
@@ -140,6 +143,12 @@ def infer(
                 graph_feat=graph_feat,
                 tof_paddle_energy=tof_paddle_energy,
             )
+        elif model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
+            vertex_token, prong_tokens, prong_mask = cluster_vertex_token_inputs(batch)
+            model_output = model(
+                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+                vertex_token=vertex_token, prong_tokens=prong_tokens,
+                prong_mask=prong_mask)
         else:
             model_output = model(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
@@ -171,7 +180,7 @@ def main():
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
     parser.add_argument(
         '--model',
-        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'dgcnn'],
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -223,6 +232,8 @@ def main():
     if args.classify_with_predicted_beta and not args.multi_task_beta:
         raise ValueError(
             '--classify-with-predicted-beta requires --multi-task-beta')
+    if args.multi_task_beta and args.model in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
+        raise ValueError('cluster-token models are classification-only in this A/B')
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -271,6 +282,11 @@ def main():
     elif args.model == 'gravnet_attention':
         model = GravNetAttentionClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_cluster_tokens':
+        model = GravNetClusterTokenClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'cluster_tokens_only':
+        model = ClusterVertexTokenClassifier()
     elif args.model == 'dgcnn':
         model = DGCNNClassifier(
             in_channels=8, hidden_dim=args.hidden_dim, k=8,
@@ -295,6 +311,9 @@ def main():
     print(f'TOF beta   : {"enabled" if args.use_tof_beta else "disabled"}')
     print(f'hit topology: {"enabled" if args.use_hit_topology else "disabled"}')
     print(f'track/star : {"enabled" if args.use_track_star else "disabled"}')
+    print(
+        'cluster/vertex tokens: '
+        f'{"enabled" if args.model in ("gravnet_cluster_tokens", "cluster_tokens_only") else "disabled"}')
     if args.multi_task_beta:
         print(
             'beta multi-task: enabled '
@@ -341,6 +360,8 @@ def main():
         'use_tof_beta': bool(args.use_tof_beta),
         'use_hit_topology': bool(args.use_hit_topology),
         'use_track_star': bool(args.use_track_star),
+        'use_cluster_vertex_tokens': bool(
+            args.model in ('gravnet_cluster_tokens', 'cluster_tokens_only')),
         'multi_task_beta': bool(args.multi_task_beta),
         'classify_with_predicted_beta': bool(
             args.classify_with_predicted_beta),

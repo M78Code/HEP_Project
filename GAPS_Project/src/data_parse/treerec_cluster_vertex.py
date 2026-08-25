@@ -30,6 +30,9 @@ _VERTEX_RADIUS_MM = 75.0
 _VERTEX_ENERGY_RADIUS_MM = 125.0
 _CLUSTER_LINK_RADIUS_MM = 75.0
 _PRONG_LINK_RADIUS_MM = 100.0
+MAX_OUTER_PRONGS = 4
+VERTEX_TOKEN_DIM = 3
+PRONG_TOKEN_DIM = 7
 
 
 def _safe_weights(energy: np.ndarray) -> np.ndarray:
@@ -65,9 +68,13 @@ def _components(points: np.ndarray, energy: np.ndarray, radius_mm: float) -> lis
         members = np.asarray(members, dtype=np.int64)
         member_energy = clipped_energy[members]
         weights = _safe_weights(member_energy)
+        center = np.sum(points[members] * weights[:, None], axis=0)
+        squared_radius = np.sum((points[members] - center) ** 2, axis=1)
         components.append({
             'energy': float(member_energy.sum()),
-            'center': np.sum(points[members] * weights[:, None], axis=0),
+            'center': center,
+            'count': len(members),
+            'rms_radius': float(np.sqrt(np.sum(weights * squared_radius))),
         })
     return components
 
@@ -149,3 +156,70 @@ def cluster_vertex_features(graph, mean: np.ndarray, std: np.ndarray) -> np.ndar
     if not np.isfinite(values).all():
         raise ValueError('cluster/vertex feature calculation produced non-finite values')
     return values.astype(np.float32)
+
+
+def cluster_vertex_tokens(
+        graph, mean: np.ndarray, std: np.ndarray,
+        max_outer_prongs: int = MAX_OUTER_PRONGS
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return one vertex token, ordered outer-prong tokens, and their mask.
+
+    The vertex token is ``[has_vertex, E_75/E_total, E_125/E_total]``.  Each
+    prong token is ``[E/E_total, log1p(distance), direction_xyz,
+    log1p(hit_count), log1p(local_rms)]``.  Prongs are ordered by descending
+    energy only to produce a fixed-size cache representation; the downstream
+    token encoder itself does not use a positional encoding.
+    """
+    if max_outer_prongs < 1:
+        raise ValueError('max_outer_prongs must be positive')
+    vertex_token = np.zeros(VERTEX_TOKEN_DIM, dtype=np.float32)
+    prong_tokens = np.zeros((max_outer_prongs, PRONG_TOKEN_DIM), dtype=np.float32)
+    prong_mask = np.zeros(max_outer_prongs, dtype=bool)
+
+    x = graph.x.detach().cpu().numpy().astype(np.float64, copy=False)
+    pos = graph.pos.detach().cpu().numpy().astype(np.float64, copy=False)
+    if x.ndim != 2 or x.shape[1] != 8 or pos.shape != (len(x), 3):
+        raise ValueError(f'unexpected graph shapes: x={x.shape}, pos={pos.shape}')
+    if len(x) == 0:
+        return vertex_token, prong_tokens, prong_mask
+
+    log_energy = x[:, 3] * std[3] + mean[3]
+    energy = np.expm1(np.clip(log_energy, 0.0, 50.0))
+    sili_mask = x[:, 6] >= 0.5
+    points = pos[sili_mask]
+    energy = np.maximum(energy[sili_mask], 0.0)
+    if len(points) < 3:
+        return vertex_token, prong_tokens, prong_mask
+
+    total_energy = max(float(energy.sum()), 1e-12)
+    delta = points[:, None, :] - points[None, :, :]
+    distance = np.sqrt(np.maximum(np.sum(delta * delta, axis=-1), 0.0))
+    vertex_index = int(np.argmax((distance <= _VERTEX_RADIUS_MM) @ energy))
+    vertex = points[vertex_index]
+    vertex_distance = distance[vertex_index]
+    vertex_token[:] = (
+        1.0,
+        float(energy[vertex_distance <= _VERTEX_RADIUS_MM].sum() / total_energy),
+        float(energy[vertex_distance <= _VERTEX_ENERGY_RADIUS_MM].sum() / total_energy),
+    )
+
+    outer = vertex_distance > _VERTEX_RADIUS_MM
+    prongs = _components(points[outer], energy[outer], _PRONG_LINK_RADIUS_MM)
+    prongs.sort(key=lambda prong: prong['energy'], reverse=True)
+    for index, prong in enumerate(prongs[:max_outer_prongs]):
+        displacement = prong['center'] - vertex
+        prong_distance = float(np.linalg.norm(displacement))
+        if prong_distance <= 1e-8:
+            continue
+        prong_tokens[index] = (
+            prong['energy'] / total_energy,
+            np.log1p(prong_distance),
+            *(displacement / prong_distance),
+            np.log1p(prong['count']),
+            np.log1p(prong['rms_radius']),
+        )
+        prong_mask[index] = True
+
+    if not (np.isfinite(vertex_token).all() and np.isfinite(prong_tokens).all()):
+        raise ValueError('cluster/vertex token calculation produced non-finite values')
+    return vertex_token, prong_tokens, prong_mask

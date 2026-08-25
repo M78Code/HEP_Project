@@ -72,7 +72,9 @@ from tqdm import tqdm
 import GAPS_Project
 from GAPS_Project.src.losses import FocalLoss
 from GAPS_Project.src.models.gravnet import (
+    ClusterVertexTokenClassifier,
     GravNetAttentionClassifier,
+    GravNetClusterTokenClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
     GravNetMultiTaskClassifier,
@@ -84,6 +86,7 @@ from GAPS_Project.src.models.tree_rec_features import (
     append_hit_topology,
     append_track_star,
     build_base_graph_feat,
+    cluster_vertex_token_inputs,
     fit_mc_beta_normalizer,
     fit_short_tof_antip_profile,
     load_graph_feature_normalizer,
@@ -184,6 +187,23 @@ def build_graph_feat(
     if use_track_star:
         graph_feat = append_track_star(graph_feat, batch)
     return graph_feat
+
+
+def forward_model(model, model_name, batch, graph_feat):
+    """Call one model variant while keeping the training loops identical."""
+    if model_name == 'gravnet_tof':
+        if not hasattr(batch, 'tof_paddle_energy'):
+            raise ValueError('GravNetTOF requires tof_paddle_energy in graph cache')
+        return model(
+            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172))
+    if model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
+        vertex_token, prong_tokens, prong_mask = cluster_vertex_token_inputs(batch)
+        return model(
+            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            vertex_token=vertex_token, prong_tokens=prong_tokens,
+            prong_mask=prong_mask)
+    return model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
 
 
 # ── IterableDataset ────────────────────────────────────
@@ -471,6 +491,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     if classify_with_predicted_beta and not multi_task_beta:
         raise ValueError(
             '--classify-with-predicted-beta requires --multi-task-beta')
+    if multi_task_beta and model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
+        raise ValueError('cluster-token models are classification-only in this A/B')
     if multi_task_beta and beta_weighted_loss:
         raise ValueError(
             '--multi-task-beta is intentionally kept separate from '
@@ -546,6 +568,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'| hit topology input: {"enabled" if use_hit_topology else "disabled"} '
         f'| track/star input: {"enabled" if use_track_star else "disabled"} '
         f'(graph_feat_dim={graph_feat_dim})')
+    print(
+        'cluster/vertex tokens: '
+        f'{"enabled" if model_name in ("gravnet_cluster_tokens", "cluster_tokens_only") else "disabled"}')
     beta_target_mean = None
     beta_target_std = None
     if multi_task_beta:
@@ -586,6 +611,14 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         model = GravNetAttentionClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
             graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_cluster_tokens':
+        exp_name = f'GravNetClusterTokens_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetClusterTokenClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'cluster_tokens_only':
+        exp_name = f'ClusterTokensOnly_{dataset_tag}'
+        model = ClusterVertexTokenClassifier().to(DEVICE)
     else:
         exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetClassifier(
@@ -738,19 +771,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 graph_feature_mean=graph_feature_mean,
                 graph_feature_std=graph_feature_std,
             )
-            if model_name == 'gravnet_tof':
-                if not hasattr(batch, 'tof_paddle_energy'):
-                    raise ValueError(
-                        'GravNetTOF requires tof_paddle_energy in graph cache')
-                model_output = model(
-                    batch.x, batch.edge_index, batch.batch,
-                    graph_feat=graph_feat,
-                    tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
-                )
-            else:
-                model_output = model(
-                    batch.x, batch.edge_index, batch.batch,
-                    graph_feat=graph_feat)
+            model_output = forward_model(model, model_name, batch, graph_feat)
             if multi_task_beta:
                 logits, beta_prediction = model_output
             else:
@@ -826,16 +847,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     graph_feature_mean=graph_feature_mean,
                     graph_feature_std=graph_feature_std,
                 )
-                if model_name == 'gravnet_tof':
-                    model_output = model(
-                        batch.x, batch.edge_index, batch.batch,
-                        graph_feat=graph_feat,
-                        tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172),
-                    )
-                else:
-                    model_output = model(
-                        batch.x, batch.edge_index, batch.batch,
-                        graph_feat=graph_feat)
+                model_output = forward_model(model, model_name, batch, graph_feat)
                 if multi_task_beta:
                     logits, beta_prediction = model_output
                 else:
@@ -899,6 +911,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
             'use_track_star': use_track_star,
+            'use_cluster_vertex_tokens': model_name in (
+                'gravnet_cluster_tokens', 'cluster_tokens_only'),
             'multi_task_beta': multi_task_beta,
             'classify_with_predicted_beta': classify_with_predicted_beta,
             'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
@@ -944,7 +958,7 @@ if __name__ == '__main__':
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
-    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention'],
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument(

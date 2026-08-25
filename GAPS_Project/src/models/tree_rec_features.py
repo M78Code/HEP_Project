@@ -21,6 +21,9 @@ BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
 HIT_TOPOLOGY_FEATURE_DIM = 6
 TRACK_STAR_FEATURE_DIM = 4
+CLUSTER_VERTEX_TOKEN_DIM = 3
+CLUSTER_PRONG_TOKEN_DIM = 7
+MAX_CLUSTER_PRONGS = 4
 
 
 def build_base_graph_feat(batch) -> torch.Tensor:
@@ -93,6 +96,30 @@ def append_track_star(graph_feat: torch.Tensor, batch) -> torch.Tensor:
     if not torch.isfinite(features).all():
         raise ValueError('track_star_z contains non-finite values')
     return torch.cat([graph_feat, features], dim=1)
+
+
+def cluster_vertex_token_inputs(batch) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Return normalized vertex/prong tokens and a valid-prong mask.
+
+    The cache stores an explicit vertex token for every event and zero-padded
+    outer-prong rows.  The boolean mask makes padding invisible to the token
+    encoder, so a missing prong cannot be interpreted as a physical zero.
+    """
+    required = ('cluster_vertex_token_z', 'cluster_prong_tokens_z',
+                'cluster_prong_mask')
+    missing = [name for name in required if not hasattr(batch, name)]
+    if missing:
+        raise ValueError(
+            'cluster-token model requires a cache created by '
+            'attach_treerec_cluster_vertex_tokens.py; missing '
+            f'{", ".join(missing)}')
+    vertex = batch.cluster_vertex_token_z.view(-1, CLUSTER_VERTEX_TOKEN_DIM).float()
+    prongs = batch.cluster_prong_tokens_z.view(
+        -1, MAX_CLUSTER_PRONGS, CLUSTER_PRONG_TOKEN_DIM).float()
+    mask = batch.cluster_prong_mask.view(-1, MAX_CLUSTER_PRONGS).bool()
+    if not (torch.isfinite(vertex).all() and torch.isfinite(prongs).all()):
+        raise ValueError('cluster token cache contains non-finite values')
+    return vertex, prongs, mask
 
 
 def fit_mc_beta_normalizer(
