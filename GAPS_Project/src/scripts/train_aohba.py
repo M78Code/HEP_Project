@@ -469,6 +469,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           model_name: str = 'gravnet', result_dir: Path = None,
           dataset_tag: str = None, resume_checkpoint: Path = None,
           num_workers: int = 0, prefetch_factor: int = 2,
+          non_blocking_transfer: bool = False,
           use_amp: bool = False,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
@@ -557,6 +558,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'dataloader: num_workers={num_workers}, '
         f'pin_memory={DEVICE.type == "cuda"}, '
         f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
+    print(
+        'host-to-device transfer: '
+        f'{"non-blocking enabled" if non_blocking_transfer else "blocking"}')
     print(
         'automatic mixed precision: '
         f'{"FP16 enabled" if use_amp else "disabled"}')
@@ -777,7 +781,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         for batch_idx, batch in enumerate(train_bar):
             if max_train_batches is not None and batch_idx >= max_train_batches:
                 break
-            batch = batch.to(DEVICE)
+            batch = batch.to(DEVICE, non_blocking=non_blocking_transfer)
             optimizer.zero_grad()
             # 图级特征 45维；MC beta 追加 1 维，TOF beta 追加 beta 和有效标记 2 维。
             # 节点特征 batch.x 已经在 graph cache 中，
@@ -858,7 +862,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     total=val_batches, leave=False)):
                 if max_val_batches is not None and batch_idx >= max_val_batches:
                     break
-                batch = batch.to(DEVICE)
+                batch = batch.to(DEVICE, non_blocking=non_blocking_transfer)
                 # 验证阶段使用同样的图级特征。
                 graph_feat = build_graph_feat(
                     batch,
@@ -980,6 +984,8 @@ if __name__ == '__main__':
                     help='DataLoader worker数。0なら従来通り単一プロセス')
     ap.add_argument('--prefetch-factor', type=int, default=2,
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
+    ap.add_argument('--non-blocking-transfer', action='store_true',
+                    help='overlap pinned-memory host-to-device copies when possible')
     ap.add_argument('--amp', action='store_true',
                     help='use CUDA FP16 autocast with GradScaler')
     ap.add_argument('--seed', type=int, default=42,
@@ -1051,6 +1057,7 @@ if __name__ == '__main__':
           resume_checkpoint=args.resume_checkpoint,
           num_workers=args.num_workers,
           prefetch_factor=args.prefetch_factor,
+          non_blocking_transfer=args.non_blocking_transfer,
           use_amp=args.amp,
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
