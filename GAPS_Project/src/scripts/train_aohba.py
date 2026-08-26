@@ -471,6 +471,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           num_workers: int = 0, prefetch_factor: int = 2,
           non_blocking_transfer: bool = False,
           use_amp: bool = False,
+          profile_batches: int = 0,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
@@ -514,6 +515,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'combined in the first controlled comparison')
     if use_amp and DEVICE.type != 'cuda':
         raise ValueError('--amp requires a CUDA device')
+    if profile_batches < 0:
+        raise ValueError('--profile-batches must be non-negative')
+    if profile_batches > 0 and DEVICE.type != 'cuda':
+        raise ValueError('--profile-batches requires a CUDA device')
 
     graph_feature_mean = None
     graph_feature_std = None
@@ -564,6 +569,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(
         'automatic mixed precision: '
         f'{"FP16 enabled" if use_amp else "disabled"}')
+    if profile_batches:
+        print(f'timing profile: first {profile_batches} train batches')
     print(f'random seed: {seed}')
     print(
         'graph feature normalization: '
@@ -776,12 +783,27 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         model.train()
         total_loss, total_class_loss, total_beta_loss = 0.0, 0.0, 0.0
         total_correct, total_samples = 0, 0
+        profile_records = []
+        profile_data_wait = []
+        previous_submit_end = time.perf_counter()
         train_bar = tqdm(train_loader, desc=f'Epoch {epoch:3d}/{epochs} [train]',
                          total=train_batches, leave=False)
         for batch_idx, batch in enumerate(train_bar):
             if max_train_batches is not None and batch_idx >= max_train_batches:
                 break
+            profile_this_batch = profile_batches > 0 and batch_idx < profile_batches
+            if profile_this_batch and batch_idx > 0:
+                profile_data_wait.append(time.perf_counter() - previous_submit_end)
+            if profile_this_batch:
+                h2d_start = torch.cuda.Event(enable_timing=True)
+                h2d_end = torch.cuda.Event(enable_timing=True)
+                compute_start = torch.cuda.Event(enable_timing=True)
+                compute_end = torch.cuda.Event(enable_timing=True)
+                h2d_start.record()
             batch = batch.to(DEVICE, non_blocking=non_blocking_transfer)
+            if profile_this_batch:
+                h2d_end.record()
+                compute_start.record()
             optimizer.zero_grad()
             # 图级特征 45维；MC beta 追加 1 维，TOF beta 追加 beta 和有效标记 2 维。
             # 节点特征 batch.x 已经在 graph cache 中，
@@ -838,6 +860,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
+            if profile_this_batch:
+                compute_end.record()
+                profile_records.append((h2d_start, h2d_end, compute_start, compute_end))
+            previous_submit_end = time.perf_counter()
 
             total_loss    += loss.item() * batch.num_graphs
             total_class_loss += class_loss.item() * batch.num_graphs
@@ -847,6 +873,19 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             total_correct += (preds == targets).sum().item()
             total_samples += batch.num_graphs
             train_bar.set_postfix(loss=f'{loss.item():.4f}')
+
+        if profile_records:
+            torch.cuda.synchronize()
+            h2d_ms = [start.elapsed_time(end) for start, end, _, _ in profile_records]
+            compute_ms = [start.elapsed_time(end) for _, _, start, end in profile_records]
+            avg_wait_ms = (
+                1000.0 * sum(profile_data_wait) / len(profile_data_wait)
+                if profile_data_wait else 0.0)
+            print(
+                f'profile ({len(profile_records)} train batches; first fetch excluded): '
+                f'dataloader_wait={avg_wait_ms:.2f} ms/batch | '
+                f'h2d={sum(h2d_ms) / len(h2d_ms):.2f} ms/batch | '
+                f'gpu_compute={sum(compute_ms) / len(compute_ms):.2f} ms/batch')
 
         train_loss = total_loss / total_samples
         train_class_loss = total_class_loss / total_samples
@@ -988,6 +1027,8 @@ if __name__ == '__main__':
                     help='overlap pinned-memory host-to-device copies when possible')
     ap.add_argument('--amp', action='store_true',
                     help='use CUDA FP16 autocast with GradScaler')
+    ap.add_argument('--profile-batches', type=int, default=0,
+                    help='time the first N train batches (CUDA only)')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
     ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only'],
@@ -1059,6 +1100,7 @@ if __name__ == '__main__':
           prefetch_factor=args.prefetch_factor,
           non_blocking_transfer=args.non_blocking_transfer,
           use_amp=args.amp,
+          profile_batches=args.profile_batches,
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
