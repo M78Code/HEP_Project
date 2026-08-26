@@ -19,6 +19,7 @@ from GAPS_Project.src.models.gravnet import (
     GravNetClusterTokenClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
+    GravNetPhysicsEdgeClassifier,
     GravNetMultiTaskClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
@@ -149,6 +150,13 @@ def infer(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
                 vertex_token=vertex_token, prong_tokens=prong_tokens,
                 prong_mask=prong_mask)
+        elif model_name == 'gravnet_physics_edges':
+            if not hasattr(batch, 'edge_attr'):
+                raise ValueError(
+                    'gravnet_physics_edges requires cached edge_attr')
+            model_output = model(
+                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+                edge_attr=batch.edge_attr)
         else:
             model_output = model(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
@@ -180,7 +188,7 @@ def main():
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
     parser.add_argument(
         '--model',
-        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'dgcnn'],
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -285,6 +293,9 @@ def main():
     elif args.model == 'gravnet_cluster_tokens':
         model = GravNetClusterTokenClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_physics_edges':
+        model = GravNetPhysicsEdgeClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'cluster_tokens_only':
         model = ClusterVertexTokenClassifier()
     elif args.model == 'dgcnn':
@@ -314,6 +325,9 @@ def main():
     print(
         'cluster/vertex tokens: '
         f'{"enabled" if args.model in ("gravnet_cluster_tokens", "cluster_tokens_only") else "disabled"}')
+    print(
+        'explicit physics edges: '
+        f'{"enabled" if args.model == "gravnet_physics_edges" else "disabled"}')
     if args.multi_task_beta:
         print(
             'beta multi-task: enabled '
@@ -362,6 +376,7 @@ def main():
         'use_track_star': bool(args.use_track_star),
         'use_cluster_vertex_tokens': bool(
             args.model in ('gravnet_cluster_tokens', 'cluster_tokens_only')),
+        'use_physics_edges': bool(args.model == 'gravnet_physics_edges'),
         'multi_task_beta': bool(args.multi_task_beta),
         'classify_with_predicted_beta': bool(
             args.classify_with_predicted_beta),

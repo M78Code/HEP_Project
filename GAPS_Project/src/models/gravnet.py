@@ -9,6 +9,7 @@ GNN 更适合不规则探测器几何的原因。
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
+    GINEConv,
     GravNetConv,
     global_add_pool,
     global_max_pool,
@@ -292,6 +293,71 @@ class GravNetClusterTokenClassifier(GravNetClassifier):
             graph_embedding = torch.cat([graph_embedding, graph_feat], dim=1)
         token_embedding = self.token_encoder(vertex_token, prong_tokens, prong_mask)
         return self.classifier(torch.cat([graph_embedding, token_embedding], dim=1))
+
+
+class GravNetPhysicsEdgeClassifier(GravNetClassifier):
+    """Fuse the baseline GravNet embedding with explicit physical edge messages.
+
+    GravNet learns its own latent kNN graph and ignores the cached spatial kNN
+    edges.  This branch consumes the cached directed edges plus their physical
+    relation attributes, while retaining the original encoder unchanged.
+    """
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 edge_attr_dim: int = 10, edge_blocks: int = 3,
+                 dropout: float = 0.3, num_classes: int = 2, **kwargs):
+        super().__init__(
+            *args,
+            hidden_dim=hidden_dim,
+            graph_feat_dim=graph_feat_dim,
+            dropout=dropout,
+            num_classes=num_classes,
+            **kwargs,
+        )
+        self.edge_attr_dim = edge_attr_dim
+        self.edge_input = nn.Linear(self.skip_linear.in_features, hidden_dim)
+        self.edge_convs = nn.ModuleList()
+        self.edge_norms = nn.ModuleList()
+        for _ in range(edge_blocks):
+            message_mlp = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+            )
+            self.edge_convs.append(
+                GINEConv(message_mlp, edge_dim=edge_attr_dim))
+            self.edge_norms.append(nn.BatchNorm1d(hidden_dim))
+
+        edge_graph_dim = hidden_dim * 2
+        concat_dim = self.node_embedding_dim + graph_feat_dim + edge_graph_dim
+        self.classifier = nn.Sequential(
+            nn.Linear(concat_dim, hidden_dim), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, num_classes),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None, edge_attr=None):
+        if edge_attr is None:
+            raise ValueError('GravNetPhysicsEdgeClassifier requires edge_attr')
+        if edge_attr.ndim != 2 or edge_attr.size(0) != edge_index.size(1):
+            raise ValueError('edge_attr must have one row per edge')
+        if edge_attr.size(1) != self.edge_attr_dim:
+            raise ValueError(
+                f'expected edge_attr dim={self.edge_attr_dim}, '
+                f'got {edge_attr.size(1)}')
+
+        gravnet_nodes = self.encode_nodes(x, batch)
+        gravnet_graph = global_mean_pool(gravnet_nodes, batch)
+        if graph_feat is not None:
+            gravnet_graph = torch.cat([gravnet_graph, graph_feat], dim=1)
+
+        edge_nodes = self.edge_input(x)
+        for conv, norm in zip(self.edge_convs, self.edge_norms):
+            edge_nodes = norm(conv(edge_nodes, edge_index, edge_attr)).relu()
+        edge_graph = torch.cat([
+            global_mean_pool(edge_nodes, batch),
+            global_max_pool(edge_nodes, batch),
+        ], dim=1)
+        return self.classifier(torch.cat([gravnet_graph, edge_graph], dim=1))
 
 
 class DetectorAwareGravNetClassifier(GravNetClassifier):

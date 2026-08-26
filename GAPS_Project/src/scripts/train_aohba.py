@@ -78,6 +78,7 @@ from GAPS_Project.src.models.gravnet import (
     GravNetClusterTokenClassifier,
     DetectorAwareGravNetClassifier,
     GravNetClassifier,
+    GravNetPhysicsEdgeClassifier,
     GravNetMultiTaskClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
@@ -204,6 +205,14 @@ def forward_model(model, model_name, batch, graph_feat):
             batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
             vertex_token=vertex_token, prong_tokens=prong_tokens,
             prong_mask=prong_mask)
+    if model_name == 'gravnet_physics_edges':
+        if not hasattr(batch, 'edge_attr'):
+            raise ValueError(
+                'gravnet_physics_edges requires cached edge_attr; run '
+                'attach_treerec_physics_edge_attributes.py first')
+        return model(
+            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            edge_attr=batch.edge_attr)
     return model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
 
 
@@ -589,6 +598,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(
         'cluster/vertex tokens: '
         f'{"enabled" if model_name in ("gravnet_cluster_tokens", "cluster_tokens_only") else "disabled"}')
+    print(
+        'explicit physics edges: '
+        f'{"enabled" if model_name == "gravnet_physics_edges" else "disabled"}')
     beta_target_mean = None
     beta_target_std = None
     if multi_task_beta:
@@ -632,6 +644,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     elif model_name == 'gravnet_cluster_tokens':
         exp_name = f'GravNetClusterTokens_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetClusterTokenClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_physics_edges':
+        exp_name = f'GravNetPhysicsEdges_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetPhysicsEdgeClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
             graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     elif model_name == 'cluster_tokens_only':
@@ -978,6 +995,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_track_star': use_track_star,
             'use_cluster_vertex_tokens': model_name in (
                 'gravnet_cluster_tokens', 'cluster_tokens_only'),
+            'use_physics_edges': model_name == 'gravnet_physics_edges',
             'use_amp': use_amp,
             'multi_task_beta': multi_task_beta,
             'classify_with_predicted_beta': classify_with_predicted_beta,
@@ -1031,7 +1049,7 @@ if __name__ == '__main__':
                     help='time the first N train batches (CUDA only)')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
-    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only'],
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument(
