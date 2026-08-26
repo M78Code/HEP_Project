@@ -54,6 +54,7 @@ TOF172 を追加する場合だけ `--model gravnet_tof` を指定する。
       --manifest /mnt/ynakagami3/aohba_preprocess/split/split_manifest.json
 """
 import argparse
+from contextlib import nullcontext
 import json
 import pickle
 import random
@@ -468,6 +469,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           model_name: str = 'gravnet', result_dir: Path = None,
           dataset_tag: str = None, resume_checkpoint: Path = None,
           num_workers: int = 0, prefetch_factor: int = 2,
+          use_amp: bool = False,
           use_mc_beta: bool = False,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
@@ -509,6 +511,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         raise ValueError(
             '--multi-task-beta and --short-tof-antip-weight cannot be '
             'combined in the first controlled comparison')
+    if use_amp and DEVICE.type != 'cuda':
+        raise ValueError('--amp requires a CUDA device')
 
     graph_feature_mean = None
     graph_feature_std = None
@@ -553,6 +557,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         f'dataloader: num_workers={num_workers}, '
         f'pin_memory={DEVICE.type == "cuda"}, '
         f'prefetch_factor={prefetch_factor if num_workers > 0 else None}')
+    print(
+        'automatic mixed precision: '
+        f'{"FP16 enabled" if use_amp else "disabled"}')
     print(f'random seed: {seed}')
     print(
         'graph feature normalization: '
@@ -667,6 +674,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         print('short-TOF antiP hard-negative loss: disabled')
     optimizer = Adam(model.parameters(), lr=LR)
     scheduler = StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
+    scaler = torch.amp.GradScaler('cuda', enabled=use_amp)
+
+    def autocast_context():
+        if use_amp:
+            return torch.autocast(device_type='cuda', dtype=torch.float16)
+        return nullcontext()
 
     best_val_loss   = float('inf')
     patience_counter = 0
@@ -700,6 +713,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint use_track_star={checkpoint_use_track_star}, '
                 f'requested use_track_star={use_track_star}')
+        checkpoint_use_amp = bool(checkpoint.get('use_amp', False))
+        if checkpoint_use_amp != use_amp:
+            raise ValueError(
+                f'checkpoint use_amp={checkpoint_use_amp}, '
+                f'requested use_amp={use_amp}')
         checkpoint_multi_task_beta = bool(checkpoint.get('multi_task_beta', False))
         if checkpoint_multi_task_beta != multi_task_beta:
             raise ValueError(
@@ -715,6 +733,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
+        if use_amp:
+            scaler.load_state_dict(checkpoint['scaler_state'])
         best_val_loss = float(checkpoint['best_val_loss'])
         patience_counter = int(checkpoint['patience_counter'])
         start_epoch = int(checkpoint['epoch']) + 1
@@ -762,16 +782,17 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             # 图级特征 45维；MC beta 追加 1 维，TOF beta 追加 beta 和有效标记 2 维。
             # 节点特征 batch.x 已经在 graph cache 中，
             # 这里把 event-level summary 拼成 graph_feat 后交给 GravNet。
-            graph_feat = build_graph_feat(
-                batch,
-                use_mc_beta=use_mc_beta,
-                use_tof_beta=use_tof_beta,
-                use_hit_topology=use_hit_topology,
-                use_track_star=use_track_star,
-                graph_feature_mean=graph_feature_mean,
-                graph_feature_std=graph_feature_std,
-            )
-            model_output = forward_model(model, model_name, batch, graph_feat)
+            with autocast_context():
+                graph_feat = build_graph_feat(
+                    batch,
+                    use_mc_beta=use_mc_beta,
+                    use_tof_beta=use_tof_beta,
+                    use_hit_topology=use_hit_topology,
+                    use_track_star=use_track_star,
+                    graph_feature_mean=graph_feature_mean,
+                    graph_feature_std=graph_feature_std,
+                )
+                model_output = forward_model(model, model_name, batch, graph_feat)
             if multi_task_beta:
                 logits, beta_prediction = model_output
             else:
@@ -781,7 +802,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 if not hasattr(batch, 'mc_beta'):
                     raise ValueError(
                         '--beta-weighted-loss requires mc_beta in graph cache')
-                losses = criterion_none(logits, targets)
+                losses = criterion_none(logits.float(), targets)
                 weights = beta_bin_weights(
                     batch.mc_beta.view(-1).float(),
                     beta_bin_edges,
@@ -791,7 +812,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 beta_loss = None
                 loss = class_loss
             elif short_tof_antip_weight > 1.0:
-                losses = criterion_none(logits, targets)
+                losses = criterion_none(logits.float(), targets)
                 weights = short_tof_antip_weights(
                     batch, targets, short_tof_antip_weight,
                     short_tof_reference_ns, short_tof_scale_ns)
@@ -800,18 +821,19 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 beta_loss = None
                 loss = class_loss
             else:
-                class_loss = criterion(logits, targets)
+                class_loss = criterion(logits.float(), targets)
                 if multi_task_beta:
                     beta_target = (
                         batch.mc_beta.view(-1).float() - beta_target_mean
                     ) / beta_target_std
-                    beta_loss = beta_criterion(beta_prediction, beta_target)
+                    beta_loss = beta_criterion(beta_prediction.float(), beta_target)
                     loss = class_loss + beta_loss_weight * beta_loss
                 else:
                     beta_loss = None
                     loss = class_loss
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             total_loss    += loss.item() * batch.num_graphs
             total_class_loss += class_loss.item() * batch.num_graphs
@@ -830,7 +852,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         # ── Validation ───────────────────────────────
         model.eval()
         val_loss, val_beta_loss, val_correct, val_samples = 0.0, 0.0, 0, 0
-        with torch.no_grad():
+        with torch.no_grad(), autocast_context():
             for batch_idx, batch in enumerate(tqdm(
                     val_loader, desc=f'Epoch {epoch:3d}/{epochs} [val]  ',
                     total=val_batches, leave=False)):
@@ -852,12 +874,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     logits, beta_prediction = model_output
                 else:
                     logits = model_output
-                loss = criterion(logits, batch.y.view(-1))
+                loss = criterion(logits.float(), batch.y.view(-1))
                 if multi_task_beta:
                     beta_target = (
                         batch.mc_beta.view(-1).float() - beta_target_mean
                     ) / beta_target_std
-                    beta_loss = beta_criterion(beta_prediction, beta_target)
+                    beta_loss = beta_criterion(beta_prediction.float(), beta_target)
                     val_beta_loss += beta_loss.item() * batch.num_graphs
                 val_loss    += loss.item() * batch.num_graphs
                 preds        = logits.argmax(dim=1)
@@ -913,6 +935,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_track_star': use_track_star,
             'use_cluster_vertex_tokens': model_name in (
                 'gravnet_cluster_tokens', 'cluster_tokens_only'),
+            'use_amp': use_amp,
             'multi_task_beta': multi_task_beta,
             'classify_with_predicted_beta': classify_with_predicted_beta,
             'beta_loss_weight': beta_loss_weight if multi_task_beta else None,
@@ -928,6 +951,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'model_state': model.state_dict(),
             'optimizer_state': optimizer.state_dict(),
             'scheduler_state': scheduler.state_dict(),
+            'scaler_state': scaler.state_dict() if use_amp else None,
             'best_val_loss': best_val_loss,
             'patience_counter': patience_counter,
             'best_model_path': str(best_model_path),
@@ -956,6 +980,8 @@ if __name__ == '__main__':
                     help='DataLoader worker数。0なら従来通り単一プロセス')
     ap.add_argument('--prefetch-factor', type=int, default=2,
                     help='num-workers > 0 の時に各workerが先読みするbatch数')
+    ap.add_argument('--amp', action='store_true',
+                    help='use CUDA FP16 autocast with GradScaler')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
     ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only'],
@@ -1025,6 +1051,7 @@ if __name__ == '__main__':
           resume_checkpoint=args.resume_checkpoint,
           num_workers=args.num_workers,
           prefetch_factor=args.prefetch_factor,
+          use_amp=args.amp,
           use_mc_beta=args.use_mc_beta,
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
