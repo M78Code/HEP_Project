@@ -535,8 +535,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         raise ValueError(
             'gravnet_soft_objects keeps its MC auxiliary losses separate from '
             '--multi-task-beta in the first controlled comparison')
-    if soft_object_aux_weight <= 0.0:
-        raise ValueError('--soft-object-aux-weight must be positive')
+    if model_name == 'gravnet_soft_objects' and soft_object_aux_weight < 0.0:
+        raise ValueError('--soft-object-aux-weight must be non-negative')
     if multi_task_beta and beta_weighted_loss:
         raise ValueError(
             '--multi-task-beta is intentionally kept separate from '
@@ -1146,7 +1146,7 @@ if __name__ == '__main__':
     ap.add_argument('--use-track-star', action='store_true',
                     help='append four precomputed TreeRec track/star geometry candidates')
     ap.add_argument('--soft-object-aux-weight', type=float, default=0.05,
-                    help='training-only weight for MC stop/direction auxiliary losses')
+                    help='non-negative training-only weight for MC stop/direction auxiliary losses')
     ap.add_argument('--multi-task-beta', action='store_true',
                     help='jointly train a beta-regression head using mc_beta as a target, not an input')
     ap.add_argument('--classify-with-predicted-beta', action='store_true',
