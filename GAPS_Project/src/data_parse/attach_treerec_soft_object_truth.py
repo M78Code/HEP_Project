@@ -2,8 +2,9 @@
 
 The model input remains the original TreeRec graph.  The added fields are
 consumed only by the training loss of ``gravnet_soft_objects`` and are never
-passed into its forward method.  Events are joined to TreeMc by the persisted
-event_id provenance field, rather than by TreeRec hit indices.
+passed into its forward method.  Events are joined by the cache's persisted
+source_event_index, with event_id checked only as a consistency field because
+eventId is not unique within every production ROOT file.
 """
 
 from __future__ import annotations
@@ -52,7 +53,7 @@ def input_shards(cache_dir: Path, split: str) -> list[Path]:
 class TruthLookup:
     def __init__(self, root_dir: Path):
         self.root_dir = root_dir
-        self.cache: dict[tuple[str, int], dict[int, tuple[np.ndarray, np.ndarray, bool]]] = {}
+        self.cache: dict[tuple[str, int], tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
 
     def _load(self, particle: str, random_seed: int) -> None:
         key = (particle, random_seed)
@@ -71,40 +72,48 @@ class TruthLookup:
             arrays['Mc/CEventBase/primaryMomentumDirectionGenerated_'])
         if not (len(event_ids) == len(stops) == len(directions)):
             raise RuntimeError(f'{path}: inconsistent TreeMc target lengths')
-        if len(np.unique(event_ids)) != len(event_ids):
-            raise RuntimeError(f'{path}: eventId is not unique')
         norms = np.linalg.norm(directions, axis=1)
         valid = np.isfinite(stops).all(axis=1) & np.isfinite(directions).all(axis=1) & (norms > 1e-6)
         normalized_directions = np.zeros_like(directions, dtype=np.float32)
         normalized_directions[valid] = directions[valid] / norms[valid, None]
-        self.cache[key] = {
-            int(event_id): (stops[index], normalized_directions[index], bool(valid[index]))
-            for index, event_id in enumerate(event_ids)
-        }
+        self.cache[key] = (event_ids, stops, normalized_directions, valid)
 
-    def get(self, particle: str, random_seed: int, event_id: int):
+    def get(self, particle: str, random_seed: int, source_event_index: int,
+            event_id: int):
         self._load(particle, random_seed)
-        try:
-            return self.cache[(particle, random_seed)][event_id]
-        except KeyError as error:
-            raise KeyError(
-                f'event_id={event_id} absent from {particle} seed={random_seed}') from error
+        event_ids, stops, directions, valid = self.cache[(particle, random_seed)]
+        if source_event_index < 0 or source_event_index >= len(event_ids):
+            raise IndexError(
+                f'source_event_index={source_event_index} outside TreeMc '
+                f'for {particle} seed={random_seed} ({len(event_ids)} events)')
+        if int(event_ids[source_event_index]) != event_id:
+            raise RuntimeError(
+                f'provenance mismatch for {particle} seed={random_seed} '
+                f'index={source_event_index}: cache event_id={event_id}, '
+                f'TreeMc event_id={int(event_ids[source_event_index])}')
+        return stops[source_event_index], directions[source_event_index], bool(valid[source_event_index])
 
 
-def graph_identity(graph) -> tuple[str, int, int]:
-    required = ('event_id', 'random_seed', 'y')
+def graph_identity(graph) -> tuple[str, int, int, int]:
+    required = ('event_id', 'random_seed', 'source_event_index', 'y')
     missing = [name for name in required if not hasattr(graph, name)]
     if missing:
         raise RuntimeError(
             'soft-object truth attachment requires cache provenance; '
             f'missing {missing}')
     particle = 'antiD' if scalar(graph.y) == 1 else 'antiP'
-    return particle, scalar(graph.random_seed), scalar(graph.event_id)
+    return (
+        particle,
+        scalar(graph.random_seed),
+        scalar(graph.source_event_index),
+        scalar(graph.event_id),
+    )
 
 
 def attach_target(graph, lookup: TruthLookup, stop_mean, stop_std) -> bool:
-    particle, random_seed, event_id = graph_identity(graph)
-    stop, direction, valid = lookup.get(particle, random_seed, event_id)
+    particle, random_seed, source_event_index, event_id = graph_identity(graph)
+    stop, direction, valid = lookup.get(
+        particle, random_seed, source_event_index, event_id)
     graph.mc_soft_truth_valid = torch.tensor([valid], dtype=torch.bool)
     graph.mc_soft_stop_z = torch.tensor(
         (stop - stop_mean) / stop_std if valid else np.zeros(3),
@@ -125,8 +134,9 @@ def fit_stop_normalizer(cache_dir: Path, lookup: TruthLookup,
         if max_graphs_per_shard is not None:
             graphs = graphs[:max_graphs_per_shard]
         for graph in graphs:
-            particle, random_seed, event_id = graph_identity(graph)
-            stop, _, valid = lookup.get(particle, random_seed, event_id)
+            particle, random_seed, source_event_index, event_id = graph_identity(graph)
+            stop, _, valid = lookup.get(
+                particle, random_seed, source_event_index, event_id)
             if not valid:
                 invalid += 1
                 continue
