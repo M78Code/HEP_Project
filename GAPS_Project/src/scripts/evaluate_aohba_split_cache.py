@@ -21,6 +21,7 @@ from GAPS_Project.src.models.gravnet import (
     GravNetClassifier,
     GravNetPhysicsEdgeClassifier,
     GravNetMultiTaskClassifier,
+    GravNetSoftObjectClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
@@ -157,6 +158,10 @@ def infer(
             model_output = model(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
                 edge_attr=batch.edge_attr)
+        elif model_name == 'gravnet_soft_objects':
+            logits, _ = model(
+                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+            model_output = logits
         else:
             model_output = model(
                 batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
@@ -188,7 +193,7 @@ def main():
     parser.add_argument('--hidden-dim', type=int, default=64, help='hidden dim for DGCNN')
     parser.add_argument(
         '--model',
-        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges', 'dgcnn'],
+        choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges', 'gravnet_soft_objects', 'dgcnn'],
                         default='gravnet')
     parser.add_argument(
         '--tof-mode',
@@ -296,6 +301,9 @@ def main():
     elif args.model == 'gravnet_physics_edges':
         model = GravNetPhysicsEdgeClassifier(
             in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+    elif args.model == 'gravnet_soft_objects':
+        model = GravNetSoftObjectClassifier(
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
     elif args.model == 'cluster_tokens_only':
         model = ClusterVertexTokenClassifier()
     elif args.model == 'dgcnn':
@@ -328,6 +336,9 @@ def main():
     print(
         'explicit physics edges: '
         f'{"enabled" if args.model == "gravnet_physics_edges" else "disabled"}')
+    print(
+        'soft object queries: '
+        f'{"enabled" if args.model == "gravnet_soft_objects" else "disabled"}')
     if args.multi_task_beta:
         print(
             'beta multi-task: enabled '
@@ -377,6 +388,7 @@ def main():
         'use_cluster_vertex_tokens': bool(
             args.model in ('gravnet_cluster_tokens', 'cluster_tokens_only')),
         'use_physics_edges': bool(args.model == 'gravnet_physics_edges'),
+        'use_soft_objects': bool(args.model == 'gravnet_soft_objects'),
         'multi_task_beta': bool(args.multi_task_beta),
         'classify_with_predicted_beta': bool(
             args.classify_with_predicted_beta),

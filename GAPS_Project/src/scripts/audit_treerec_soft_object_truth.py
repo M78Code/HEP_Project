@@ -130,11 +130,12 @@ def audit_file(path: Path, max_events: int) -> dict:
                 silicentroid_mm.append(float(np.linalg.norm(centroid - stop)))
 
         norm = float(np.linalg.norm(unit))
-        path = stop - start
-        path_norm = float(np.linalg.norm(path))
+        displacement = stop - start
+        path_norm = float(np.linalg.norm(displacement))
         if np.isfinite(unit).all() and norm > 1e-9 and path_norm > 1e-9:
             valid_direction += 1
-            direction_path_cosine.append(float(np.dot(unit, path) / (norm * path_norm)))
+            direction_path_cosine.append(
+                float(np.dot(unit, displacement) / (norm * path_norm)))
 
     return {
         'file': str(path),

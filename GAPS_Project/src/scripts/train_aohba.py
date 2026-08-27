@@ -80,6 +80,7 @@ from GAPS_Project.src.models.gravnet import (
     GravNetClassifier,
     GravNetPhysicsEdgeClassifier,
     GravNetMultiTaskClassifier,
+    GravNetSoftObjectClassifier,
 )
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.tree_rec_features import (
@@ -214,6 +215,29 @@ def forward_model(model, model_name, batch, graph_feat):
             batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
             edge_attr=batch.edge_attr)
     return model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+
+
+def soft_object_auxiliary_loss(auxiliary, batch):
+    """Training-only MC supervision for the learned track and stop queries."""
+    required = ('mc_soft_stop_z', 'mc_soft_direction', 'mc_soft_truth_valid')
+    missing = [name for name in required if not hasattr(batch, name)]
+    if missing:
+        raise ValueError(
+            'gravnet_soft_objects requires cached MC auxiliary targets; '
+            f'missing {missing}')
+    valid = batch.mc_soft_truth_valid.view(-1).bool()
+    if not valid.any():
+        raise ValueError('soft-object batch has no valid MC auxiliary targets')
+    stop_target = batch.mc_soft_stop_z.view(-1, 3).float()
+    direction_target = batch.mc_soft_direction.view(-1, 3).float()
+    stop_loss = torch.nn.functional.smooth_l1_loss(
+        auxiliary['stop_prediction'][valid], stop_target[valid])
+    direction_prediction = torch.nn.functional.normalize(
+        auxiliary['direction_prediction'][valid], dim=1, eps=1e-6)
+    direction_target = torch.nn.functional.normalize(
+        direction_target[valid], dim=1, eps=1e-6)
+    direction_loss = 1.0 - (direction_prediction * direction_target).sum(dim=1).mean()
+    return stop_loss + direction_loss, stop_loss, direction_loss
 
 
 # ── IterableDataset ────────────────────────────────────
@@ -485,6 +509,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           use_tof_beta: bool = False,
           use_hit_topology: bool = False,
           use_track_star: bool = False,
+          soft_object_aux_weight: float = 0.05,
           multi_task_beta: bool = False,
           classify_with_predicted_beta: bool = False,
           beta_loss_weight: float = 0.1,
@@ -506,6 +531,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             '--classify-with-predicted-beta requires --multi-task-beta')
     if multi_task_beta and model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
         raise ValueError('cluster-token models are classification-only in this A/B')
+    if model_name == 'gravnet_soft_objects' and multi_task_beta:
+        raise ValueError(
+            'gravnet_soft_objects keeps its MC auxiliary losses separate from '
+            '--multi-task-beta in the first controlled comparison')
+    if soft_object_aux_weight <= 0.0:
+        raise ValueError('--soft-object-aux-weight must be positive')
     if multi_task_beta and beta_weighted_loss:
         raise ValueError(
             '--multi-task-beta is intentionally kept separate from '
@@ -601,6 +632,13 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     print(
         'explicit physics edges: '
         f'{"enabled" if model_name == "gravnet_physics_edges" else "disabled"}')
+    print(
+        'soft object queries: '
+        f'{"enabled" if model_name == "gravnet_soft_objects" else "disabled"}')
+    if model_name == 'gravnet_soft_objects':
+        print(
+            'soft-object auxiliary targets: training-only '
+            f'| weight={soft_object_aux_weight:g}')
     beta_target_mean = None
     beta_target_std = None
     if multi_task_beta:
@@ -649,6 +687,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     elif model_name == 'gravnet_physics_edges':
         exp_name = f'GravNetPhysicsEdges_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetPhysicsEdgeClassifier(
+            in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+    elif model_name == 'gravnet_soft_objects':
+        exp_name = f'GravNetSoftObjects_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
+        model = GravNetSoftObjectClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
             graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
     elif model_name == 'cluster_tokens_only':
@@ -799,6 +842,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         # ── Train ────────────────────────────────────
         model.train()
         total_loss, total_class_loss, total_beta_loss = 0.0, 0.0, 0.0
+        total_soft_aux_loss = 0.0
         total_correct, total_samples = 0, 0
         profile_records = []
         profile_data_wait = []
@@ -838,6 +882,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 model_output = forward_model(model, model_name, batch, graph_feat)
             if multi_task_beta:
                 logits, beta_prediction = model_output
+            elif model_name == 'gravnet_soft_objects':
+                logits, soft_auxiliary = model_output
             else:
                 logits = model_output
             targets = batch.y.view(-1)
@@ -871,6 +917,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     ) / beta_target_std
                     beta_loss = beta_criterion(beta_prediction.float(), beta_target)
                     loss = class_loss + beta_loss_weight * beta_loss
+                elif model_name == 'gravnet_soft_objects':
+                    soft_aux_loss, _, _ = soft_object_auxiliary_loss(
+                        soft_auxiliary, batch)
+                    beta_loss = None
+                    loss = class_loss + soft_object_aux_weight * soft_aux_loss
                 else:
                     beta_loss = None
                     loss = class_loss
@@ -886,6 +937,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             total_class_loss += class_loss.item() * batch.num_graphs
             if beta_loss is not None:
                 total_beta_loss += beta_loss.item() * batch.num_graphs
+            if model_name == 'gravnet_soft_objects':
+                total_soft_aux_loss += soft_aux_loss.item() * batch.num_graphs
             preds          = logits.argmax(dim=1)
             total_correct += (preds == targets).sum().item()
             total_samples += batch.num_graphs
@@ -907,6 +960,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         train_loss = total_loss / total_samples
         train_class_loss = total_class_loss / total_samples
         train_beta_loss = total_beta_loss / total_samples if multi_task_beta else None
+        train_soft_aux_loss = (
+            total_soft_aux_loss / total_samples
+            if model_name == 'gravnet_soft_objects' else None)
         train_acc  = total_correct / total_samples
 
         # ── Validation ───────────────────────────────
@@ -932,6 +988,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                 model_output = forward_model(model, model_name, batch, graph_feat)
                 if multi_task_beta:
                     logits, beta_prediction = model_output
+                elif model_name == 'gravnet_soft_objects':
+                    logits, _ = model_output
                 else:
                     logits = model_output
                 loss = criterion(logits.float(), batch.y.view(-1))
@@ -955,6 +1013,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             f'train_loss: {train_loss:.4f} '
             f'(class={train_class_loss:.4f}, beta={train_beta_loss:.4f})'
             if multi_task_beta else f'train_loss: {train_loss:.4f}')
+        if model_name == 'gravnet_soft_objects':
+            train_loss_text = (
+                f'train_loss: {train_loss:.4f} '
+                f'(class={train_class_loss:.4f}, soft_aux={train_soft_aux_loss:.4f})')
         val_loss_text = (
             f'val_loss: {val_loss:.4f} '
             f'val_beta_loss: {val_beta_loss / val_samples:.4f}'
@@ -970,6 +1032,8 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         if multi_task_beta:
             writer.add_scalar('Loss/train_beta', train_beta_loss, epoch)
             writer.add_scalar('Loss/val_beta', val_beta_loss / val_samples, epoch)
+        if model_name == 'gravnet_soft_objects':
+            writer.add_scalar('Loss/train_soft_aux', train_soft_aux_loss, epoch)
         writer.add_scalar('Acc/train',  train_acc,  epoch)
         writer.add_scalar('Acc/val',    val_acc,    epoch)
 
@@ -996,6 +1060,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'use_cluster_vertex_tokens': model_name in (
                 'gravnet_cluster_tokens', 'cluster_tokens_only'),
             'use_physics_edges': model_name == 'gravnet_physics_edges',
+            'use_soft_objects': model_name == 'gravnet_soft_objects',
+            'soft_object_aux_weight': (
+                soft_object_aux_weight
+                if model_name == 'gravnet_soft_objects' else None),
             'use_amp': use_amp,
             'multi_task_beta': multi_task_beta,
             'classify_with_predicted_beta': classify_with_predicted_beta,
@@ -1049,7 +1117,7 @@ if __name__ == '__main__':
                     help='time the first N train batches (CUDA only)')
     ap.add_argument('--seed', type=int, default=42,
                     help='model initialization and data shuffling seed')
-    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges'],
+    ap.add_argument('--model', choices=['gravnet', 'gravnet_tof', 'gravnet_detector', 'gravnet_attention', 'gravnet_cluster_tokens', 'cluster_tokens_only', 'gravnet_physics_edges', 'gravnet_soft_objects'],
                     default='gravnet')
     ap.add_argument('--result-dir', type=Path, default=None)
     ap.add_argument(
@@ -1077,6 +1145,8 @@ if __name__ == '__main__':
                     help='append six precomputed TreeRec hit-level topology summaries')
     ap.add_argument('--use-track-star', action='store_true',
                     help='append four precomputed TreeRec track/star geometry candidates')
+    ap.add_argument('--soft-object-aux-weight', type=float, default=0.05,
+                    help='training-only weight for MC stop/direction auxiliary losses')
     ap.add_argument('--multi-task-beta', action='store_true',
                     help='jointly train a beta-regression head using mc_beta as a target, not an input')
     ap.add_argument('--classify-with-predicted-beta', action='store_true',
@@ -1123,6 +1193,7 @@ if __name__ == '__main__':
           use_tof_beta=args.use_tof_beta,
           use_hit_topology=args.use_hit_topology,
           use_track_star=args.use_track_star,
+          soft_object_aux_weight=args.soft_object_aux_weight,
           multi_task_beta=args.multi_task_beta,
           classify_with_predicted_beta=args.classify_with_predicted_beta,
           beta_loss_weight=args.beta_loss_weight,

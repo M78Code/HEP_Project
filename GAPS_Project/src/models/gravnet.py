@@ -360,6 +360,73 @@ class GravNetPhysicsEdgeClassifier(GravNetClassifier):
         return self.classifier(torch.cat([gravnet_graph, edge_graph], dim=1))
 
 
+class GravNetSoftObjectClassifier(GravNetClassifier):
+    """GravNet with learned all-hit track, stop, and star object queries.
+
+    The query branch reads only node embeddings derived from TreeRec.  During
+    training, callers may supervise the stop and track query heads with MC
+    targets, but those targets are never arguments to ``forward`` and are not
+    required at inference.
+    """
+
+    def __init__(self, *args, hidden_dim: int = 64, graph_feat_dim: int = 2,
+                 object_dim: int = 128, dropout: float = 0.3,
+                 num_classes: int = 2, **kwargs):
+        super().__init__(
+            *args,
+            hidden_dim=hidden_dim,
+            graph_feat_dim=graph_feat_dim,
+            dropout=dropout,
+            num_classes=num_classes,
+            **kwargs,
+        )
+        self.object_dim = object_dim
+        self.object_names = ('track', 'stop', 'star')
+        self.object_key = nn.Linear(self.node_embedding_dim, object_dim)
+        self.object_value = nn.Linear(self.node_embedding_dim, object_dim)
+        self.object_queries = nn.Parameter(
+            torch.empty(len(self.object_names), object_dim))
+        nn.init.normal_(self.object_queries, std=object_dim ** -0.5)
+        object_layer = nn.TransformerEncoderLayer(
+            d_model=object_dim, nhead=4, dim_feedforward=object_dim * 2,
+            dropout=0.1, batch_first=True, activation='gelu', norm_first=True)
+        self.object_mixer = nn.TransformerEncoder(object_layer, num_layers=1)
+        self.stop_head = nn.Linear(object_dim, 3)
+        self.direction_head = nn.Linear(object_dim, 3)
+
+        concat_dim = self.node_embedding_dim + graph_feat_dim + (
+            len(self.object_names) * object_dim)
+        self.classifier = nn.Sequential(
+            nn.Linear(concat_dim, hidden_dim), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, num_classes),
+        )
+
+    def forward(self, x, edge_index, batch, graph_feat=None):
+        del edge_index
+        node_embedding = self.encode_nodes(x, batch)
+        graph_embedding = global_mean_pool(node_embedding, batch)
+        if graph_feat is not None:
+            graph_embedding = torch.cat([graph_embedding, graph_feat], dim=1)
+
+        keys = self.object_key(node_embedding)
+        values = self.object_value(node_embedding)
+        scores = keys @ self.object_queries.T
+        scores = scores * (self.object_dim ** -0.5)
+        weights = softmax(scores, batch)
+        object_embeddings = torch.stack([
+            global_add_pool(weights[:, query].unsqueeze(1) * values, batch)
+            for query in range(len(self.object_names))
+        ], dim=1)
+        object_embeddings = self.object_mixer(object_embeddings)
+        logits = self.classifier(torch.cat([
+            graph_embedding, object_embeddings.flatten(1)], dim=1))
+        return logits, {
+            'stop_prediction': self.stop_head(object_embeddings[:, 1]),
+            'direction_prediction': self.direction_head(object_embeddings[:, 0]),
+        }
+
+
 class DetectorAwareGravNetClassifier(GravNetClassifier):
     """GravNet with separate TOF and Si(Li) mean/max readout.
 
