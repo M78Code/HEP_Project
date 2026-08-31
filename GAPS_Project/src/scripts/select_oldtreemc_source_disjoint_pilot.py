@@ -42,10 +42,51 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-antid-source", type=int, default=1627550259)
     parser.add_argument("--val-antip-source", type=int, default=1627528610)
     parser.add_argument("--val-antid-source", type=int, default=1627550262)
+    parser.add_argument(
+        "--selection",
+        action="append",
+        metavar="SPLIT:PARTICLE:SOURCE_ID:LABEL:COUNT",
+        help=(
+            "repeatable explicit selection; when supplied, replaces the "
+            "four default pilot selections"
+        ),
+    )
     return parser.parse_args()
 
 
 def selections_from_args(args: argparse.Namespace) -> list[Selection]:
+    if args.selection:
+        selections = []
+        for value in args.selection:
+            fields = value.split(":")
+            if len(fields) != 5:
+                raise ValueError(
+                    "--selection must be "
+                    "SPLIT:PARTICLE:SOURCE_ID:LABEL:COUNT"
+                )
+            split, particle, source_id, label, count = fields
+            if split not in {"train", "val"}:
+                raise ValueError(f"invalid selection split: {split}")
+            if particle not in {"antip", "antid"}:
+                raise ValueError(f"invalid selection particle: {particle}")
+            expected_label = 0 if particle == "antip" else 1
+            if int(label) != expected_label:
+                raise ValueError(
+                    f"{particle} selection must use label {expected_label}"
+                )
+            if int(count) < 1:
+                raise ValueError("selection count must be positive")
+            selections.append(
+                Selection(
+                    split,
+                    particle,
+                    int(source_id),
+                    int(label),
+                    int(count),
+                )
+            )
+        return selections
+
     return [
         Selection(
             "train", "antip", args.train_antip_source, 0,
