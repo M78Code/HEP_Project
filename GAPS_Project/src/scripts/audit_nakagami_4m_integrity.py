@@ -25,7 +25,7 @@ PARTICLE_RE = re.compile(r"_(Dbar|Pbar)_", re.IGNORECASE)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset-dir", type=Path, required=True)
+    parser.add_argument("--dataset-dir", type=Path)
     parser.add_argument("--csv-dir", type=Path)
     parser.add_argument("--glob", default="CNN*Atrest*.csv")
     parser.add_argument("--max-files", type=int, default=0)
@@ -33,7 +33,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reservoir-size", type=int, default=100_000)
     parser.add_argument("--seed", type=int, default=20260831)
     parser.add_argument("--output", type=Path)
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.dataset_dir is None and args.csv_dir is None:
+        parser.error("at least one of --dataset-dir or --csv-dir is required")
+    return args
 
 
 def scalar_summary(values: np.ndarray) -> dict[str, object]:
@@ -56,6 +59,15 @@ def scalar_summary(values: np.ndarray) -> dict[str, object]:
 
 
 def audit_export(dataset_dir: Path) -> dict[str, object]:
+    if not dataset_dir.is_dir():
+        raise FileNotFoundError(f"dataset directory not found: {dataset_dir}")
+    split_dirs = [
+        dataset_dir / f"{split}_nakagami_style_4M" for split in SPLITS
+    ]
+    if not any(path.is_dir() for path in split_dirs):
+        raise FileNotFoundError(
+            f"no *_nakagami_style_4M split directories found under {dataset_dir}"
+        )
     report: dict[str, object] = {
         "dataset_dir": str(dataset_dir),
         "splits": {},
@@ -275,23 +287,25 @@ def audit_csv(args: argparse.Namespace) -> dict[str, object]:
 
 
 def print_findings(report: dict[str, object]) -> None:
-    export = report["export"]
+    export = report.get("export")
     csv_report = report["source_csv"]
     print("Nakagami 4M integrity audit")
-    print("dataset:", export["dataset_dir"])
-    metadata = export.get("export_metadata")
-    if isinstance(metadata, dict):
-        print("layout:", metadata.get("layout"))
-        print("explicit split:", metadata.get("explicit_split"))
-    if export.get("source_file_overlap"):
-        print("source file overlap:", export["source_file_overlap"])
-    for split, item in export["splits"].items():
-        if item.get("missing"):
-            print(split, "MISSING")
-            continue
-        labels = item["arrays"].get("labels", {}).get("counts")
-        betas = item["arrays"].get("betas", {}).get("summary")
-        print(split, "labels=", labels, "beta=", betas)
+    metadata = None
+    if isinstance(export, dict):
+        print("dataset:", export["dataset_dir"])
+        metadata = export.get("export_metadata")
+        if isinstance(metadata, dict):
+            print("layout:", metadata.get("layout"))
+            print("explicit split:", metadata.get("explicit_split"))
+        if export.get("source_file_overlap"):
+            print("source file overlap:", export["source_file_overlap"])
+        for split, item in export["splits"].items():
+            if item.get("missing"):
+                print(split, "MISSING")
+                continue
+            labels = item["arrays"].get("labels", {}).get("counts")
+            betas = item["arrays"].get("betas", {}).get("summary")
+            print(split, "labels=", labels, "beta=", betas)
     if not csv_report.get("skipped"):
         print("source files:", csv_report["files"], "rows:", csv_report["rows"])
         print("rows by label:", csv_report["rows_by_label"])
@@ -313,12 +327,16 @@ def print_findings(report: dict[str, object]) -> None:
 
 def main() -> None:
     args = parse_args()
-    report = {
-        "export": audit_export(args.dataset_dir),
-        "source_csv": audit_csv(args),
-    }
+    report = {"source_csv": audit_csv(args)}
+    if args.dataset_dir is not None:
+        report["export"] = audit_export(args.dataset_dir)
     print_findings(report)
-    output = args.output or args.dataset_dir / "priority1_integrity_audit.json"
+    output = args.output
+    if output is None:
+        if args.dataset_dir is not None:
+            output = args.dataset_dir / "priority1_integrity_audit.json"
+        else:
+            output = Path("priority1_integrity_audit.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print("saved:", output)
