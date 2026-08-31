@@ -151,17 +151,14 @@ std::string shard_path(const std::string& prefix, int shard, int shards) {
   return path.str();
 }
 
-void copy_metadata(TFile& metadata, OutputShard& output) {
-  if (TObject* geometry = metadata.Get("GGeometry")) {
+void copy_metadata(TObject* geometry, TTree* simulation,
+                   OutputShard& output) {
+  if (geometry) {
     output.file->cd();
     geometry->Write("GGeometry", TObject::kOverwrite);
-  } else {
-    std::cerr << "warning: GGeometry is missing from "
-              << metadata.GetName() << "\n";
   }
 
-  if (TTree* simulation =
-          dynamic_cast<TTree*>(metadata.Get("SimulationParameterTree"))) {
+  if (simulation) {
     output.file->cd();
     TTree* clone = simulation->CloneTree(-1, "fast");
     clone->Write("SimulationParameterTree", TObject::kOverwrite);
@@ -266,12 +263,22 @@ int main(int argc, char** argv) {
     return 8;
   }
 
+  // TGeoManager is registered in ROOT global state. Fetch it once: repeated
+  // TFile::Get calls can delete and recreate the active geometry.
+  TObject* geometry = metadata.Get("GGeometry");
+  if (!geometry) {
+    std::cerr << "warning: GGeometry is missing from "
+              << metadata.GetName() << "\n";
+  }
+  TTree* simulation = dynamic_cast<TTree*>(
+      metadata.Get("SimulationParameterTree"));
+
   Long64_t total_written = 0;
   for (auto& output : outputs) {
     output->file->cd();
     output->event_tree->Write(args.tree_name.c_str(), TObject::kOverwrite);
     output->selection_tree->Write("SelectionMetadata", TObject::kOverwrite);
-    copy_metadata(metadata, *output);
+    copy_metadata(geometry, simulation, *output);
 
     total_written += output->written;
     std::cout << output->path << ": " << output->written << " entries\n";
