@@ -128,10 +128,10 @@ def load_root_events(path: Path, source_id: int, k: int) -> list[dict]:
         }
         if len(lengths) != 1:
             raise RuntimeError(f"{path}: hit-array mismatch at entry {index}")
-        if len(event_energy) <= k:
+        if len(event_energy) <= 1:
             raise RuntimeError(
                 f"{path}: entry {index} has {len(event_energy)} hits, "
-                f"not enough for k={k}"
+                "at least two are required"
             )
         if int(pdgs[index]) != PDG[particle]:
             raise RuntimeError(

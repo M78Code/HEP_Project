@@ -91,7 +91,12 @@ class GraphBuilder:
 
         #  —— 7. 构建边（k近邻边，基于空间距离）—————————————
         pos_tensor = torch.tensor(positions, dtype=torch.float32)
-        edge_index = knn_graph(pos_tensor, k=self.k, loop=False)
+        if N > 1:
+            effective_k = min(self.k, N - 1)
+            edge_index = knn_graph(
+                pos_tensor, k=effective_k, loop=False)
+        else:
+            edge_index = torch.empty((2, 0), dtype=torch.long)
 
         # ── 8. 标签（PDG→0/1分类）────────────────────
         # 反质子=-2212 → 0，反重氘核=-1000010020 → 1
