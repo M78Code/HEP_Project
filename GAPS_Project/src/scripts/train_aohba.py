@@ -293,15 +293,26 @@ class CachedStreamDataset(IterableDataset):
             )
         return data_list
 
+    @staticmethod
+    def _particle_tag(pt_path: Path) -> str | None:
+        name = pt_path.name.lower()
+        if '_antid_' in name:
+            return 'antid'
+        if '_antip_' in name:
+            return 'antip'
+        return None
+
     def __iter__(self):
         epoch = self._epoch
         self._epoch += 1
 
         if self.balance_tagged_classes:
             antiD_files = [
-                path for path in self.pt_files if '_antiD_' in path.name]
+                path for path in self.pt_files
+                if self._particle_tag(path) == 'antid']
             antiP_files = [
-                path for path in self.pt_files if '_antiP_' in path.name]
+                path for path in self.pt_files
+                if self._particle_tag(path) == 'antip']
             if antiD_files and antiP_files:
                 yield from self._iter_balanced(
                     antiD_files, antiP_files, epoch)
@@ -372,9 +383,11 @@ class CachedStreamDataset(IterableDataset):
 
         if self.balance_tagged_classes:
             antiD_files = [
-                path for path in self.pt_files if '_antiD_' in path.name]
+                path for path in self.pt_files
+                if self._particle_tag(path) == 'antid']
             antiP_files = [
-                path for path in self.pt_files if '_antiP_' in path.name]
+                path for path in self.pt_files
+                if self._particle_tag(path) == 'antip']
             if antiD_files and antiP_files:
                 return 2 * min(
                     count_files(antiD_files),
