@@ -272,12 +272,18 @@ int main(int argc, char** argv) {
     output->event_tree->Write(args.tree_name.c_str(), TObject::kOverwrite);
     output->selection_tree->Write("SelectionMetadata", TObject::kOverwrite);
     copy_metadata(metadata, *output);
-    output->file->Close();
 
     total_written += output->written;
     std::cout << output->path << ": " << output->written << " entries\n";
   }
+
+  // Old GGeometry files register objects in ROOT's global directory state.
+  // Close their owning input file before output directories tear down.
   metadata.Close();
+
+  for (auto& output : outputs) {
+    output->file->Close();
+  }
 
   if (total_written != static_cast<Long64_t>(entries.size())) {
     std::cerr << "entry-count mismatch: selected=" << entries.size()
