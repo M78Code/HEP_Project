@@ -45,9 +45,14 @@ class GravNetClassifier(nn.Module):
     """
 
     def __init__(self, in_channels: int = 8, hidden_dim: int = 64, space_dimensions: int = 4,
-                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3, graph_feat_dim: int = 2, num_blocks: int = 4):
+                 propagate_dimensions: int = 22, k: int = 8, num_classes: int = 2, dropout: float = 0.3, graph_feat_dim: int = 2, num_blocks: int = 4,
+                 normalization: str = 'batch'):
         super(GravNetClassifier, self).__init__()
         self.num_blocks = num_blocks
+        if normalization not in {'batch', 'layer'}:
+            raise ValueError(
+                f'normalization must be batch or layer, got {normalization!r}')
+        self.normalization = normalization
 
         # ── 4个GravNet block ──────────────────────────────
         self.pre_linears = nn.ModuleList()
@@ -67,7 +72,12 @@ class GravNetClassifier(nn.Module):
                             propagate_dimensions=propagate_dimensions, k=k,
                             ),
             )
-            self.post_norms.append(nn.BatchNorm1d(hidden_dim))
+            norm = (
+                nn.BatchNorm1d(hidden_dim)
+                if normalization == 'batch'
+                else nn.LayerNorm(hidden_dim)
+            )
+            self.post_norms.append(norm)
             current_dim = hidden_dim
 
         # ── 分类头 ─────────────────────────────────────────

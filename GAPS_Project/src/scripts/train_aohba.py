@@ -532,6 +532,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           short_tof_antip_weight: float = 1.0,
           beta_min: float = None, beta_max: float = None,
           graph_feature_normalizer: Path = None,
+          gravnet_normalization: str = 'batch',
           seed: int = 42):
     if use_mc_beta and use_tof_beta:
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
@@ -542,6 +543,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     if classify_with_predicted_beta and not multi_task_beta:
         raise ValueError(
             '--classify-with-predicted-beta requires --multi-task-beta')
+    if gravnet_normalization != 'batch' and model_name != 'gravnet':
+        raise ValueError(
+            '--gravnet-normalization currently supports --model gravnet only')
     if multi_task_beta and model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
         raise ValueError('cluster-token models are classification-only in this A/B')
     if model_name == 'gravnet_soft_objects' and multi_task_beta:
@@ -714,7 +718,10 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         exp_name = f'GravNet_{NUM_BLOCKS}b_h{HIDDEN_DIM}_{dataset_tag}'
         model = GravNetClassifier(
             in_channels=IN_CHANNEL, hidden_dim=HIDDEN_DIM,
-            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS).to(DEVICE)
+            graph_feat_dim=graph_feat_dim, num_blocks=NUM_BLOCKS,
+            normalization=gravnet_normalization).to(DEVICE)
+    if model_name == 'gravnet':
+        print(f'GravNet internal normalization: {gravnet_normalization}')
     print(f'模型: {exp_name}')
     print(f'参数量: {sum(p.numel() for p in model.parameters()):,}')
     print(
@@ -776,6 +783,12 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint model={checkpoint["model_name"]}, '
                 f'requested model={model_name}')
+        checkpoint_normalization = checkpoint.get(
+            'gravnet_normalization', 'batch')
+        if checkpoint_normalization != gravnet_normalization:
+            raise ValueError(
+                f'checkpoint gravnet_normalization={checkpoint_normalization}, '
+                f'requested gravnet_normalization={gravnet_normalization}')
         checkpoint_use_mc_beta = bool(checkpoint.get('use_mc_beta', False))
         if checkpoint_use_mc_beta != use_mc_beta:
             raise ValueError(
@@ -1066,6 +1079,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'model_name': model_name,
             'dataset_tag': dataset_tag,
             'seed': seed,
+            'gravnet_normalization': gravnet_normalization,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
@@ -1185,6 +1199,10 @@ if __name__ == '__main__':
         '--graph-feature-normalizer', type=Path, default=None,
         help='JSON fitted on this dataset\'s train split: log1p first 38 graph features, then z-score all 45',
     )
+    ap.add_argument(
+        '--gravnet-normalization', choices=['batch', 'layer'], default='batch',
+        help='normalization after each GravNet block',
+    )
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files,
@@ -1217,4 +1235,5 @@ if __name__ == '__main__':
           beta_min=args.beta_min,
           beta_max=args.beta_max,
           graph_feature_normalizer=args.graph_feature_normalizer,
+          gravnet_normalization=args.gravnet_normalization,
           seed=args.seed)

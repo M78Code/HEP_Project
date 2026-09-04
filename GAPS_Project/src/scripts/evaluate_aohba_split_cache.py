@@ -225,6 +225,10 @@ def main():
                         help='classification head consumes the model-predicted beta; requires --multi-task-beta')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument(
+        '--gravnet-normalization', choices=['batch', 'layer'], default='batch',
+        help='must match the normalization used during GravNet training',
+    )
+    parser.add_argument(
         '--graph-feature-normalizer', type=Path, default=None,
         help='same train-only JSON used for training',
     )
@@ -312,7 +316,8 @@ def main():
             graph_feat_dim=graph_feat_dim)
     else:
         model = GravNetClassifier(
-            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim, num_blocks=6)
+            in_channels=8, hidden_dim=128, graph_feat_dim=graph_feat_dim,
+            num_blocks=6, normalization=args.gravnet_normalization)
     state = torch.load(args.model_path, map_location=device, weights_only=True)
     state = {
         key.replace('_orig_mod.', '').replace('module.', ''): value
@@ -349,6 +354,7 @@ def main():
         print('beta multi-task: disabled')
     print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
+    print(f'GravNet norm: {args.gravnet_normalization}')
 
     labels, scores, betas, predicted_betas = infer(
         model,
