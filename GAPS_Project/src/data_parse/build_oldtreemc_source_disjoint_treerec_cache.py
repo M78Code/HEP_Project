@@ -46,6 +46,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expected-train", type=int, default=2000)
     parser.add_argument("--expected-val", type=int, default=1000)
     parser.add_argument("--expected-test", type=int, default=2000)
+    parser.add_argument(
+        "--max-train-events-per-source",
+        type=int,
+        default=None,
+        help=(
+            "Use at most this many training events from each source, in "
+            "sorted ROOT-shard and entry order. Validation and test are unchanged."
+        ),
+    )
     parser.add_argument("--test-antip-source", type=int, default=1627528714)
     parser.add_argument("--test-antid-source", type=int, default=1627550286)
     return parser.parse_args()
@@ -178,19 +187,46 @@ def source_ids_by_split(
     return sources
 
 
-def fit_train_normalizer(
+def selected_path_events(
+    args: argparse.Namespace,
+    split: str,
     paths: list[Path],
-    k: int,
+):
+    selected_by_source: Counter[int] = Counter()
+    for shard_index, path in enumerate(paths):
+        source_id = (
+            test_source_id(args, path)
+            if split == "test"
+            else source_from_path(path)
+        )
+        if split == "train" and args.max_train_events_per_source is not None:
+            remaining = (
+                args.max_train_events_per_source - selected_by_source[source_id]
+            )
+            if remaining <= 0:
+                continue
+        else:
+            remaining = None
+        events = load_root_events(path, source_id, args.k)
+        if remaining is not None:
+            events = events[:remaining]
+        if not events:
+            continue
+        selected_by_source[source_id] += len(events)
+        yield shard_index, path, source_id, events
+
+
+def fit_train_normalizer(
+    args: argparse.Namespace,
+    paths: list[Path],
 ) -> tuple[np.ndarray, np.ndarray, int, int]:
-    builder = GraphBuilder(k=k, normalize=False)
+    builder = GraphBuilder(k=args.k, normalize=False)
     sums = np.zeros(6, dtype=np.float64)
     sums_squared = np.zeros(6, dtype=np.float64)
     n_nodes = 0
     n_events = 0
 
-    for path in paths:
-        source_id = source_from_path(path)
-        events = load_root_events(path, source_id, k)
+    for _, path, _, events in selected_path_events(args, "train", paths):
         for event in events:
             raw = builder.raw_node_features_from_dict(event)
             transformed = raw[:, :6].astype(np.float64, copy=True)
@@ -233,13 +269,10 @@ def build_split(
     label_counts: Counter[int] = Counter()
     source_counts: Counter[int] = Counter()
 
-    for shard_index, path in enumerate(paths):
-        source_id = (
-            test_source_id(args, path)
-            if split == "test"
-            else source_from_path(path)
-        )
-        events = load_root_events(path, source_id, args.k)
+    saved_shards = 0
+    for shard_index, path, source_id, events in selected_path_events(
+        args, split, paths
+    ):
         graphs = []
         for event in events:
             graph = builder.build_from_dict(event)
@@ -278,13 +311,14 @@ def build_split(
             encoding="utf-8",
         )
         total += len(graphs)
+        saved_shards += 1
         print(f"[{split}] saved {destination.name}: {len(graphs):,}", flush=True)
 
     return {
         "events": total,
         "label_counts": dict(sorted(label_counts.items())),
         "source_counts": dict(sorted(source_counts.items())),
-        "shards": len(paths),
+        "shards": saved_shards,
     }
 
 
@@ -292,6 +326,11 @@ def main() -> None:
     args = parse_args()
     if args.k < 1:
         raise ValueError("--k must be positive")
+    if (
+        args.max_train_events_per_source is not None
+        and args.max_train_events_per_source < 1
+    ):
+        raise ValueError("--max-train-events-per-source must be positive")
     if args.output_dir.exists() and any(args.output_dir.iterdir()):
         raise FileExistsError(f"output directory is not empty: {args.output_dir}")
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -301,7 +340,7 @@ def main() -> None:
     print("source IDs:", {key: sorted(value) for key, value in sources.items()})
 
     mean, std, n_nodes, n_train_events = fit_train_normalizer(
-        paths["train"], args.k
+        args, paths["train"]
     )
     print("train node statistics:")
     for name, feature_mean, feature_std in zip(FEATURE_NAMES, mean, std):
@@ -318,6 +357,7 @@ def main() -> None:
         "train_nodes": n_nodes,
         "train_events": n_train_events,
         "train_sources": sorted(sources["train"]),
+        "max_train_events_per_source": args.max_train_events_per_source,
     }
     (args.output_dir / "node_feature_normalizer.json").write_text(
         json.dumps(normalizer, indent=2), encoding="utf-8"
@@ -354,6 +394,16 @@ def main() -> None:
                 f"{split}: unexpected label counts "
                 f"{summaries[split]['label_counts']}"
             )
+    if args.max_train_events_per_source is not None:
+        expected_source_counts = {
+            source_id: args.max_train_events_per_source
+            for source_id in sorted(sources["train"])
+        }
+        if summaries["train"]["source_counts"] != expected_source_counts:
+            raise RuntimeError(
+                "train: per-source cap was not satisfied: "
+                f"{summaries['train']['source_counts']}"
+            )
 
     manifest = {
         "purpose": "old-domain source-disjoint TreeRec pilot",
@@ -361,6 +411,7 @@ def main() -> None:
         "k": args.k,
         "pilot_reco_dir": str(args.pilot_reco_dir.resolve()),
         "test_reco_dir": str(args.test_reco_dir.resolve()),
+        "max_train_events_per_source": args.max_train_events_per_source,
         "sources": {key: sorted(value) for key, value in sources.items()},
         "splits": summaries,
     }
