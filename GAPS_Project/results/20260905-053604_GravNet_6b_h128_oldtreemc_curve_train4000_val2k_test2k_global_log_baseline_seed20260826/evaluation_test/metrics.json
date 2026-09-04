@@ -1,0 +1,71 @@
+{
+  "n_events": 2000,
+  "label_counts": {
+    "0": 1000,
+    "1": 1000
+  },
+  "accuracy": 0.873,
+  "auc": 0.945774,
+  "rejection": [
+    {
+      "target_efficiency": 0.5,
+      "actual_efficiency": 0.5,
+      "fpr": 0.005,
+      "rejection": 200.0,
+      "threshold": 0.8278535604476929
+    },
+    {
+      "target_efficiency": 0.7,
+      "actual_efficiency": 0.7,
+      "fpr": 0.033,
+      "rejection": 30.3030303030303,
+      "threshold": 0.710375964641571
+    },
+    {
+      "target_efficiency": 0.8,
+      "actual_efficiency": 0.8,
+      "fpr": 0.063,
+      "rejection": 15.873015873015873,
+      "threshold": 0.6011182069778442
+    },
+    {
+      "target_efficiency": 0.9,
+      "actual_efficiency": 0.9,
+      "fpr": 0.163,
+      "rejection": 6.134969325153374,
+      "threshold": 0.3889155983924866
+    },
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.95,
+      "fpr": 0.298,
+      "rejection": 3.3557046979865772,
+      "threshold": 0.2730933725833893
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.98,
+      "fpr": 0.421,
+      "rejection": 2.375296912114014,
+      "threshold": 0.19854736328125
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.99,
+      "fpr": 0.641,
+      "rejection": 1.5600624024960998,
+      "threshold": 0.1246139258146286
+    }
+  ],
+  "tof_mode": "normal",
+  "use_mc_beta": false,
+  "use_tof_beta": false,
+  "use_hit_topology": false,
+  "use_track_star": false,
+  "use_cluster_vertex_tokens": false,
+  "use_physics_edges": false,
+  "use_soft_objects": false,
+  "multi_task_beta": false,
+  "classify_with_predicted_beta": false,
+  "graph_feat_dim": 45
+}
