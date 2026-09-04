@@ -38,6 +38,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--train-events-per-class", type=int, default=1000)
     parser.add_argument("--val-events-per-class", type=int, default=500)
+    parser.add_argument(
+        "--exclude-manifest",
+        type=Path,
+        action="append",
+        default=[],
+        help=(
+            "repeatable prior selection manifest; entries from matching "
+            "sources are excluded from the new selection"
+        ),
+    )
     parser.add_argument("--train-antip-source", type=int, default=1627528606)
     parser.add_argument("--train-antid-source", type=int, default=1627550259)
     parser.add_argument("--val-antip-source", type=int, default=1627528610)
@@ -124,9 +134,49 @@ def discover_root_files(root_dir: Path, source_id: int) -> list[Path]:
     return paths
 
 
+def load_excluded_entries(
+    manifest_paths: list[Path],
+) -> dict[int, set[int]]:
+    excluded: dict[int, set[int]] = {}
+    for manifest_path in manifest_paths:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for row in payload["selections"]:
+            source_id = int(row["source_id"])
+            entry_path = Path(row["entry_list"])
+            if not entry_path.is_file():
+                recovered_path = manifest_path.parent / entry_path.name
+                if recovered_path.is_file():
+                    entry_path = recovered_path
+                else:
+                    raise FileNotFoundError(
+                        f"excluded entry list is missing: {entry_path}"
+                    )
+            entries = {
+                int(line)
+                for line in entry_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            }
+            expected = int(row["events"])
+            if len(entries) != expected:
+                raise RuntimeError(
+                    f"{entry_path}: expected {expected} unique entries, "
+                    f"found {len(entries)}"
+                )
+            excluded.setdefault(source_id, set()).update(entries)
+
+    if manifest_paths:
+        print(
+            "excluded existing entries:",
+            {key: len(value) for key, value in sorted(excluded.items())},
+            flush=True,
+        )
+    return excluded
+
+
 def scan_csv(
     csv_dir: Path,
     selections: list[Selection],
+    excluded: dict[int, set[int]],
 ) -> tuple[dict[str, list[int]], list[Path]]:
     selected = {item.name: [] for item in selections}
     by_source = {item.source_id: item for item in selections}
@@ -163,6 +213,8 @@ def scan_csv(
                         f"expected {item.label}, found {label} at "
                         f"{csv_path}:{row_number}"
                     )
+                if source_entry in excluded.get(source_id, set()):
+                    continue
                 selected[item.name].append(source_entry)
 
         progress = ", ".join(
@@ -179,6 +231,7 @@ def scan_csv(
 def validate_entries(
     selections: list[Selection],
     selected: dict[str, list[int]],
+    excluded: dict[int, set[int]],
 ) -> None:
     source_ids = [item.source_id for item in selections]
     if len(set(source_ids)) != len(source_ids):
@@ -199,6 +252,12 @@ def validate_entries(
             )
         if len(set(entries)) != len(entries):
             raise RuntimeError(f"{item.name}: duplicate source entries")
+        overlap_with_existing = set(entries) & excluded.get(item.source_id, set())
+        if overlap_with_existing:
+            raise RuntimeError(
+                f"{item.name}: overlaps excluded selection: "
+                f"{sorted(overlap_with_existing)[:5]}"
+            )
         split_entries[item.split].update(
             (item.source_id, entry) for entry in entries
         )
@@ -252,6 +311,9 @@ def write_outputs(
         "purpose": "old-domain source-disjoint TreeRec pilot",
         "csv_dir": str(args.csv_dir.resolve()),
         "root_dir": str(args.root_dir.resolve()),
+        "excluded_selection_manifests": [
+            str(path.resolve()) for path in args.exclude_manifest
+        ],
         "scanned_csv_files": [str(path.resolve()) for path in scanned_paths],
         "untouched_test_sources": {
             "antip": 1627528714,
@@ -269,8 +331,9 @@ def main() -> None:
     if args.train_events_per_class < 1 or args.val_events_per_class < 1:
         raise ValueError("event counts must be positive")
     selections = selections_from_args(args)
-    selected, scanned_paths = scan_csv(args.csv_dir, selections)
-    validate_entries(selections, selected)
+    excluded = load_excluded_entries(args.exclude_manifest)
+    selected, scanned_paths = scan_csv(args.csv_dir, selections, excluded)
+    validate_entries(selections, selected, excluded)
     write_outputs(args, selections, selected, scanned_paths)
 
 
