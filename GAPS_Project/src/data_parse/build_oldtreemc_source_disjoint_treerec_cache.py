@@ -76,10 +76,15 @@ def source_from_path(path: Path) -> int:
 
 
 def split_paths(args: argparse.Namespace) -> dict[str, list[Path]]:
+    test_paths = sorted(args.test_reco_dir.glob("reco_test_*.root"))
+    if not test_paths:
+        # Backward compatibility for the original paired 2k test directory,
+        # which contains only generic reco_*.root files.
+        test_paths = sorted(args.test_reco_dir.glob("reco_*.root"))
     paths = {
         "train": sorted(args.pilot_reco_dir.glob("reco_train_*.root")),
         "val": sorted(args.pilot_reco_dir.glob("reco_val_*.root")),
-        "test": sorted(args.test_reco_dir.glob("reco_*.root")),
+        "test": test_paths,
     }
     for split, split_files in paths.items():
         if not split_files:
