@@ -109,7 +109,11 @@ def scalar_array(tree, branch: str) -> np.ndarray:
     return np.asarray(tree[branch].array(library="np")).reshape(-1)
 
 
-def load_root_events(path: Path, source_id: int, k: int) -> list[dict]:
+def load_root_events(
+    path: Path,
+    source_id: int,
+    k: int,
+) -> tuple[list[dict], Counter[str]]:
     particle = particle_from_path(path)
     with uproot.open(path) as root_file:
         mc = root_file["TreeMc"]
@@ -129,6 +133,7 @@ def load_root_events(path: Path, source_id: int, k: int) -> list[dict]:
         times = rec["Rec/hitseries_/hitseries_.hit_time_"].array(library="ak")
 
     events = []
+    skipped: Counter[str] = Counter()
     for index in range(len(pdgs)):
         event_volume = np.asarray(volume[index], dtype=np.int64)
         event_energy = np.asarray(energy[index], dtype=np.float32)
@@ -143,10 +148,8 @@ def load_root_events(path: Path, source_id: int, k: int) -> list[dict]:
         if len(lengths) != 1:
             raise RuntimeError(f"{path}: hit-array mismatch at entry {index}")
         if len(event_energy) <= 1:
-            raise RuntimeError(
-                f"{path}: entry {index} has {len(event_energy)} hits, "
-                "at least two are required"
-            )
+            skipped["n_le_1"] += 1
+            continue
         if int(pdgs[index]) != PDG[particle]:
             raise RuntimeError(
                 f"{path}: PDG mismatch at entry {index}: {int(pdgs[index])}"
@@ -171,7 +174,13 @@ def load_root_events(path: Path, source_id: int, k: int) -> list[dict]:
                 "root_entry": index,
             }
         )
-    return events
+    if skipped:
+        print(
+            f"[filter] {path.name}: skipped "
+            f"{skipped['n_le_1']:,} events with N<=1 hits",
+            flush=True,
+        )
+    return events, skipped
 
 
 def source_ids_by_split(
@@ -212,13 +221,14 @@ def selected_path_events(
                 continue
         else:
             remaining = None
-        events = load_root_events(path, source_id, args.k)
+        events, skipped = load_root_events(path, source_id, args.k)
+        scanned_events = len(events) + sum(skipped.values())
         if remaining is not None:
             events = events[:remaining]
         if not events:
             continue
         selected_by_source[source_id] += len(events)
-        yield shard_index, path, source_id, events
+        yield shard_index, path, source_id, events, scanned_events, skipped
 
 
 def fit_train_normalizer(
@@ -231,7 +241,9 @@ def fit_train_normalizer(
     n_nodes = 0
     n_events = 0
 
-    for _, path, _, events in selected_path_events(args, "train", paths):
+    for _, path, _, events, _, _ in selected_path_events(
+        args, "train", paths
+    ):
         for event in events:
             raw = builder.raw_node_features_from_dict(event)
             transformed = raw[:, :6].astype(np.float64, copy=True)
@@ -271,13 +283,27 @@ def build_split(
     builder: GraphBuilder,
 ) -> dict:
     total = 0
+    scanned_total = 0
+    skipped_small = 0
     label_counts: Counter[int] = Counter()
+    skipped_label_counts: Counter[int] = Counter()
     source_counts: Counter[int] = Counter()
 
     saved_shards = 0
-    for shard_index, path, source_id, events in selected_path_events(
+    for (
+        shard_index,
+        path,
+        source_id,
+        events,
+        scanned_events,
+        skipped,
+    ) in selected_path_events(
         args, split, paths
     ):
+        particle = particle_from_path(path)
+        scanned_total += scanned_events
+        skipped_small += skipped["n_le_1"]
+        skipped_label_counts[LABEL[particle]] += skipped["n_le_1"]
         graphs = []
         for event in events:
             graph = builder.build_from_dict(event)
@@ -294,7 +320,6 @@ def build_split(
             label_counts[int(graph.y.item())] += 1
             source_counts[source_id] += 1
 
-        particle = particle_from_path(path)
         destination = args.output_dir / (
             f"{split}_{particle}_{source_id}_{shard_index:02d}.pt"
         )
@@ -321,7 +346,10 @@ def build_split(
 
     return {
         "events": total,
+        "scanned_events": scanned_total,
+        "skipped_n_le_1": skipped_small,
         "label_counts": dict(sorted(label_counts.items())),
+        "skipped_label_counts": dict(sorted(skipped_label_counts.items())),
         "source_counts": dict(sorted(source_counts.items())),
         "shards": saved_shards,
     }
@@ -385,19 +413,33 @@ def main() -> None:
         "test": args.expected_test,
     }
     for split, expected_events in expected.items():
-        if summaries[split]["events"] != expected_events:
+        summary = summaries[split]
+        if (
+            split == "train"
+            and args.max_train_events_per_source is not None
+        ):
+            expected_kept = expected_events
+        else:
+            if summary["scanned_events"] != expected_events:
+                raise RuntimeError(
+                    f"{split}: expected {expected_events} input events, "
+                    f"scanned {summary['scanned_events']}"
+                )
+            expected_kept = expected_events - summary["skipped_n_le_1"]
+        if summary["events"] != expected_kept:
             raise RuntimeError(
-                f"{split}: expected {expected_events} events, "
-                f"found {summaries[split]['events']}"
+                f"{split}: expected {expected_kept} usable events, "
+                f"found {summary['events']}"
             )
         expected_per_class = expected_events // 2
-        if summaries[split]["label_counts"] != {
-            0: expected_per_class,
-            1: expected_per_class,
+        input_label_counts = Counter(summary["label_counts"])
+        input_label_counts.update(summary["skipped_label_counts"])
+        if dict(sorted(input_label_counts.items())) != {
+            0: expected_per_class, 1: expected_per_class
         }:
             raise RuntimeError(
-                f"{split}: unexpected label counts "
-                f"{summaries[split]['label_counts']}"
+                f"{split}: unexpected input label counts "
+                f"{dict(input_label_counts)}"
             )
     if args.max_train_events_per_source is not None:
         expected_source_counts = {
