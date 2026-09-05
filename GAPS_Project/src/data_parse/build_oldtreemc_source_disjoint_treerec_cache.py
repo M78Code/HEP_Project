@@ -419,6 +419,10 @@ def main() -> None:
             and args.max_train_events_per_source is not None
         ):
             expected_kept = expected_events
+            expected_label_counts = {
+                0: expected_events // 2,
+                1: expected_events // 2,
+            }
         else:
             if summary["scanned_events"] != expected_events:
                 raise RuntimeError(
@@ -426,20 +430,31 @@ def main() -> None:
                     f"scanned {summary['scanned_events']}"
                 )
             expected_kept = expected_events - summary["skipped_n_le_1"]
+            expected_per_class = expected_events // 2
+            expected_label_counts = Counter(summary["label_counts"])
+            expected_label_counts.update(summary["skipped_label_counts"])
+            expected_label_counts = dict(sorted(expected_label_counts.items()))
+            if expected_label_counts != {
+                0: expected_per_class,
+                1: expected_per_class,
+            }:
+                raise RuntimeError(
+                    f"{split}: unexpected input label counts "
+                    f"{expected_label_counts}"
+                )
         if summary["events"] != expected_kept:
             raise RuntimeError(
                 f"{split}: expected {expected_kept} usable events, "
                 f"found {summary['events']}"
             )
-        expected_per_class = expected_events // 2
-        input_label_counts = Counter(summary["label_counts"])
-        input_label_counts.update(summary["skipped_label_counts"])
-        if dict(sorted(input_label_counts.items())) != {
-            0: expected_per_class, 1: expected_per_class
-        }:
+        if (
+            split == "train"
+            and args.max_train_events_per_source is not None
+            and summary["label_counts"] != expected_label_counts
+        ):
             raise RuntimeError(
-                f"{split}: unexpected input label counts "
-                f"{dict(input_label_counts)}"
+                f"{split}: unexpected selected label counts "
+                f"{summary['label_counts']}"
             )
     if args.max_train_events_per_source is not None:
         expected_source_counts = {
