@@ -19,6 +19,13 @@ TOF_POSITION_SCALE_MM = 1000.0
 # TOF flight time and two 3D positions can be signed, so they are only z-scored.
 BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
+INPUT_ABLATION_CHOICES = (
+    'full',
+    'node_only',
+    'event_only',
+    'no_energy',
+    'no_time',
+)
 HIT_TOPOLOGY_FEATURE_DIM = 6
 TRACK_STAR_FEATURE_DIM = 4
 CLUSTER_VERTEX_TOKEN_DIM = 3
@@ -35,6 +42,43 @@ def build_base_graph_feat(batch) -> torch.Tensor:
         batch.tof_profile.view(-1, 16),
         batch.tof_feat.view(-1, 11),
     ], dim=1)
+
+
+def apply_input_ablation(
+        node_features: torch.Tensor,
+        graph_features: torch.Tensor,
+        mode: str,
+) -> tuple[torch.Tensor, torch.Tensor | None]:
+    """Mask TreeRec inputs while keeping the baseline architecture controlled.
+
+    Node continuous features are train-normalized, so zero is their training
+    mean. Event features are raw in the current baseline, where zero denotes an
+    absent count, energy deposit, time difference, or position.
+    """
+    if mode not in INPUT_ABLATION_CHOICES:
+        raise ValueError(f'unsupported input ablation: {mode}')
+    if graph_features.ndim != 2 or graph_features.size(1) < BASE_GRAPH_FEATURE_DIM:
+        raise ValueError(
+            f'expected at least {BASE_GRAPH_FEATURE_DIM} graph features, '
+            f'got {tuple(graph_features.shape)}')
+    if mode == 'full':
+        return node_features, graph_features
+    if mode == 'node_only':
+        return node_features, None
+    if mode == 'event_only':
+        return torch.zeros_like(node_features), graph_features
+
+    node_features = node_features.clone()
+    graph_features = graph_features.clone()
+    if mode == 'no_energy':
+        # Node E and dE/dx; event total/profile/TOF-energy summaries.
+        node_features[:, (3, 5)] = 0.0
+        graph_features[:, 1:36] = 0.0
+    elif mode == 'no_time':
+        # Node time plus every summary selected by earliest TOF hit time.
+        node_features[:, 4] = 0.0
+        graph_features[:, 38:45] = 0.0
+    return node_features, graph_features
 
 
 def transform_base_graph_feat(graph_feat: torch.Tensor) -> torch.Tensor:

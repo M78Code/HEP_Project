@@ -85,7 +85,9 @@ from GAPS_Project.src.models.gravnet import (
 from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
+    INPUT_ABLATION_CHOICES,
     TRACK_STAR_FEATURE_DIM,
+    apply_input_ablation,
     append_hit_topology,
     append_track_star,
     build_base_graph_feat,
@@ -192,18 +194,19 @@ def build_graph_feat(
     return graph_feat
 
 
-def forward_model(model, model_name, batch, graph_feat):
+def forward_model(model, model_name, batch, graph_feat, node_features=None):
     """Call one model variant while keeping the training loops identical."""
+    node_features = batch.x if node_features is None else node_features
     if model_name == 'gravnet_tof':
         if not hasattr(batch, 'tof_paddle_energy'):
             raise ValueError('GravNetTOF requires tof_paddle_energy in graph cache')
         return model(
-            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            node_features, batch.edge_index, batch.batch, graph_feat=graph_feat,
             tof_paddle_energy=batch.tof_paddle_energy.view(-1, 172))
     if model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
         vertex_token, prong_tokens, prong_mask = cluster_vertex_token_inputs(batch)
         return model(
-            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            node_features, batch.edge_index, batch.batch, graph_feat=graph_feat,
             vertex_token=vertex_token, prong_tokens=prong_tokens,
             prong_mask=prong_mask)
     if model_name == 'gravnet_physics_edges':
@@ -212,9 +215,9 @@ def forward_model(model, model_name, batch, graph_feat):
                 'gravnet_physics_edges requires cached edge_attr; run '
                 'attach_treerec_physics_edge_attributes.py first')
         return model(
-            batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+            node_features, batch.edge_index, batch.batch, graph_feat=graph_feat,
             edge_attr=batch.edge_attr)
-    return model(batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+    return model(node_features, batch.edge_index, batch.batch, graph_feat=graph_feat)
 
 
 def soft_object_auxiliary_loss(auxiliary, batch):
@@ -533,6 +536,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
           beta_min: float = None, beta_max: float = None,
           graph_feature_normalizer: Path = None,
           gravnet_normalization: str = 'batch',
+          input_ablation: str = 'full',
           seed: int = 42):
     if use_mc_beta and use_tof_beta:
         raise ValueError('--use-mc-beta and --use-tof-beta cannot be used together')
@@ -546,6 +550,16 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
     if gravnet_normalization != 'batch' and model_name != 'gravnet':
         raise ValueError(
             '--gravnet-normalization currently supports --model gravnet only')
+    if input_ablation not in INPUT_ABLATION_CHOICES:
+        raise ValueError(f'unsupported input ablation: {input_ablation}')
+    if input_ablation != 'full':
+        if model_name != 'gravnet':
+            raise ValueError('--input-ablation currently supports --model gravnet only')
+        if any((use_mc_beta, use_tof_beta, use_hit_topology, use_track_star,
+                multi_task_beta, beta_weighted_loss,
+                short_tof_antip_weight > 1.0)):
+            raise ValueError(
+                '--input-ablation must be run without optional input/loss branches')
     if multi_task_beta and model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
         raise ValueError('cluster-token models are classification-only in this A/B')
     if model_name == 'gravnet_soft_objects' and multi_task_beta:
@@ -637,6 +651,9 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
         graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
     if use_track_star:
         graph_feat_dim += TRACK_STAR_FEATURE_DIM
+    if input_ablation == 'node_only':
+        graph_feat_dim = 0
+    print(f'input ablation: {input_ablation}')
     print(
         f'MC beta input: {"enabled" if use_mc_beta else "disabled"} '
         f'| TOF beta input: {"enabled" if use_tof_beta else "disabled"} '
@@ -789,6 +806,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             raise ValueError(
                 f'checkpoint gravnet_normalization={checkpoint_normalization}, '
                 f'requested gravnet_normalization={gravnet_normalization}')
+        checkpoint_input_ablation = checkpoint.get('input_ablation', 'full')
+        if checkpoint_input_ablation != input_ablation:
+            raise ValueError(
+                f'checkpoint input_ablation={checkpoint_input_ablation}, '
+                f'requested input_ablation={input_ablation}')
         checkpoint_use_mc_beta = bool(checkpoint.get('use_mc_beta', False))
         if checkpoint_use_mc_beta != use_mc_beta:
             raise ValueError(
@@ -905,7 +927,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     graph_feature_mean=graph_feature_mean,
                     graph_feature_std=graph_feature_std,
                 )
-                model_output = forward_model(model, model_name, batch, graph_feat)
+                node_features, graph_feat = apply_input_ablation(
+                    batch.x, graph_feat, input_ablation)
+                model_output = forward_model(
+                    model, model_name, batch, graph_feat,
+                    node_features=node_features)
             if multi_task_beta:
                 logits, beta_prediction = model_output
             elif model_name == 'gravnet_soft_objects':
@@ -1011,7 +1037,11 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
                     graph_feature_mean=graph_feature_mean,
                     graph_feature_std=graph_feature_std,
                 )
-                model_output = forward_model(model, model_name, batch, graph_feat)
+                node_features, graph_feat = apply_input_ablation(
+                    batch.x, graph_feat, input_ablation)
+                model_output = forward_model(
+                    model, model_name, batch, graph_feat,
+                    node_features=node_features)
                 if multi_task_beta:
                     logits, beta_prediction = model_output
                 elif model_name == 'gravnet_soft_objects':
@@ -1080,6 +1110,7 @@ def train(manifest_path: Path, cache_dir: Path, epochs: int = EPOCHS,
             'dataset_tag': dataset_tag,
             'seed': seed,
             'gravnet_normalization': gravnet_normalization,
+            'input_ablation': input_ablation,
             'use_mc_beta': use_mc_beta,
             'use_tof_beta': use_tof_beta,
             'use_hit_topology': use_hit_topology,
@@ -1203,6 +1234,12 @@ if __name__ == '__main__':
         '--gravnet-normalization', choices=['batch', 'layer'], default='batch',
         help='normalization after each GravNet block',
     )
+    ap.add_argument(
+        '--input-ablation', choices=INPUT_ABLATION_CHOICES, default='full',
+        help=(
+            'controlled TreeRec input mask: remove event features, node '
+            'features, energy information, or timing information'),
+    )
     args = ap.parse_args()
     train(args.manifest, args.cache_dir, epochs=args.epochs,
           max_train_files=args.max_train_files,
@@ -1236,4 +1273,5 @@ if __name__ == '__main__':
           beta_max=args.beta_max,
           graph_feature_normalizer=args.graph_feature_normalizer,
           gravnet_normalization=args.gravnet_normalization,
+          input_ablation=args.input_ablation,
           seed=args.seed)

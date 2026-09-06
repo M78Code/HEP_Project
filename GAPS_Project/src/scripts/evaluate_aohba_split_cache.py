@@ -27,7 +27,9 @@ from GAPS_Project.src.models.gravnet_tof import GravNetTOFClassifier
 from GAPS_Project.src.models.dgcnn import DGCNNClassifier
 from GAPS_Project.src.models.tree_rec_features import (
     HIT_TOPOLOGY_FEATURE_DIM,
+    INPUT_ABLATION_CHOICES,
     TRACK_STAR_FEATURE_DIM,
+    apply_input_ablation,
     append_hit_topology,
     append_track_star,
     build_base_graph_feat,
@@ -112,7 +114,8 @@ def infer(
         use_track_star=False,
         multi_task_beta=False,
         beta_target_mean=None, beta_target_std=None,
-        graph_feature_mean=None, graph_feature_std=None):
+        graph_feature_mean=None, graph_feature_std=None,
+        input_ablation='full'):
     labels, scores, betas, predicted_betas = [], [], [], []
     model.eval()
     for batch in tqdm(loader, total=total_batches, desc='test', dynamic_ncols=True):
@@ -126,6 +129,8 @@ def infer(
             graph_feature_mean=graph_feature_mean,
             graph_feature_std=graph_feature_std,
         )
+        node_features, graph_feat = apply_input_ablation(
+            batch.x, graph_feat, input_ablation)
         if model_name == 'gravnet_tof':
             tof_paddle_energy = batch.tof_paddle_energy.view(-1, 172)
 
@@ -139,7 +144,7 @@ def infer(
                 tof_paddle_energy = tof_paddle_energy[permutation]
 
             model_output = model(
-                batch.x,
+                node_features,
                 batch.edge_index,
                 batch.batch,
                 graph_feat=graph_feat,
@@ -148,7 +153,7 @@ def infer(
         elif model_name in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
             vertex_token, prong_tokens, prong_mask = cluster_vertex_token_inputs(batch)
             model_output = model(
-                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+                node_features, batch.edge_index, batch.batch, graph_feat=graph_feat,
                 vertex_token=vertex_token, prong_tokens=prong_tokens,
                 prong_mask=prong_mask)
         elif model_name == 'gravnet_physics_edges':
@@ -156,15 +161,15 @@ def infer(
                 raise ValueError(
                     'gravnet_physics_edges requires cached edge_attr')
             model_output = model(
-                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat,
+                node_features, batch.edge_index, batch.batch, graph_feat=graph_feat,
                 edge_attr=batch.edge_attr)
         elif model_name == 'gravnet_soft_objects':
             logits, _ = model(
-                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                node_features, batch.edge_index, batch.batch, graph_feat=graph_feat)
             model_output = logits
         else:
             model_output = model(
-                batch.x, batch.edge_index, batch.batch, graph_feat=graph_feat)
+                node_features, batch.edge_index, batch.batch, graph_feat=graph_feat)
         if multi_task_beta:
             logits, beta_prediction = model_output
             predicted_betas.append(
@@ -232,6 +237,10 @@ def main():
         '--graph-feature-normalizer', type=Path, default=None,
         help='same train-only JSON used for training',
     )
+    parser.add_argument(
+        '--input-ablation', choices=INPUT_ABLATION_CHOICES, default='full',
+        help='must match the controlled TreeRec input mask used for training',
+    )
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -251,6 +260,13 @@ def main():
             '--classify-with-predicted-beta requires --multi-task-beta')
     if args.multi_task_beta and args.model in ('gravnet_cluster_tokens', 'cluster_tokens_only'):
         raise ValueError('cluster-token models are classification-only in this A/B')
+    if args.input_ablation != 'full':
+        if args.model != 'gravnet':
+            raise ValueError('--input-ablation currently supports --model gravnet only')
+        if any((args.use_mc_beta, args.use_tof_beta, args.use_hit_topology,
+                args.use_track_star, args.multi_task_beta)):
+            raise ValueError(
+                '--input-ablation must be evaluated without optional input branches')
 
     files = sorted(args.cache_dir.glob('test_*.pt'))
     if not files:
@@ -274,6 +290,8 @@ def main():
         graph_feat_dim += HIT_TOPOLOGY_FEATURE_DIM
     if args.use_track_star:
         graph_feat_dim += TRACK_STAR_FEATURE_DIM
+    if args.input_ablation == 'node_only':
+        graph_feat_dim = 0
 
     beta_target_mean = None
     beta_target_std = None
@@ -355,6 +373,7 @@ def main():
     print(f'graph norm : {args.graph_feature_normalizer or "disabled"}')
     print(f'graph feat : {graph_feat_dim}')
     print(f'GravNet norm: {args.gravnet_normalization}')
+    print(f'input ablation: {args.input_ablation}')
 
     labels, scores, betas, predicted_betas = infer(
         model,
@@ -372,6 +391,7 @@ def main():
         beta_target_std=beta_target_std,
         graph_feature_mean=graph_feature_mean,
         graph_feature_std=graph_feature_std,
+        input_ablation=args.input_ablation,
     )
 
     predictions = (scores >= 0.5).astype(np.int64)
@@ -399,6 +419,7 @@ def main():
         'classify_with_predicted_beta': bool(
             args.classify_with_predicted_beta),
         'graph_feat_dim': int(graph_feat_dim),
+        'input_ablation': args.input_ablation,
     }
     if args.multi_task_beta:
         if betas is None or predicted_betas is None:
