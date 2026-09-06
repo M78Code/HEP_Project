@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import time
@@ -28,7 +29,9 @@ class Job:
     output_path: Path
     log_path: Path
     status_path: Path
+    seed_path: Path
     expected_events: int
+    digitization_seed: int | None
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,7 +44,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--glob", default="*.root")
     parser.add_argument("--expected-events", type=int)
     parser.add_argument("--max-files", type=int)
+    parser.add_argument(
+        "--seed-base",
+        type=int,
+        help=(
+            "derive a stable, distinct positive digitization seed for each "
+            "input file; omit to preserve the Crane default"
+        ),
+    )
     return parser.parse_args()
+
+
+def derive_digitization_seed(seed_base: int, input_name: str) -> int:
+    """Derive a stable ROOT-compatible positive seed from a file name."""
+    if seed_base <= 0:
+        raise ValueError("--seed-base must be positive")
+    payload = f"{seed_base}:{input_name}".encode("utf-8")
+    digest = hashlib.sha256(payload).digest()
+    seed = int.from_bytes(digest[:8], "big") % 2_147_483_647
+    return seed or 1
 
 
 def tree_entries(path: Path, tree_name: str) -> int:
@@ -73,6 +94,13 @@ def completed(job: Job) -> bool:
         return False
     if job.status_path.read_text(encoding="utf-8").strip() != "0":
         return False
+    if job.digitization_seed is not None:
+        if not job.seed_path.is_file():
+            return False
+        if job.seed_path.read_text(encoding="utf-8").strip() != str(
+            job.digitization_seed
+        ):
+            return False
     try:
         validate_output(job)
     except Exception:
@@ -80,15 +108,7 @@ def completed(job: Job) -> bool:
     return True
 
 
-def run_job(args: argparse.Namespace, job: Job) -> tuple[str, int, float]:
-    if completed(job):
-        print(f"[SKIP] {job.input_path.name}", flush=True)
-        return job.input_path.name, 0, 0.0
-    if job.output_path.exists():
-        raise FileExistsError(
-            f"incomplete output exists; inspect or remove it: {job.output_path}"
-        )
-
+def build_command(args: argparse.Namespace, job: Job) -> list[str]:
     command = [
         str(args.crane),
         "-i", str(job.input_path),
@@ -100,8 +120,26 @@ def run_job(args: argparse.Namespace, job: Job) -> tuple[str, int, float]:
         "--clone-mc", "1",
         "--keep-not-triggered", "1",
     ]
+    if job.digitization_seed is not None:
+        command.extend(
+            ["--digitization-seed", str(job.digitization_seed)]
+        )
+    return command
+
+
+def run_job(args: argparse.Namespace, job: Job) -> tuple[str, int, float]:
+    if completed(job):
+        print(f"[SKIP] {job.input_path.name}", flush=True)
+        return job.input_path.name, 0, 0.0
+    if job.output_path.exists():
+        raise FileExistsError(
+            f"incomplete output exists; inspect or remove it: {job.output_path}"
+        )
+
+    command = build_command(args, job)
     print(
-        f"[START] {job.input_path.name} events={job.expected_events:,}",
+        f"[START] {job.input_path.name} events={job.expected_events:,} "
+        f"seed={job.digitization_seed}",
         flush=True,
     )
     started = time.monotonic()
@@ -119,6 +157,10 @@ def run_job(args: argparse.Namespace, job: Job) -> tuple[str, int, float]:
             with job.log_path.open("a", encoding="utf-8") as log:
                 log.write(f"\nOUTPUT VALIDATION FAILED: {error}\n")
     job.status_path.write_text(f"{status}\n", encoding="utf-8")
+    if status == 0 and job.digitization_seed is not None:
+        job.seed_path.write_text(
+            f"{job.digitization_seed}\n", encoding="utf-8"
+        )
     print(
         f"[DONE] {job.input_path.name} status={status} "
         f"seconds={elapsed:.1f}",
@@ -131,6 +173,8 @@ def main() -> None:
     args = parse_args()
     if args.jobs < 1:
         raise ValueError("--jobs must be positive")
+    if args.seed_base is not None and args.seed_base <= 0:
+        raise ValueError("--seed-base must be positive")
     if not args.crane.is_file():
         raise FileNotFoundError(f"missing Crane executable: {args.crane}")
     paths = sorted(args.input_dir.glob(args.glob))
@@ -144,15 +188,29 @@ def main() -> None:
     jobs = []
     for path in paths:
         entries = tree_entries(path, "TreeMc")
+        digitization_seed = (
+            derive_digitization_seed(args.seed_base, path.name)
+            if args.seed_base is not None
+            else None
+        )
         jobs.append(
             Job(
                 input_path=path,
                 output_path=args.output_dir / f"reco_{path.name}",
                 log_path=args.log_dir / f"{path.stem}.log",
                 status_path=args.log_dir / f"{path.stem}.status",
+                seed_path=args.log_dir / f"{path.stem}.seed",
                 expected_events=entries,
+                digitization_seed=digitization_seed,
             )
         )
+    seeds = [
+        job.digitization_seed
+        for job in jobs
+        if job.digitization_seed is not None
+    ]
+    if len(seeds) != len(set(seeds)):
+        raise RuntimeError("derived digitization seed collision")
     total_events = sum(job.expected_events for job in jobs)
     if args.expected_events is not None and total_events != args.expected_events:
         raise RuntimeError(
@@ -181,6 +239,10 @@ def main() -> None:
         "files": len(jobs),
         "events": total_events,
         "parallel_jobs": args.jobs,
+        "digitization_seed_base": args.seed_base,
+        "digitization_seeds": {
+            job.input_path.name: job.digitization_seed for job in jobs
+        },
         "failed": failed,
     }
     (args.output_dir / "digitization_manifest.json").write_text(

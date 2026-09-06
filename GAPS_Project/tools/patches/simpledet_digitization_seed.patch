@@ -1,0 +1,80 @@
+diff --git a/SimpleDet/common/include/GDigitizer.hh b/SimpleDet/common/include/GDigitizer.hh
+--- a/SimpleDet/common/include/GDigitizer.hh
++++ b/SimpleDet/common/include/GDigitizer.hh
+@@ -81,6 +81,12 @@ class GDigitizer{
+ 	   ~GDigitizer();
+        GDigitizer();
+ 
++      /**
++       * Set a reproducible random seed for digitization smearing.
++       * A positive seed is required.
++       */
++      void SetRandomSeed(unsigned int seed);
++
+       /**
+        * Switch off all digitization effects and just
+        * convert MC events directly to Rec events without  
+diff --git a/SimpleDet/common/src/GDigitizer.cc b/SimpleDet/common/src/GDigitizer.cc
+--- a/SimpleDet/common/src/GDigitizer.cc
++++ b/SimpleDet/common/src/GDigitizer.cc
+@@ -203,6 +203,14 @@ dg::GDigitizer::~GDigitizer(){
+ 
+ /******************************************************************************/
+ 
++void dg::GDigitizer::SetRandomSeed(unsigned int seed)
++{
++    random_generator_.SetSeed(seed);
++    log_info("Set digitization random seed to " << seed);
++}
++
++/******************************************************************************/
++
+ void dg::GDigitizer::DisableDigitizer()
+ {
+     log_warn("=========ACHTUNG!!=================");
+diff --git a/SimpleDet/analysis/CraneBaseProcessing.cc b/SimpleDet/analysis/CraneBaseProcessing.cc
+--- a/SimpleDet/analysis/CraneBaseProcessing.cc
++++ b/SimpleDet/analysis/CraneBaseProcessing.cc
+@@ -13,5 +13,6 @@
+  */
+ #include <cstdlib>
++#include <stdexcept>
+ #include <string>
+ 
+ #include "TFile.h"
+@@ -57,5 +57,7 @@ int main(int argc, char* argv[])
+   bool do_primary_columndensity = false;
+   // do reconstruction
+   bool do_reconstruction = false;
++  // Optional reproducible seed for digitization smearing
++  int digitization_seed = -1;
+   // save GDataEvent object
+   bool save_greco_event = false;
+@@ -101,4 +103,7 @@ int main(int argc, char* argv[])
+ 
+   parser->AddCommandLineOption<std::string>("digi-pars", "user-defined digitization parameters file [DEFAULT: use nominal values]","","p");
+   parser->AddOption<int>("nevents", "process only XX events (default [-1] = process all)", -1, "n");
++  parser->AddOption<int>("digitization-seed",
++                          "positive random seed for reproducible digitization; default [-1] keeps the library default",
++                          -1, "");
+   parser->AddOption<bool>("clone-mc", "Keep the CEventMc by cloning the tree", false, "");
+@@ -188,4 +193,5 @@ int main(int argc, char* argv[])
+   // figure out what to do, how many events to run etc
+   nEvents = parser->GetOption<int>("nevents");
+   digi_par_file = parser->GetOption<std::string>("digi-pars");
++  digitization_seed = parser->GetOption<int>("digitization-seed");
+   write_mc_to_output = parser->GetOption<bool>("clone-mc");
+@@ -223,5 +229,13 @@ int main(int argc, char* argv[])
+ 
+   if (digitize)
+   {
++    if (digitization_seed == 0)
++      {
++        throw std::invalid_argument("--digitization-seed must be positive or omitted");
++      }
++    if (digitization_seed > 0)
++      {
++        digi.SetRandomSeed(static_cast<unsigned int>(digitization_seed));
++      }
+     digi.SetGeometry(geometry);
+     // FIXME is this necessary?
