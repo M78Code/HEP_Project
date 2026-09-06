@@ -1,0 +1,312 @@
+[
+  {
+    "label": "TreeRec 4M event z-score",
+    "result_dir": "results/evaluation_aohba4M_atrest_gravnet_mc1",
+    "n_events": 600000,
+    "label_counts": {
+      "0": 300000,
+      "1": 300000
+    },
+    "accuracy_at_0.5": 0.9394283333333333,
+    "auc": 0.9863819673388888,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 6.666666666666667e-05,
+        "rejection": 15000.0,
+        "threshold": 0.9752806425094604
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0009066666666666666,
+        "rejection": 1102.9411764705883,
+        "threshold": 0.8626708388328552
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.004123333333333333,
+        "rejection": 242.5222312045271,
+        "threshold": 0.7288657426834106
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.026543333333333332,
+        "rejection": 37.67424337561221,
+        "threshold": 0.5381225347518921
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.08084333333333334,
+        "rejection": 12.369603760359542,
+        "threshold": 0.4281083643436432
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.1771,
+        "rejection": 5.64652738565782,
+        "threshold": 0.3166034519672394
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.2629666666666667,
+        "rejection": 3.802763341361389,
+        "threshold": 0.23663058876991272
+      }
+    ]
+  },
+  {
+    "label": "Current TreeRec 1M global-log",
+    "result_dir": "results/20260816-224239_GravNet_6b_h128_aohba_treerec_1M_global_log_seed20260815/evaluation_test",
+    "n_events": 100000,
+    "label_counts": {
+      "0": 50000,
+      "1": 50000
+    },
+    "accuracy_at_0.5": 0.95773,
+    "auc": 0.9931633986,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 2e-05,
+        "rejection": 49999.99999999999,
+        "threshold": 0.9958091974258423
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0001,
+        "rejection": 10000.0,
+        "threshold": 0.9728763699531555
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.00066,
+        "rejection": 1515.1515151515152,
+        "threshold": 0.8937696218490601
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.00798,
+        "rejection": 125.31328320802007,
+        "threshold": 0.6561762094497681
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.03418,
+        "rejection": 29.25687536571094,
+        "threshold": 0.4798676371574402
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.09536,
+        "rejection": 10.486577181208053,
+        "threshold": 0.3424578905105591
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.1509,
+        "rejection": 6.626905235255135,
+        "threshold": 0.25796645879745483
+      }
+    ]
+  },
+  {
+    "label": "Current TreeRec 4M global-log",
+    "result_dir": "results/20260817-132931_GravNet_6b_h128_aohba_treerec_4M_global_log_seed20260815/evaluation_test",
+    "n_events": 600000,
+    "label_counts": {
+      "0": 300000,
+      "1": 300000
+    },
+    "accuracy_at_0.5": 0.9636566666666667,
+    "auc": 0.9948546144333331,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5000066666666667,
+        "fpr": 1e-05,
+        "rejection": 99999.99999999999,
+        "threshold": 0.9977903366088867
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 5.333333333333333e-05,
+        "rejection": 18750.0,
+        "threshold": 0.9833021759986877
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0003533333333333333,
+        "rejection": 2830.1886792452833,
+        "threshold": 0.9252627491950989
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.004403333333333334,
+        "rejection": 227.10068130204388,
+        "threshold": 0.7059419751167297
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.022863333333333333,
+        "rejection": 43.738154249890655,
+        "threshold": 0.5179617404937744
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.07509333333333333,
+        "rejection": 13.316761363636363,
+        "threshold": 0.36476102471351624
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.12342666666666667,
+        "rejection": 8.101976882359295,
+        "threshold": 0.28031694889068604
+      }
+    ]
+  },
+  {
+    "label": "Rebuilt prior-domain TreeRec 1M global-log",
+    "result_dir": "results/20260906-000617_GravNet_6b_h128_oldtreemc_source_disjoint_1m_global_log_baseline_seed20260825/evaluation_test",
+    "n_events": 100000,
+    "label_counts": {
+      "0": 50000,
+      "1": 50000
+    },
+    "accuracy_at_0.5": 0.99389,
+    "auc": 0.9996871892,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 2e-05,
+        "rejection": 49999.99999999999,
+        "threshold": 0.9974963068962097
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 2e-05,
+        "rejection": 49999.99999999999,
+        "threshold": 0.9939807653427124
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 2e-05,
+        "rejection": 49999.99999999999,
+        "threshold": 0.988907516002655
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 6e-05,
+        "rejection": 16666.666666666668,
+        "threshold": 0.9705567359924316
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.00032,
+        "rejection": 3124.9999999999995,
+        "threshold": 0.9256860017776489
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.00116,
+        "rejection": 862.0689655172414,
+        "threshold": 0.802222490310669
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.0033,
+        "rejection": 303.03030303030306,
+        "threshold": 0.655805766582489
+      }
+    ]
+  },
+  {
+    "label": "Prior fixed-grid GNN 4M (TreeMc-derived)",
+    "result_dir": "results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test",
+    "n_events": 400000,
+    "label_counts": {
+      "0": 200000,
+      "1": 200000
+    },
+    "accuracy_at_0.5": 0.9949425,
+    "auc": 0.99980412075,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.500355,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9999988079071045
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.70012,
+        "fpr": 1e-05,
+        "rejection": 99999.99999999999,
+        "threshold": 0.9999852180480957
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.80008,
+        "fpr": 1.5e-05,
+        "rejection": 66666.66666666667,
+        "threshold": 0.9999183416366577
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.900015,
+        "fpr": 4e-05,
+        "rejection": 24999.999999999996,
+        "threshold": 0.9990400671958923
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.000135,
+        "rejection": 7407.407407407407,
+        "threshold": 0.9928839206695557
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.000595,
+        "rejection": 1680.672268907563,
+        "threshold": 0.9217865467071533
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.00171,
+        "rejection": 584.7953216374269,
+        "threshold": 0.6661967039108276
+      }
+    ]
+  }
+]
