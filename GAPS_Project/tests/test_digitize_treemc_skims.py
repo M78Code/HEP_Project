@@ -20,6 +20,32 @@ SPEC.loader.exec_module(MODULE)
 
 
 class DigitizationSeedTest(unittest.TestCase):
+    def test_discovers_multiple_input_directories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            (first / "a.root").touch()
+            (second / "b.root").touch()
+            paths = MODULE.discover_input_paths(
+                [first, second], "*.root"
+            )
+        self.assertEqual([path.name for path in paths], ["a.root", "b.root"])
+
+    def test_rejects_duplicate_names_across_directories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            (first / "same.root").touch()
+            (second / "same.root").touch()
+            with self.assertRaisesRegex(RuntimeError, "duplicate input file"):
+                MODULE.discover_input_paths([first, second], "*.root")
+
     def test_seed_is_stable(self):
         first = MODULE.derive_digitization_seed(20260906, "sample.root")
         second = MODULE.derive_digitization_seed(20260906, "sample.root")

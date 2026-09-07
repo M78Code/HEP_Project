@@ -37,6 +37,16 @@ class Job:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", type=Path, required=True)
+    parser.add_argument(
+        "--additional-input-dir",
+        type=Path,
+        action="append",
+        default=[],
+        help=(
+            "repeatable additional directory of TreeMc skims; input file "
+            "names must be unique across all directories"
+        ),
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--log-dir", type=Path, required=True)
     parser.add_argument("--crane", type=Path, required=True)
@@ -85,6 +95,25 @@ def tree_entries(path: Path, tree_name: str) -> int:
         if tree_name not in root_file:
             raise RuntimeError(f"{path}: missing {tree_name}")
         return int(root_file[tree_name].num_entries)
+
+
+def discover_input_paths(
+    input_dirs: list[Path], pattern: str
+) -> list[Path]:
+    paths = []
+    names = {}
+    for input_dir in input_dirs:
+        if not input_dir.is_dir():
+            raise FileNotFoundError(f"missing input directory: {input_dir}")
+        for path in sorted(input_dir.glob(pattern)):
+            prior = names.get(path.name)
+            if prior is not None:
+                raise RuntimeError(
+                    f"duplicate input file name {path.name}: {prior} and {path}"
+                )
+            names[path.name] = path
+            paths.append(path)
+    return sorted(paths, key=lambda path: path.name)
 
 
 def validate_output(job: Job) -> None:
@@ -194,11 +223,14 @@ def main() -> None:
         raise ValueError("--events-per-file must be positive")
     if not args.crane.is_file():
         raise FileNotFoundError(f"missing Crane executable: {args.crane}")
-    paths = sorted(args.input_dir.glob(args.glob))
+    input_dirs = [args.input_dir, *args.additional_input_dir]
+    paths = discover_input_paths(input_dirs, args.glob)
     if args.max_files is not None:
         paths = paths[:args.max_files]
     if not paths:
-        raise FileNotFoundError(f"no inputs under {args.input_dir}")
+        raise FileNotFoundError(
+            "no inputs under " + ", ".join(str(path) for path in input_dirs)
+        )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -254,6 +286,7 @@ def main() -> None:
     summary = {
         "processing_mode": "digitization_only",
         "input_dir": str(args.input_dir.resolve()),
+        "input_dirs": [str(path.resolve()) for path in input_dirs],
         "output_dir": str(args.output_dir.resolve()),
         "files": len(jobs),
         "events": total_events,
