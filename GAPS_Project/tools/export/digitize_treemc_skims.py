@@ -43,6 +43,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--glob", default="*.root")
     parser.add_argument("--expected-events", type=int)
+    parser.add_argument(
+        "--events-per-file",
+        type=int,
+        help="process at most this many leading TreeMc events per input file",
+    )
     parser.add_argument("--max-files", type=int)
     parser.add_argument(
         "--seed-base",
@@ -63,6 +68,16 @@ def derive_digitization_seed(seed_base: int, input_name: str) -> int:
     digest = hashlib.sha256(payload).digest()
     seed = int.from_bytes(digest[:8], "big") % 2_147_483_647
     return seed or 1
+
+
+def selected_event_count(total_events: int, events_per_file: int | None) -> int:
+    if events_per_file is not None and events_per_file <= 0:
+        raise ValueError("--events-per-file must be positive")
+    return (
+        min(total_events, events_per_file)
+        if events_per_file is not None
+        else total_events
+    )
 
 
 def tree_entries(path: Path, tree_name: str) -> int:
@@ -175,6 +190,8 @@ def main() -> None:
         raise ValueError("--jobs must be positive")
     if args.seed_base is not None and args.seed_base <= 0:
         raise ValueError("--seed-base must be positive")
+    if args.events_per_file is not None and args.events_per_file <= 0:
+        raise ValueError("--events-per-file must be positive")
     if not args.crane.is_file():
         raise FileNotFoundError(f"missing Crane executable: {args.crane}")
     paths = sorted(args.input_dir.glob(args.glob))
@@ -187,7 +204,9 @@ def main() -> None:
 
     jobs = []
     for path in paths:
-        entries = tree_entries(path, "TreeMc")
+        entries = selected_event_count(
+            tree_entries(path, "TreeMc"), args.events_per_file
+        )
         digitization_seed = (
             derive_digitization_seed(args.seed_base, path.name)
             if args.seed_base is not None
@@ -238,6 +257,7 @@ def main() -> None:
         "output_dir": str(args.output_dir.resolve()),
         "files": len(jobs),
         "events": total_events,
+        "events_per_file": args.events_per_file,
         "parallel_jobs": args.jobs,
         "digitization_seed_base": args.seed_base,
         "digitization_seeds": {

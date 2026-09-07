@@ -41,6 +41,17 @@ class DigitizationSeedTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be positive"):
             MODULE.derive_digitization_seed(0, "sample.root")
 
+    def test_event_count_can_be_capped(self):
+        self.assertEqual(MODULE.selected_event_count(50_000, 1_000), 1_000)
+        self.assertEqual(MODULE.selected_event_count(500, 1_000), 500)
+
+    def test_event_count_preserves_full_file_by_default(self):
+        self.assertEqual(MODULE.selected_event_count(50_000, None), 50_000)
+
+    def test_event_count_cap_must_be_positive(self):
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            MODULE.selected_event_count(50_000, 0)
+
     def test_command_contains_explicit_seed(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
