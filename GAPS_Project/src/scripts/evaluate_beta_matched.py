@@ -85,6 +85,13 @@ def summarize(values):
     }
 
 
+def format_bin_key(low: float, high: float) -> str:
+    """Keep enough precision to distinguish narrow beta bins."""
+    low_text = np.format_float_positional(float(low), trim='-')
+    high_text = np.format_float_positional(float(high), trim='-')
+    return f'{low_text}-{high_text}'
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -170,7 +177,7 @@ def main():
                 collected[name]['overall'][metric].append(value)
 
             for row in matched_bins:
-                key = f'{row["beta_low"]:.2f}-{row["beta_high"]:.2f}'
+                key = format_bin_key(row['beta_low'], row['beta_high'])
                 collected[name]['bins'].setdefault(
                     key, {metric: [] for metric in metric_names})
                 bin_metrics = evaluate(
