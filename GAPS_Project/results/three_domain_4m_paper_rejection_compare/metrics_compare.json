@@ -1,0 +1,188 @@
+[
+  {
+    "label": "Prior TreeMc-derived fixed-grid GNN 4M",
+    "result_dir": "results/20260718-001435_SparseVoxelGNN_nakagami_atrest_sparse_voxel_gravnet_4M_std/evaluation_test",
+    "n_events": 400000,
+    "label_counts": {
+      "0": 200000,
+      "1": 200000
+    },
+    "accuracy_at_0.5": 0.9949425,
+    "auc": 0.99980412075,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.500355,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9999988079071045
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.70012,
+        "fpr": 1e-05,
+        "rejection": 99999.99999999999,
+        "threshold": 0.9999852180480957
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.80008,
+        "fpr": 1.5e-05,
+        "rejection": 66666.66666666667,
+        "threshold": 0.9999183416366577
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.900015,
+        "fpr": 4e-05,
+        "rejection": 24999.999999999996,
+        "threshold": 0.9990400671958923
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.000135,
+        "rejection": 7407.407407407407,
+        "threshold": 0.9928839206695557
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.000595,
+        "rejection": 1680.672268907563,
+        "threshold": 0.9217865467071533
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.00171,
+        "rejection": 584.7953216374269,
+        "threshold": 0.6661967039108276
+      }
+    ]
+  },
+  {
+    "label": "Paper TreeRec 4M event z-score",
+    "result_dir": "results/evaluation_aohba4M_atrest_gravnet_mc1",
+    "n_events": 600000,
+    "label_counts": {
+      "0": 300000,
+      "1": 300000
+    },
+    "accuracy_at_0.5": 0.9394283333333333,
+    "auc": 0.9863819673388888,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 6.666666666666667e-05,
+        "rejection": 15000.0,
+        "threshold": 0.9752806425094604
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0009066666666666666,
+        "rejection": 1102.9411764705883,
+        "threshold": 0.8626708388328552
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.004123333333333333,
+        "rejection": 242.5222312045271,
+        "threshold": 0.7288657426834106
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.026543333333333332,
+        "rejection": 37.67424337561221,
+        "threshold": 0.5381225347518921
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.08084333333333334,
+        "rejection": 12.369603760359542,
+        "threshold": 0.4281083643436432
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.1771,
+        "rejection": 5.64652738565782,
+        "threshold": 0.3166034519672394
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.2629666666666667,
+        "rejection": 3.802763341361389,
+        "threshold": 0.23663058876991272
+      }
+    ]
+  },
+  {
+    "label": "Rebuilt prior-domain TreeRec 4M global-log",
+    "result_dir": "results/20260907-220339_GravNet_6b_h128_oldtreemc_source_disjoint_4m_global_log_seed20260825/evaluation_test",
+    "n_events": 400000,
+    "label_counts": {
+      "0": 200000,
+      "1": 200000
+    },
+    "accuracy_at_0.5": 0.996245,
+    "auc": 0.9998728521124999,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.500105,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9998434782028198
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.700005,
+        "fpr": 1e-05,
+        "rejection": 99999.99999999999,
+        "threshold": 0.9993521571159363
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 1.5e-05,
+        "rejection": 66666.66666666667,
+        "threshold": 0.9982768297195435
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 2.5e-05,
+        "rejection": 40000.0,
+        "threshold": 0.9918743968009949
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 5.5e-05,
+        "rejection": 18181.81818181818,
+        "threshold": 0.9672282338142395
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.000295,
+        "rejection": 3389.830508474576,
+        "threshold": 0.8640815019607544
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.00098,
+        "rejection": 1020.4081632653061,
+        "threshold": 0.7235864996910095
+      }
+    ]
+  }
+]
