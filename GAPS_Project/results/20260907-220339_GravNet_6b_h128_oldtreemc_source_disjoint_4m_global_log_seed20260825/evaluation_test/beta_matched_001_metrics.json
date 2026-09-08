@@ -1,0 +1,5222 @@
+{
+  "seed": 20260825,
+  "repeats": 20,
+  "sample": {
+    "total_events": 248816,
+    "events_per_class": 124408,
+    "bins": [
+      {
+        "beta_low": 0.275,
+        "beta_high": 0.276,
+        "events_per_class": 13
+      },
+      {
+        "beta_low": 0.276,
+        "beta_high": 0.277,
+        "events_per_class": 53
+      },
+      {
+        "beta_low": 0.277,
+        "beta_high": 0.278,
+        "events_per_class": 151
+      },
+      {
+        "beta_low": 0.278,
+        "beta_high": 0.279,
+        "events_per_class": 263
+      },
+      {
+        "beta_low": 0.279,
+        "beta_high": 0.28,
+        "events_per_class": 350
+      },
+      {
+        "beta_low": 0.28,
+        "beta_high": 0.281,
+        "events_per_class": 443
+      },
+      {
+        "beta_low": 0.281,
+        "beta_high": 0.282,
+        "events_per_class": 573
+      },
+      {
+        "beta_low": 0.282,
+        "beta_high": 0.283,
+        "events_per_class": 662
+      },
+      {
+        "beta_low": 0.283,
+        "beta_high": 0.284,
+        "events_per_class": 774
+      },
+      {
+        "beta_low": 0.284,
+        "beta_high": 0.285,
+        "events_per_class": 838
+      },
+      {
+        "beta_low": 0.285,
+        "beta_high": 0.286,
+        "events_per_class": 868
+      },
+      {
+        "beta_low": 0.286,
+        "beta_high": 0.287,
+        "events_per_class": 946
+      },
+      {
+        "beta_low": 0.287,
+        "beta_high": 0.288,
+        "events_per_class": 1049
+      },
+      {
+        "beta_low": 0.288,
+        "beta_high": 0.289,
+        "events_per_class": 1162
+      },
+      {
+        "beta_low": 0.289,
+        "beta_high": 0.29,
+        "events_per_class": 1203
+      },
+      {
+        "beta_low": 0.29,
+        "beta_high": 0.291,
+        "events_per_class": 1256
+      },
+      {
+        "beta_low": 0.291,
+        "beta_high": 0.292,
+        "events_per_class": 1298
+      },
+      {
+        "beta_low": 0.292,
+        "beta_high": 0.293,
+        "events_per_class": 1365
+      },
+      {
+        "beta_low": 0.293,
+        "beta_high": 0.294,
+        "events_per_class": 1311
+      },
+      {
+        "beta_low": 0.294,
+        "beta_high": 0.295,
+        "events_per_class": 1386
+      },
+      {
+        "beta_low": 0.295,
+        "beta_high": 0.296,
+        "events_per_class": 1324
+      },
+      {
+        "beta_low": 0.296,
+        "beta_high": 0.297,
+        "events_per_class": 1377
+      },
+      {
+        "beta_low": 0.297,
+        "beta_high": 0.298,
+        "events_per_class": 1303
+      },
+      {
+        "beta_low": 0.298,
+        "beta_high": 0.299,
+        "events_per_class": 1345
+      },
+      {
+        "beta_low": 0.299,
+        "beta_high": 0.3,
+        "events_per_class": 1344
+      },
+      {
+        "beta_low": 0.3,
+        "beta_high": 0.301,
+        "events_per_class": 1349
+      },
+      {
+        "beta_low": 0.301,
+        "beta_high": 0.302,
+        "events_per_class": 1374
+      },
+      {
+        "beta_low": 0.302,
+        "beta_high": 0.303,
+        "events_per_class": 1277
+      },
+      {
+        "beta_low": 0.303,
+        "beta_high": 0.304,
+        "events_per_class": 1256
+      },
+      {
+        "beta_low": 0.304,
+        "beta_high": 0.305,
+        "events_per_class": 1339
+      },
+      {
+        "beta_low": 0.305,
+        "beta_high": 0.306,
+        "events_per_class": 1291
+      },
+      {
+        "beta_low": 0.306,
+        "beta_high": 0.307,
+        "events_per_class": 1234
+      },
+      {
+        "beta_low": 0.307,
+        "beta_high": 0.308,
+        "events_per_class": 1243
+      },
+      {
+        "beta_low": 0.308,
+        "beta_high": 0.309,
+        "events_per_class": 1221
+      },
+      {
+        "beta_low": 0.309,
+        "beta_high": 0.31,
+        "events_per_class": 1306
+      },
+      {
+        "beta_low": 0.31,
+        "beta_high": 0.311,
+        "events_per_class": 1267
+      },
+      {
+        "beta_low": 0.311,
+        "beta_high": 0.312,
+        "events_per_class": 1260
+      },
+      {
+        "beta_low": 0.312,
+        "beta_high": 0.313,
+        "events_per_class": 1267
+      },
+      {
+        "beta_low": 0.313,
+        "beta_high": 0.314,
+        "events_per_class": 1230
+      },
+      {
+        "beta_low": 0.314,
+        "beta_high": 0.315,
+        "events_per_class": 1179
+      },
+      {
+        "beta_low": 0.315,
+        "beta_high": 0.316,
+        "events_per_class": 1185
+      },
+      {
+        "beta_low": 0.316,
+        "beta_high": 0.317,
+        "events_per_class": 1175
+      },
+      {
+        "beta_low": 0.317,
+        "beta_high": 0.318,
+        "events_per_class": 1193
+      },
+      {
+        "beta_low": 0.318,
+        "beta_high": 0.319,
+        "events_per_class": 1165
+      },
+      {
+        "beta_low": 0.319,
+        "beta_high": 0.32,
+        "events_per_class": 1167
+      },
+      {
+        "beta_low": 0.32,
+        "beta_high": 0.321,
+        "events_per_class": 1170
+      },
+      {
+        "beta_low": 0.321,
+        "beta_high": 0.322,
+        "events_per_class": 1199
+      },
+      {
+        "beta_low": 0.322,
+        "beta_high": 0.323,
+        "events_per_class": 1119
+      },
+      {
+        "beta_low": 0.323,
+        "beta_high": 0.324,
+        "events_per_class": 1093
+      },
+      {
+        "beta_low": 0.324,
+        "beta_high": 0.325,
+        "events_per_class": 1111
+      },
+      {
+        "beta_low": 0.325,
+        "beta_high": 0.326,
+        "events_per_class": 1162
+      },
+      {
+        "beta_low": 0.326,
+        "beta_high": 0.327,
+        "events_per_class": 1079
+      },
+      {
+        "beta_low": 0.327,
+        "beta_high": 0.328,
+        "events_per_class": 1068
+      },
+      {
+        "beta_low": 0.328,
+        "beta_high": 0.329,
+        "events_per_class": 1046
+      },
+      {
+        "beta_low": 0.329,
+        "beta_high": 0.33,
+        "events_per_class": 1072
+      },
+      {
+        "beta_low": 0.33,
+        "beta_high": 0.331,
+        "events_per_class": 1127
+      },
+      {
+        "beta_low": 0.331,
+        "beta_high": 0.332,
+        "events_per_class": 1058
+      },
+      {
+        "beta_low": 0.332,
+        "beta_high": 0.333,
+        "events_per_class": 1086
+      },
+      {
+        "beta_low": 0.333,
+        "beta_high": 0.334,
+        "events_per_class": 1059
+      },
+      {
+        "beta_low": 0.334,
+        "beta_high": 0.335,
+        "events_per_class": 1031
+      },
+      {
+        "beta_low": 0.335,
+        "beta_high": 0.336,
+        "events_per_class": 1060
+      },
+      {
+        "beta_low": 0.336,
+        "beta_high": 0.337,
+        "events_per_class": 1039
+      },
+      {
+        "beta_low": 0.337,
+        "beta_high": 0.338,
+        "events_per_class": 1042
+      },
+      {
+        "beta_low": 0.338,
+        "beta_high": 0.339,
+        "events_per_class": 1061
+      },
+      {
+        "beta_low": 0.339,
+        "beta_high": 0.34,
+        "events_per_class": 1060
+      },
+      {
+        "beta_low": 0.34,
+        "beta_high": 0.341,
+        "events_per_class": 1038
+      },
+      {
+        "beta_low": 0.341,
+        "beta_high": 0.342,
+        "events_per_class": 1030
+      },
+      {
+        "beta_low": 0.342,
+        "beta_high": 0.343,
+        "events_per_class": 1060
+      },
+      {
+        "beta_low": 0.343,
+        "beta_high": 0.344,
+        "events_per_class": 1053
+      },
+      {
+        "beta_low": 0.344,
+        "beta_high": 0.345,
+        "events_per_class": 1014
+      },
+      {
+        "beta_low": 0.345,
+        "beta_high": 0.346,
+        "events_per_class": 958
+      },
+      {
+        "beta_low": 0.346,
+        "beta_high": 0.347,
+        "events_per_class": 962
+      },
+      {
+        "beta_low": 0.347,
+        "beta_high": 0.348,
+        "events_per_class": 1005
+      },
+      {
+        "beta_low": 0.348,
+        "beta_high": 0.349,
+        "events_per_class": 950
+      },
+      {
+        "beta_low": 0.349,
+        "beta_high": 0.35,
+        "events_per_class": 973
+      },
+      {
+        "beta_low": 0.35,
+        "beta_high": 0.351,
+        "events_per_class": 940
+      },
+      {
+        "beta_low": 0.351,
+        "beta_high": 0.352,
+        "events_per_class": 889
+      },
+      {
+        "beta_low": 0.352,
+        "beta_high": 0.353,
+        "events_per_class": 926
+      },
+      {
+        "beta_low": 0.353,
+        "beta_high": 0.354,
+        "events_per_class": 973
+      },
+      {
+        "beta_low": 0.354,
+        "beta_high": 0.355,
+        "events_per_class": 877
+      },
+      {
+        "beta_low": 0.355,
+        "beta_high": 0.356,
+        "events_per_class": 871
+      },
+      {
+        "beta_low": 0.356,
+        "beta_high": 0.357,
+        "events_per_class": 943
+      },
+      {
+        "beta_low": 0.357,
+        "beta_high": 0.358,
+        "events_per_class": 917
+      },
+      {
+        "beta_low": 0.358,
+        "beta_high": 0.359,
+        "events_per_class": 877
+      },
+      {
+        "beta_low": 0.359,
+        "beta_high": 0.36,
+        "events_per_class": 879
+      },
+      {
+        "beta_low": 0.36,
+        "beta_high": 0.361,
+        "events_per_class": 870
+      },
+      {
+        "beta_low": 0.361,
+        "beta_high": 0.362,
+        "events_per_class": 925
+      },
+      {
+        "beta_low": 0.362,
+        "beta_high": 0.363,
+        "events_per_class": 862
+      },
+      {
+        "beta_low": 0.363,
+        "beta_high": 0.364,
+        "events_per_class": 831
+      },
+      {
+        "beta_low": 0.364,
+        "beta_high": 0.365,
+        "events_per_class": 886
+      },
+      {
+        "beta_low": 0.365,
+        "beta_high": 0.366,
+        "events_per_class": 869
+      },
+      {
+        "beta_low": 0.366,
+        "beta_high": 0.367,
+        "events_per_class": 850
+      },
+      {
+        "beta_low": 0.367,
+        "beta_high": 0.368,
+        "events_per_class": 856
+      },
+      {
+        "beta_low": 0.368,
+        "beta_high": 0.369,
+        "events_per_class": 783
+      },
+      {
+        "beta_low": 0.369,
+        "beta_high": 0.37,
+        "events_per_class": 776
+      },
+      {
+        "beta_low": 0.37,
+        "beta_high": 0.371,
+        "events_per_class": 822
+      },
+      {
+        "beta_low": 0.371,
+        "beta_high": 0.372,
+        "events_per_class": 808
+      },
+      {
+        "beta_low": 0.372,
+        "beta_high": 0.373,
+        "events_per_class": 793
+      },
+      {
+        "beta_low": 0.373,
+        "beta_high": 0.374,
+        "events_per_class": 786
+      },
+      {
+        "beta_low": 0.374,
+        "beta_high": 0.375,
+        "events_per_class": 741
+      },
+      {
+        "beta_low": 0.375,
+        "beta_high": 0.376,
+        "events_per_class": 788
+      },
+      {
+        "beta_low": 0.376,
+        "beta_high": 0.377,
+        "events_per_class": 763
+      },
+      {
+        "beta_low": 0.377,
+        "beta_high": 0.378,
+        "events_per_class": 718
+      },
+      {
+        "beta_low": 0.378,
+        "beta_high": 0.379,
+        "events_per_class": 726
+      },
+      {
+        "beta_low": 0.379,
+        "beta_high": 0.38,
+        "events_per_class": 682
+      },
+      {
+        "beta_low": 0.38,
+        "beta_high": 0.381,
+        "events_per_class": 734
+      },
+      {
+        "beta_low": 0.381,
+        "beta_high": 0.382,
+        "events_per_class": 655
+      },
+      {
+        "beta_low": 0.382,
+        "beta_high": 0.383,
+        "events_per_class": 688
+      },
+      {
+        "beta_low": 0.383,
+        "beta_high": 0.384,
+        "events_per_class": 657
+      },
+      {
+        "beta_low": 0.384,
+        "beta_high": 0.385,
+        "events_per_class": 663
+      },
+      {
+        "beta_low": 0.385,
+        "beta_high": 0.386,
+        "events_per_class": 613
+      },
+      {
+        "beta_low": 0.386,
+        "beta_high": 0.387,
+        "events_per_class": 647
+      },
+      {
+        "beta_low": 0.387,
+        "beta_high": 0.388,
+        "events_per_class": 624
+      },
+      {
+        "beta_low": 0.388,
+        "beta_high": 0.389,
+        "events_per_class": 596
+      },
+      {
+        "beta_low": 0.389,
+        "beta_high": 0.39,
+        "events_per_class": 602
+      },
+      {
+        "beta_low": 0.39,
+        "beta_high": 0.391,
+        "events_per_class": 594
+      },
+      {
+        "beta_low": 0.391,
+        "beta_high": 0.392,
+        "events_per_class": 567
+      },
+      {
+        "beta_low": 0.392,
+        "beta_high": 0.393,
+        "events_per_class": 530
+      },
+      {
+        "beta_low": 0.393,
+        "beta_high": 0.394,
+        "events_per_class": 534
+      },
+      {
+        "beta_low": 0.394,
+        "beta_high": 0.395,
+        "events_per_class": 505
+      },
+      {
+        "beta_low": 0.395,
+        "beta_high": 0.396,
+        "events_per_class": 495
+      },
+      {
+        "beta_low": 0.396,
+        "beta_high": 0.397,
+        "events_per_class": 493
+      },
+      {
+        "beta_low": 0.397,
+        "beta_high": 0.398,
+        "events_per_class": 467
+      },
+      {
+        "beta_low": 0.398,
+        "beta_high": 0.399,
+        "events_per_class": 536
+      },
+      {
+        "beta_low": 0.399,
+        "beta_high": 0.4,
+        "events_per_class": 443
+      },
+      {
+        "beta_low": 0.4,
+        "beta_high": 0.401,
+        "events_per_class": 493
+      },
+      {
+        "beta_low": 0.401,
+        "beta_high": 0.402,
+        "events_per_class": 434
+      },
+      {
+        "beta_low": 0.402,
+        "beta_high": 0.403,
+        "events_per_class": 424
+      },
+      {
+        "beta_low": 0.403,
+        "beta_high": 0.404,
+        "events_per_class": 383
+      },
+      {
+        "beta_low": 0.404,
+        "beta_high": 0.405,
+        "events_per_class": 361
+      },
+      {
+        "beta_low": 0.405,
+        "beta_high": 0.406,
+        "events_per_class": 383
+      },
+      {
+        "beta_low": 0.406,
+        "beta_high": 0.407,
+        "events_per_class": 360
+      },
+      {
+        "beta_low": 0.407,
+        "beta_high": 0.408,
+        "events_per_class": 332
+      },
+      {
+        "beta_low": 0.408,
+        "beta_high": 0.409,
+        "events_per_class": 376
+      },
+      {
+        "beta_low": 0.409,
+        "beta_high": 0.41,
+        "events_per_class": 323
+      },
+      {
+        "beta_low": 0.41,
+        "beta_high": 0.411,
+        "events_per_class": 334
+      },
+      {
+        "beta_low": 0.411,
+        "beta_high": 0.412,
+        "events_per_class": 274
+      },
+      {
+        "beta_low": 0.412,
+        "beta_high": 0.413,
+        "events_per_class": 263
+      },
+      {
+        "beta_low": 0.413,
+        "beta_high": 0.414,
+        "events_per_class": 300
+      },
+      {
+        "beta_low": 0.414,
+        "beta_high": 0.415,
+        "events_per_class": 253
+      },
+      {
+        "beta_low": 0.415,
+        "beta_high": 0.416,
+        "events_per_class": 212
+      },
+      {
+        "beta_low": 0.416,
+        "beta_high": 0.417,
+        "events_per_class": 220
+      },
+      {
+        "beta_low": 0.417,
+        "beta_high": 0.418,
+        "events_per_class": 180
+      },
+      {
+        "beta_low": 0.418,
+        "beta_high": 0.419,
+        "events_per_class": 195
+      },
+      {
+        "beta_low": 0.419,
+        "beta_high": 0.42,
+        "events_per_class": 181
+      },
+      {
+        "beta_low": 0.42,
+        "beta_high": 0.421,
+        "events_per_class": 145
+      },
+      {
+        "beta_low": 0.421,
+        "beta_high": 0.422,
+        "events_per_class": 169
+      },
+      {
+        "beta_low": 0.422,
+        "beta_high": 0.423,
+        "events_per_class": 159
+      },
+      {
+        "beta_low": 0.423,
+        "beta_high": 0.424,
+        "events_per_class": 137
+      },
+      {
+        "beta_low": 0.424,
+        "beta_high": 0.425,
+        "events_per_class": 121
+      },
+      {
+        "beta_low": 0.425,
+        "beta_high": 0.426,
+        "events_per_class": 118
+      },
+      {
+        "beta_low": 0.426,
+        "beta_high": 0.427,
+        "events_per_class": 92
+      },
+      {
+        "beta_low": 0.427,
+        "beta_high": 0.428,
+        "events_per_class": 101
+      },
+      {
+        "beta_low": 0.428,
+        "beta_high": 0.429,
+        "events_per_class": 69
+      },
+      {
+        "beta_low": 0.429,
+        "beta_high": 0.43,
+        "events_per_class": 88
+      },
+      {
+        "beta_low": 0.43,
+        "beta_high": 0.431,
+        "events_per_class": 53
+      },
+      {
+        "beta_low": 0.431,
+        "beta_high": 0.432,
+        "events_per_class": 59
+      },
+      {
+        "beta_low": 0.432,
+        "beta_high": 0.433,
+        "events_per_class": 60
+      },
+      {
+        "beta_low": 0.433,
+        "beta_high": 0.434,
+        "events_per_class": 50
+      },
+      {
+        "beta_low": 0.434,
+        "beta_high": 0.435,
+        "events_per_class": 56
+      },
+      {
+        "beta_low": 0.435,
+        "beta_high": 0.436,
+        "events_per_class": 38
+      },
+      {
+        "beta_low": 0.436,
+        "beta_high": 0.437,
+        "events_per_class": 38
+      },
+      {
+        "beta_low": 0.437,
+        "beta_high": 0.438,
+        "events_per_class": 33
+      },
+      {
+        "beta_low": 0.438,
+        "beta_high": 0.439,
+        "events_per_class": 32
+      },
+      {
+        "beta_low": 0.439,
+        "beta_high": 0.44,
+        "events_per_class": 30
+      },
+      {
+        "beta_low": 0.44,
+        "beta_high": 0.441,
+        "events_per_class": 25
+      },
+      {
+        "beta_low": 0.441,
+        "beta_high": 0.442,
+        "events_per_class": 19
+      },
+      {
+        "beta_low": 0.442,
+        "beta_high": 0.443,
+        "events_per_class": 16
+      },
+      {
+        "beta_low": 0.443,
+        "beta_high": 0.444,
+        "events_per_class": 15
+      },
+      {
+        "beta_low": 0.444,
+        "beta_high": 0.445,
+        "events_per_class": 13
+      },
+      {
+        "beta_low": 0.445,
+        "beta_high": 0.446,
+        "events_per_class": 14
+      },
+      {
+        "beta_low": 0.446,
+        "beta_high": 0.447,
+        "events_per_class": 5
+      },
+      {
+        "beta_low": 0.447,
+        "beta_high": 0.448,
+        "events_per_class": 7
+      },
+      {
+        "beta_low": 0.448,
+        "beta_high": 0.449,
+        "events_per_class": 7
+      },
+      {
+        "beta_low": 0.449,
+        "beta_high": 0.45,
+        "events_per_class": 8
+      },
+      {
+        "beta_low": 0.45,
+        "beta_high": 0.451,
+        "events_per_class": 12
+      },
+      {
+        "beta_low": 0.451,
+        "beta_high": 0.452,
+        "events_per_class": 9
+      },
+      {
+        "beta_low": 0.452,
+        "beta_high": 0.453,
+        "events_per_class": 7
+      },
+      {
+        "beta_low": 0.453,
+        "beta_high": 0.454,
+        "events_per_class": 7
+      },
+      {
+        "beta_low": 0.454,
+        "beta_high": 0.455,
+        "events_per_class": 6
+      },
+      {
+        "beta_low": 0.457,
+        "beta_high": 0.458,
+        "events_per_class": 3
+      },
+      {
+        "beta_low": 0.458,
+        "beta_high": 0.459,
+        "events_per_class": 4
+      },
+      {
+        "beta_low": 0.459,
+        "beta_high": 0.46,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.461,
+        "beta_high": 0.462,
+        "events_per_class": 2
+      },
+      {
+        "beta_low": 0.462,
+        "beta_high": 0.463,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.463,
+        "beta_high": 0.464,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.465,
+        "beta_high": 0.466,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.466,
+        "beta_high": 0.467,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.467,
+        "beta_high": 0.468,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.475,
+        "beta_high": 0.476,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.48,
+        "beta_high": 0.481,
+        "events_per_class": 1
+      },
+      {
+        "beta_low": 0.484,
+        "beta_high": 0.485,
+        "events_per_class": 2
+      }
+    ]
+  },
+  "models": {
+    "old-domain-4M": {
+      "overall": {
+        "accuracy": {
+          "mean": 0.9947447109510643,
+          "std": 4.3237784733398637e-05
+        },
+        "auc": {
+          "mean": 0.9997790383772112,
+          "std": 2.127372233452506e-06
+        },
+        "rejection_0.90": {
+          "mean": 16106.392857142859,
+          "std": 961.9686467322729
+        },
+        "rejection_0.95": {
+          "mean": 7870.209979530274,
+          "std": 769.8639696682603
+        },
+        "rejection_0.98": {
+          "mean": 1253.0634834363368,
+          "std": 58.940125134306065
+        }
+      },
+      "bins": {
+        "0.275-0.276": {
+          "accuracy": {
+            "mean": 0.998076923076923,
+            "std": 0.008382497968347443
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.276-0.277": {
+          "accuracy": {
+            "mean": 0.9995283018867924,
+            "std": 0.002056084407330506
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.277-0.278": {
+          "accuracy": {
+            "mean": 0.9978476821192054,
+            "std": 0.0030121532116987324
+          },
+          "auc": {
+            "mean": 0.9999298276391386,
+            "std": 0.00021051708258409404
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.278-0.279": {
+          "accuracy": {
+            "mean": 0.9977186311787074,
+            "std": 0.001544493993276812
+          },
+          "auc": {
+            "mean": 0.9999739767815061,
+            "std": 5.204643698766275e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.279-0.28": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.28-0.281": {
+          "accuracy": {
+            "mean": 0.9989841986455984,
+            "std": 0.0007900677200902818
+          },
+          "auc": {
+            "mean": 0.9999979617730534,
+            "std": 2.4963079993073807e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.281-0.282": {
+          "accuracy": {
+            "mean": 0.9984729493891796,
+            "std": 0.0006688355024762542
+          },
+          "auc": {
+            "mean": 0.9999964974157021,
+            "std": 3.63897284287181e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.282-0.283": {
+          "accuracy": {
+            "mean": 0.9989803625377643,
+            "std": 0.0006442115600163102
+          },
+          "auc": {
+            "mean": 0.9999969195242835,
+            "std": 3.4055940427096423e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.283-0.284": {
+          "accuracy": {
+            "mean": 0.9980943152454781,
+            "std": 0.0006919988787347545
+          },
+          "auc": {
+            "mean": 0.9999950757499881,
+            "std": 1.7881107977704732e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.284-0.285": {
+          "accuracy": {
+            "mean": 0.9972553699284011,
+            "std": 0.0005784820832239091
+          },
+          "auc": {
+            "mean": 0.9999584190110559,
+            "std": 1.569381761371899e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.285-0.286": {
+          "accuracy": {
+            "mean": 0.9985311059907834,
+            "std": 0.0005302981751014503
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.286-0.287": {
+          "accuracy": {
+            "mean": 0.9988372093023254,
+            "std": 0.000460771558513816
+          },
+          "auc": {
+            "mean": 0.999997541668715,
+            "std": 9.741470581938265e-07
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.287-0.288": {
+          "accuracy": {
+            "mean": 0.997926596758818,
+            "std": 0.0003116467309490589
+          },
+          "auc": {
+            "mean": 0.9999920029153009,
+            "std": 1.8084088202478593e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.288-0.289": {
+          "accuracy": {
+            "mean": 0.9980206540447508,
+            "std": 0.0002509015445286398
+          },
+          "auc": {
+            "mean": 0.9999866320457637,
+            "std": 2.324078208742278e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.289-0.29": {
+          "accuracy": {
+            "mean": 0.9985453034081463,
+            "std": 0.00027881146851620317
+          },
+          "auc": {
+            "mean": 0.9999633777844114,
+            "std": 1.1320353821050863e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.29-0.291": {
+          "accuracy": {
+            "mean": 0.9984474522292993,
+            "std": 0.00011942675159237749
+          },
+          "auc": {
+            "mean": 0.999973566371861,
+            "std": 2.763832883253792e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.291-0.292": {
+          "accuracy": {
+            "mean": 0.9962249614791988,
+            "std": 0.00015408320493066617
+          },
+          "auc": {
+            "mean": 0.999848469020729,
+            "std": 5.001264107225183e-07
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.292-0.293": {
+          "accuracy": {
+            "mean": 0.9978021978021978,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9999537361295602,
+            "std": 4.0163237253216206e-07
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.293-0.294": {
+          "accuracy": {
+            "mean": 0.998150266971777,
+            "std": 0.00013618284570068398
+          },
+          "auc": {
+            "mean": 0.9999838251816321,
+            "std": 1.0977908726794733e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.294-0.295": {
+          "accuracy": {
+            "mean": 0.9978354978354981,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 0.999975247215507,
+            "std": 1.6168917052198705e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.295-0.296": {
+          "accuracy": {
+            "mean": 0.9981117824773413,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9999960067907375,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.296-0.297": {
+          "accuracy": {
+            "mean": 0.9971496005809731,
+            "std": 0.0001296555633359484
+          },
+          "auc": {
+            "mean": 0.9999505307919453,
+            "std": 7.780749471446835e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1377.0,
+            "std": 0.0
+          }
+        },
+        "0.297-0.298": {
+          "accuracy": {
+            "mean": 0.9967191097467383,
+            "std": 0.00022620541294228688
+          },
+          "auc": {
+            "mean": 0.9999562671655056,
+            "std": 6.537240902947916e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1303.0,
+            "std": 0.0
+          }
+        },
+        "0.298-0.299": {
+          "accuracy": {
+            "mean": 0.9978066914498142,
+            "std": 0.00011152416356877692
+          },
+          "auc": {
+            "mean": 0.9999762302897967,
+            "std": 2.060928055972556e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.299-0.3": {
+          "accuracy": {
+            "mean": 0.9956287202380952,
+            "std": 0.00016109103493015258
+          },
+          "auc": {
+            "mean": 0.9999445285926869,
+            "std": 1.938414713556144e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1344.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1344.0,
+            "std": 0.0
+          }
+        },
+        "0.3-0.301": {
+          "accuracy": {
+            "mean": 0.9974425500370646,
+            "std": 0.00011119347664939608
+          },
+          "auc": {
+            "mean": 0.9999856852480022,
+            "std": 2.103089978884422e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.301-0.302": {
+          "accuracy": {
+            "mean": 0.9967612809315864,
+            "std": 0.00010917030567687558
+          },
+          "auc": {
+            "mean": 0.9997928359701591,
+            "std": 4.7875242036112e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1374.0,
+            "std": 0.0
+          }
+        },
+        "0.302-0.303": {
+          "accuracy": {
+            "mean": 0.9973179326546596,
+            "std": 0.0001398087006370857
+          },
+          "auc": {
+            "mean": 0.999980376874392,
+            "std": 3.7401556437495953e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.303-0.304": {
+          "accuracy": {
+            "mean": 0.9948049363057324,
+            "std": 0.00029455908811600246
+          },
+          "auc": {
+            "mean": 0.9997119558602782,
+            "std": 1.1206591078960263e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.304-0.305": {
+          "accuracy": {
+            "mean": 0.9977595220313665,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9999712759234793,
+            "std": 1.277963640048797e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.305-0.306": {
+          "accuracy": {
+            "mean": 0.9967079783113866,
+            "std": 0.00022912779950042014
+          },
+          "auc": {
+            "mean": 0.9999468104574303,
+            "std": 1.62689073858589e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1291.0,
+            "std": 0.0
+          }
+        },
+        "0.306-0.307": {
+          "accuracy": {
+            "mean": 0.99669773095624,
+            "std": 0.0002649249763091942
+          },
+          "auc": {
+            "mean": 0.9999147926522699,
+            "std": 1.6545651162271583e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 586.1500000000001,
+            "std": 285.5361521185481
+          }
+        },
+        "0.307-0.308": {
+          "accuracy": {
+            "mean": 0.9970635559131136,
+            "std": 0.0003837245379794638
+          },
+          "auc": {
+            "mean": 0.9998706513515107,
+            "std": 6.989695006940386e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.308-0.309": {
+          "accuracy": {
+            "mean": 0.9942669942669943,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9999298382590766,
+            "std": 7.497550901727104e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.309-0.31": {
+          "accuracy": {
+            "mean": 0.9928407350689129,
+            "std": 0.0004033558098335797
+          },
+          "auc": {
+            "mean": 0.999838975021634,
+            "std": 1.72615577880562e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 824.8421052631579,
+            "std": 287.54684069829017
+          }
+        },
+        "0.31-0.311": {
+          "accuracy": {
+            "mean": 0.9969613259668508,
+            "std": 0.0002818243263039718
+          },
+          "auc": {
+            "mean": 0.9999234405767433,
+            "std": 1.5794835437826366e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 700.1842105263158,
+            "std": 194.41621186234198
+          }
+        },
+        "0.311-0.312": {
+          "accuracy": {
+            "mean": 0.9932539682539682,
+            "std": 0.0003073796306513812
+          },
+          "auc": {
+            "mean": 0.9998768266565886,
+            "std": 7.769468676214889e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1260.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1260.0,
+            "std": 0.0
+          }
+        },
+        "0.312-0.313": {
+          "accuracy": {
+            "mean": 0.9961917916337806,
+            "std": 0.00035898589973679573
+          },
+          "auc": {
+            "mean": 0.9998950033296184,
+            "std": 1.813225918289173e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 833.5526315789474,
+            "std": 294.4695004641416
+          }
+        },
+        "0.313-0.314": {
+          "accuracy": {
+            "mean": 0.9968495934959348,
+            "std": 0.0002838260171497934
+          },
+          "auc": {
+            "mean": 0.9999487077797609,
+            "std": 1.1245248367028866e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1230.0,
+            "std": 0.0
+          }
+        },
+        "0.314-0.315": {
+          "accuracy": {
+            "mean": 0.9953350296861746,
+            "std": 0.00029987564935818496
+          },
+          "auc": {
+            "mean": 0.9999217289274203,
+            "std": 1.63236384089445e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1179.0,
+            "std": 0.0
+          }
+        },
+        "0.315-0.316": {
+          "accuracy": {
+            "mean": 0.996012658227848,
+            "std": 0.000248730508914562
+          },
+          "auc": {
+            "mean": 0.9999441328846874,
+            "std": 7.470563984350237e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.316-0.317": {
+          "accuracy": {
+            "mean": 0.9939574468085107,
+            "std": 0.0004962512250932047
+          },
+          "auc": {
+            "mean": 0.9998896152105026,
+            "std": 1.2005637159274399e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 763.75,
+            "std": 269.2263220786556
+          }
+        },
+        "0.317-0.318": {
+          "accuracy": {
+            "mean": 0.9960184409052806,
+            "std": 0.00031082139510040636
+          },
+          "auc": {
+            "mean": 0.9999317406862749,
+            "std": 6.134440394471952e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1193.0,
+            "std": 0.0
+          }
+        },
+        "0.318-0.319": {
+          "accuracy": {
+            "mean": 0.9946995708154509,
+            "std": 0.00031171328425606614
+          },
+          "auc": {
+            "mean": 0.999873970785979,
+            "std": 1.0044458088573756e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.319-0.32": {
+          "accuracy": {
+            "mean": 0.9942373607540705,
+            "std": 0.000213150693467582
+          },
+          "auc": {
+            "mean": 0.9996758913538475,
+            "std": 3.3871776658467744e-05
+          },
+          "rejection_0.90": {
+            "mean": 641.85,
+            "std": 175.05
+          },
+          "rejection_0.95": {
+            "mean": 641.85,
+            "std": 175.05
+          },
+          "rejection_0.98": {
+            "mean": 641.85,
+            "std": 175.05
+          }
+        },
+        "0.32-0.321": {
+          "accuracy": {
+            "mean": 0.9941025641025639,
+            "std": 0.0002179068168202037
+          },
+          "auc": {
+            "mean": 0.9998825334209949,
+            "std": 3.841973494714024e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 585.0,
+            "std": 0.0
+          }
+        },
+        "0.321-0.322": {
+          "accuracy": {
+            "mean": 0.9945788156797333,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9996235742740858,
+            "std": 6.327696418565112e-07
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 599.5,
+            "std": 0.0
+          }
+        },
+        "0.322-0.323": {
+          "accuracy": {
+            "mean": 0.9908847184986597,
+            "std": 0.0003574620196604081
+          },
+          "auc": {
+            "mean": 0.9996949274094943,
+            "std": 1.3578877574124788e-05
+          },
+          "rejection_0.90": {
+            "mean": 1119.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1119.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 587.475,
+            "std": 121.94019794555035
+          }
+        },
+        "0.323-0.324": {
+          "accuracy": {
+            "mean": 0.9918572735590118,
+            "std": 0.00023325798323846084
+          },
+          "auc": {
+            "mean": 0.9992146228724923,
+            "std": 6.804862242937971e-06
+          },
+          "rejection_0.90": {
+            "mean": 1093.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1093.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1093.0,
+            "std": 0.0
+          }
+        },
+        "0.324-0.325": {
+          "accuracy": {
+            "mean": 0.9933618361836182,
+            "std": 0.00024130975010717049
+          },
+          "auc": {
+            "mean": 0.9997712102443368,
+            "std": 6.38127964037634e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1111.0,
+            "std": 0.0
+          }
+        },
+        "0.325-0.326": {
+          "accuracy": {
+            "mean": 0.9931153184165235,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 0.9995637825459693,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 581.0,
+            "std": 0.0
+          }
+        },
+        "0.326-0.327": {
+          "accuracy": {
+            "mean": 0.9919138090824837,
+            "std": 0.0002731655728117032
+          },
+          "auc": {
+            "mean": 0.999428468847945,
+            "std": 2.3091287914372295e-05
+          },
+          "rejection_0.90": {
+            "mean": 1079.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1079.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 386.64166666666677,
+            "std": 64.21334395331446
+          }
+        },
+        "0.327-0.328": {
+          "accuracy": {
+            "mean": 0.989747191011236,
+            "std": 0.0001404494382022392
+          },
+          "auc": {
+            "mean": 0.9995726462006763,
+            "std": 8.511231713577849e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 298.15,
+            "std": 42.45029446305409
+          }
+        },
+        "0.328-0.329": {
+          "accuracy": {
+            "mean": 0.9939770554493308,
+            "std": 0.0002787261900021629
+          },
+          "auc": {
+            "mean": 0.9997345802456048,
+            "std": 1.2810072676348654e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 523.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 209.19999999999996,
+            "std": 2.842170943040401e-14
+          }
+        },
+        "0.329-0.33": {
+          "accuracy": {
+            "mean": 0.9940065298507464,
+            "std": 0.00016654450626266273
+          },
+          "auc": {
+            "mean": 0.9997986832395857,
+            "std": 5.74765368896084e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1072.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 339.46666666666664,
+            "std": 35.73333333333335
+          }
+        },
+        "0.33-0.331": {
+          "accuracy": {
+            "mean": 0.9924800354924577,
+            "std": 9.669252314864497e-05
+          },
+          "auc": {
+            "mean": 0.999657357638476,
+            "std": 1.9698780207591773e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.331-0.332": {
+          "accuracy": {
+            "mean": 0.9918005671077502,
+            "std": 0.0003432381627205504
+          },
+          "auc": {
+            "mean": 0.9996966134340572,
+            "std": 1.9246562022594874e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 529.0,
+            "std": 0.0
+          }
+        },
+        "0.332-0.333": {
+          "accuracy": {
+            "mean": 0.9933931860036832,
+            "std": 0.00030102893256493137
+          },
+          "auc": {
+            "mean": 0.9998730282280082,
+            "std": 9.633463239967503e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 294.125,
+            "std": 39.18764952124585
+          }
+        },
+        "0.333-0.334": {
+          "accuracy": {
+            "mean": 0.9911945231350329,
+            "std": 0.00027019648588903094
+          },
+          "auc": {
+            "mean": 0.9996923264861375,
+            "std": 1.2385902520495038e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1059.0,
+            "std": 0.0
+          }
+        },
+        "0.334-0.335": {
+          "accuracy": {
+            "mean": 0.9918283220174589,
+            "std": 0.0005149553972258622
+          },
+          "auc": {
+            "mean": 0.9992242424698553,
+            "std": 2.1967292054294873e-05
+          },
+          "rejection_0.90": {
+            "mean": 1031.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1031.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 395.2166666666667,
+            "std": 154.65
+          }
+        },
+        "0.335-0.336": {
+          "accuracy": {
+            "mean": 0.991981132075472,
+            "std": 3.3306690738754696e-16
+          },
+          "auc": {
+            "mean": 0.9996158775364901,
+            "std": 9.076218429270126e-07
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 353.3333333333333,
+            "std": 5.684341886080802e-14
+          }
+        },
+        "0.336-0.337": {
+          "accuracy": {
+            "mean": 0.9928537054860442,
+            "std": 0.00017183417778016477
+          },
+          "auc": {
+            "mean": 0.9993210877787464,
+            "std": 5.8743118970691835e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 519.5,
+            "std": 0.0
+          }
+        },
+        "0.337-0.338": {
+          "accuracy": {
+            "mean": 0.9925863723608443,
+            "std": 0.00028286531004201364
+          },
+          "auc": {
+            "mean": 0.9996625417678244,
+            "std": 3.7279199609265464e-05
+          },
+          "rejection_0.90": {
+            "mean": 1042.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1042.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1042.0,
+            "std": 0.0
+          }
+        },
+        "0.338-0.339": {
+          "accuracy": {
+            "mean": 0.9934260131950989,
+            "std": 0.00010270732666211932
+          },
+          "auc": {
+            "mean": 0.9997626410096287,
+            "std": 4.950738164452833e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 362.5083333333334,
+            "std": 38.53993149247213
+          }
+        },
+        "0.339-0.34": {
+          "accuracy": {
+            "mean": 0.9921462264150944,
+            "std": 0.0006199735579290263
+          },
+          "auc": {
+            "mean": 0.9997723389106443,
+            "std": 2.5380663753436377e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1060.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 636.0,
+            "std": 212.0
+          }
+        },
+        "0.34-0.341": {
+          "accuracy": {
+            "mean": 0.9934248554913298,
+            "std": 0.0002756628887827163
+          },
+          "auc": {
+            "mean": 0.99904844242485,
+            "std": 1.6453899759444125e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1038.0,
+            "std": 0.0
+          }
+        },
+        "0.341-0.342": {
+          "accuracy": {
+            "mean": 0.9934708737864076,
+            "std": 0.00035919049968320563
+          },
+          "auc": {
+            "mean": 0.9998122820246962,
+            "std": 1.3109455688948656e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1030.0,
+            "std": 0.0
+          }
+        },
+        "0.342-0.343": {
+          "accuracy": {
+            "mean": 0.9901415094339623,
+            "std": 0.0004449991100026961
+          },
+          "auc": {
+            "mean": 0.9995568707725168,
+            "std": 2.4363642385600667e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 613.6842105263158,
+            "std": 193.26040589715893
+          }
+        },
+        "0.343-0.344": {
+          "accuracy": {
+            "mean": 0.9931386514719847,
+            "std": 0.00027991040176998715
+          },
+          "auc": {
+            "mean": 0.9999030942209162,
+            "std": 6.877154502130497e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.344-0.345": {
+          "accuracy": {
+            "mean": 0.9937623274161735,
+            "std": 0.00039060600388941754
+          },
+          "auc": {
+            "mean": 0.9999001163202348,
+            "std": 8.002957248309221e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1014.0,
+            "std": 0.0
+          }
+        },
+        "0.345-0.346": {
+          "accuracy": {
+            "mean": 0.9954070981210856,
+            "std": 0.0004240103551480112
+          },
+          "auc": {
+            "mean": 0.9998269162878474,
+            "std": 3.23619485035469e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 958.0000000000001,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 447.0666666666667,
+            "std": 139.19417293039888
+          }
+        },
+        "0.346-0.347": {
+          "accuracy": {
+            "mean": 0.9928014553014552,
+            "std": 0.0003774906197072132
+          },
+          "auc": {
+            "mean": 0.9993316721487199,
+            "std": 1.1799919642823535e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.347-0.348": {
+          "accuracy": {
+            "mean": 0.997238805970149,
+            "std": 0.0003328131383149335
+          },
+          "auc": {
+            "mean": 0.9998165886982994,
+            "std": 2.7362397628520733e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1005.0000000000002,
+            "std": 1.1368683772161603e-13
+          },
+          "rejection_0.98": {
+            "mean": 634.7368421052632,
+            "std": 221.2745596491437
+          }
+        },
+        "0.348-0.349": {
+          "accuracy": {
+            "mean": 0.9966315789473684,
+            "std": 0.0003491183989847445
+          },
+          "auc": {
+            "mean": 0.9999473684210528,
+            "std": 7.940045906871536e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 950.0,
+            "std": 0.0
+          }
+        },
+        "0.349-0.35": {
+          "accuracy": {
+            "mean": 0.9955806783144912,
+            "std": 0.0003408658571794023
+          },
+          "auc": {
+            "mean": 0.9996453050450553,
+            "std": 1.5475685024521608e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 973.0,
+            "std": 0.0
+          }
+        },
+        "0.35-0.351": {
+          "accuracy": {
+            "mean": 0.9923404255319148,
+            "std": 0.0006157360054675657
+          },
+          "auc": {
+            "mean": 0.9996433906745134,
+            "std": 2.6714432297863687e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 940.0,
+            "std": 0.0
+          }
+        },
+        "0.351-0.352": {
+          "accuracy": {
+            "mean": 0.9925478065241847,
+            "std": 0.0007306176072422112
+          },
+          "auc": {
+            "mean": 0.999508364322851,
+            "std": 2.0984582301124387e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 888.9999999999999,
+            "std": 0.0
+          }
+        },
+        "0.352-0.353": {
+          "accuracy": {
+            "mean": 0.9925215982721383,
+            "std": 0.0006221230357345074
+          },
+          "auc": {
+            "mean": 0.9997999944021757,
+            "std": 2.3468143130703056e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 755.421052631579,
+            "std": 223.34026808047935
+          }
+        },
+        "0.353-0.354": {
+          "accuracy": {
+            "mean": 0.9944501541623841,
+            "std": 0.00026202566873549264
+          },
+          "auc": {
+            "mean": 0.999803639689922,
+            "std": 4.492557071375352e-06
+          },
+          "rejection_0.90": {
+            "mean": 973.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 973.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 973.0,
+            "std": 0.0
+          }
+        },
+        "0.354-0.355": {
+          "accuracy": {
+            "mean": 0.9931299885974914,
+            "std": 0.0007317843587795743
+          },
+          "auc": {
+            "mean": 0.9995622970919052,
+            "std": 2.8289648663218723e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 584.6666666666666,
+            "std": 206.71088236686737
+          }
+        },
+        "0.355-0.356": {
+          "accuracy": {
+            "mean": 0.995723306544202,
+            "std": 0.0004963150535531199
+          },
+          "auc": {
+            "mean": 0.9999486581927421,
+            "std": 1.1645099085088968e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 871.0,
+            "std": 0.0
+          }
+        },
+        "0.356-0.357": {
+          "accuracy": {
+            "mean": 0.9904029692470837,
+            "std": 0.0007846579314395011
+          },
+          "auc": {
+            "mean": 0.9993500695530724,
+            "std": 3.2138123952007854e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 412.5624999999999,
+            "std": 238.19307043254497
+          }
+        },
+        "0.357-0.358": {
+          "accuracy": {
+            "mean": 0.9929116684841874,
+            "std": 0.000808745745593846
+          },
+          "auc": {
+            "mean": 0.9997689944808412,
+            "std": 4.200459832314199e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 917.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 301.84583333333336,
+            "std": 85.35095144867715
+          }
+        },
+        "0.358-0.359": {
+          "accuracy": {
+            "mean": 0.9917616875712655,
+            "std": 0.0006367818672659127
+          },
+          "auc": {
+            "mean": 0.9997412657694614,
+            "std": 2.306843727511748e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 504.275,
+            "std": 223.95003953635134
+          }
+        },
+        "0.359-0.36": {
+          "accuracy": {
+            "mean": 0.9957337883959043,
+            "std": 0.0003815815661262248
+          },
+          "auc": {
+            "mean": 0.9997984833836153,
+            "std": 1.2044985156922482e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.36-0.361": {
+          "accuracy": {
+            "mean": 0.9945402298850572,
+            "std": 0.0003400045852356514
+          },
+          "auc": {
+            "mean": 0.9997742105958516,
+            "std": 1.8985017722942636e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.361-0.362": {
+          "accuracy": {
+            "mean": 0.9927837837837836,
+            "std": 0.0005479225657490023
+          },
+          "auc": {
+            "mean": 0.9998038276113952,
+            "std": 1.920883093492329e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 925.0,
+            "std": 0.0
+          }
+        },
+        "0.362-0.363": {
+          "accuracy": {
+            "mean": 0.9935034802784223,
+            "std": 0.0006764445353648919
+          },
+          "auc": {
+            "mean": 0.9995247253190929,
+            "std": 2.552538422497505e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 862.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 624.95,
+            "std": 214.4197926964766
+          }
+        },
+        "0.363-0.364": {
+          "accuracy": {
+            "mean": 0.9945848375451265,
+            "std": 0.0005034055514645443
+          },
+          "auc": {
+            "mean": 0.9994119274039512,
+            "std": 2.0560441912416487e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 831.0,
+            "std": 0.0
+          }
+        },
+        "0.364-0.365": {
+          "accuracy": {
+            "mean": 0.9924943566591423,
+            "std": 0.0004030151483376359
+          },
+          "auc": {
+            "mean": 0.9998405087414459,
+            "std": 1.6738958186640137e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 575.9000000000001,
+            "std": 203.00810328654376
+          }
+        },
+        "0.365-0.366": {
+          "accuracy": {
+            "mean": 0.9930092059838893,
+            "std": 0.000711116633734639
+          },
+          "auc": {
+            "mean": 0.9998420204433227,
+            "std": 2.2802376882849744e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 525.9736842105264,
+            "std": 177.13802778180238
+          }
+        },
+        "0.366-0.367": {
+          "accuracy": {
+            "mean": 0.9938529411764707,
+            "std": 0.0007995457187687301
+          },
+          "auc": {
+            "mean": 0.9998230449826989,
+            "std": 2.7875703980845975e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 613.888888888889,
+            "std": 211.18419787498019
+          }
+        },
+        "0.367-0.368": {
+          "accuracy": {
+            "mean": 0.9961156542056073,
+            "std": 0.00033427345625756976
+          },
+          "auc": {
+            "mean": 0.9996532857673159,
+            "std": 6.514935227909264e-05
+          },
+          "rejection_0.90": {
+            "mean": 856.0000000000001,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 856.0000000000001,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 856.0000000000001,
+            "std": 0.0
+          }
+        },
+        "0.368-0.369": {
+          "accuracy": {
+            "mean": 0.9946040868454661,
+            "std": 0.0007943713476771932
+          },
+          "auc": {
+            "mean": 0.9991399291130652,
+            "std": 2.1719163306333957e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.369-0.37": {
+          "accuracy": {
+            "mean": 0.9921391752577321,
+            "std": 0.0005617137813841055
+          },
+          "auc": {
+            "mean": 0.9998146721224359,
+            "std": 1.8878828104893036e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 776.0,
+            "std": 0.0
+          }
+        },
+        "0.37-0.371": {
+          "accuracy": {
+            "mean": 0.992822384428224,
+            "std": 0.0005959829057866674
+          },
+          "auc": {
+            "mean": 0.9997316793057109,
+            "std": 1.6991454032937695e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.371-0.372": {
+          "accuracy": {
+            "mean": 0.9922339108910894,
+            "std": 0.0003647842240888311
+          },
+          "auc": {
+            "mean": 0.9993612758553081,
+            "std": 3.960002855249751e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 808.0,
+            "std": 0.0
+          }
+        },
+        "0.372-0.373": {
+          "accuracy": {
+            "mean": 0.9978247162673393,
+            "std": 0.0003716843039896054
+          },
+          "auc": {
+            "mean": 0.9999461714974502,
+            "std": 7.169611286340463e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.373-0.374": {
+          "accuracy": {
+            "mean": 0.9951972010178116,
+            "std": 0.0005856219032926946
+          },
+          "auc": {
+            "mean": 0.9999405143445408,
+            "std": 7.503222976696819e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.374-0.375": {
+          "accuracy": {
+            "mean": 0.9943657219973009,
+            "std": 0.00044118410359722494
+          },
+          "auc": {
+            "mean": 0.9987114833694847,
+            "std": 1.7746432787416035e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.375-0.376": {
+          "accuracy": {
+            "mean": 0.9962563451776649,
+            "std": 0.0004873823444079187
+          },
+          "auc": {
+            "mean": 0.9999368703135868,
+            "std": 9.737571476872189e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.376-0.377": {
+          "accuracy": {
+            "mean": 0.9975098296199212,
+            "std": 0.0005712842652084561
+          },
+          "auc": {
+            "mean": 0.9999720012573668,
+            "std": 9.718377419501904e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.377-0.378": {
+          "accuracy": {
+            "mean": 0.9961350974930363,
+            "std": 0.000745970936129163
+          },
+          "auc": {
+            "mean": 0.9997575282625059,
+            "std": 2.330152135760841e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 718.0,
+            "std": 0.0
+          }
+        },
+        "0.378-0.379": {
+          "accuracy": {
+            "mean": 0.9964187327823689,
+            "std": 0.00046710261591770405
+          },
+          "auc": {
+            "mean": 0.9998902435322421,
+            "std": 1.9248304073207815e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 726.0,
+            "std": 0.0
+          }
+        },
+        "0.379-0.38": {
+          "accuracy": {
+            "mean": 0.9944648093841642,
+            "std": 0.001074365901008272
+          },
+          "auc": {
+            "mean": 0.9997438317523931,
+            "std": 3.054368421880099e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.38-0.381": {
+          "accuracy": {
+            "mean": 0.9964918256130793,
+            "std": 0.0004947492863192685
+          },
+          "auc": {
+            "mean": 0.9999264045319215,
+            "std": 1.8949556086875767e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 734.0,
+            "std": 0.0
+          }
+        },
+        "0.381-0.382": {
+          "accuracy": {
+            "mean": 0.9953053435114505,
+            "std": 0.0007737837760577825
+          },
+          "auc": {
+            "mean": 0.9999396305576598,
+            "std": 2.3996607392589365e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 655.0,
+            "std": 0.0
+          }
+        },
+        "0.382-0.383": {
+          "accuracy": {
+            "mean": 0.9958575581395351,
+            "std": 0.00033303602434274694
+          },
+          "auc": {
+            "mean": 0.9994588502230934,
+            "std": 2.1578563189938488e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.383-0.384": {
+          "accuracy": {
+            "mean": 0.9910578386605786,
+            "std": 0.0005833222875477975
+          },
+          "auc": {
+            "mean": 0.9997587159937821,
+            "std": 3.465205106622808e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 374.60526315789474,
+            "std": 152.04254762430367
+          }
+        },
+        "0.384-0.385": {
+          "accuracy": {
+            "mean": 0.9944947209653092,
+            "std": 0.000794544023593718
+          },
+          "auc": {
+            "mean": 0.9992813414958744,
+            "std": 2.91682679506594e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 663.0,
+            "std": 0.0
+          }
+        },
+        "0.385-0.386": {
+          "accuracy": {
+            "mean": 0.9963295269168027,
+            "std": 0.0004078303425774643
+          },
+          "auc": {
+            "mean": 0.9999310746761972,
+            "std": 1.3088714212561067e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.386-0.387": {
+          "accuracy": {
+            "mean": 0.996367851622875,
+            "std": 0.0006035741635167267
+          },
+          "auc": {
+            "mean": 0.9997781939709848,
+            "std": 1.1974739637863127e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.387-0.388": {
+          "accuracy": {
+            "mean": 0.99599358974359,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 0.9998730019312951,
+            "std": 1.2904465208692664e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.388-0.389": {
+          "accuracy": {
+            "mean": 0.9914010067114095,
+            "std": 0.0007903290134822591
+          },
+          "auc": {
+            "mean": 0.9996224832214764,
+            "std": 4.5322786332838955e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 596.0,
+            "std": 0.0
+          }
+        },
+        "0.389-0.39": {
+          "accuracy": {
+            "mean": 0.9953073089700999,
+            "std": 0.0003961541534123157
+          },
+          "auc": {
+            "mean": 0.9998101566207879,
+            "std": 5.573343479905948e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 602.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 602.0,
+            "std": 0.0
+          }
+        },
+        "0.39-0.391": {
+          "accuracy": {
+            "mean": 0.994570707070707,
+            "std": 0.0006228387452419186
+          },
+          "auc": {
+            "mean": 0.9996377920620343,
+            "std": 3.5063717974821665e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 594.0,
+            "std": 0.0
+          }
+        },
+        "0.391-0.392": {
+          "accuracy": {
+            "mean": 0.9960758377425043,
+            "std": 0.0005899068853729819
+          },
+          "auc": {
+            "mean": 0.9999250363153948,
+            "std": 1.1962390329382843e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.392-0.393": {
+          "accuracy": {
+            "mean": 0.997169811320755,
+            "std": 0.0006670818690439126
+          },
+          "auc": {
+            "mean": 0.9999804200783196,
+            "std": 1.0590583681484156e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.393-0.394": {
+          "accuracy": {
+            "mean": 0.9954588014981274,
+            "std": 0.0006122049078006509
+          },
+          "auc": {
+            "mean": 0.9999321424062618,
+            "std": 2.467974620304716e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 534.0,
+            "std": 0.0
+          }
+        },
+        "0.394-0.395": {
+          "accuracy": {
+            "mean": 0.9960891089108911,
+            "std": 0.000911482803936732
+          },
+          "auc": {
+            "mean": 0.9999135378884425,
+            "std": 4.159921832356043e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 505.0,
+            "std": 0.0
+          }
+        },
+        "0.395-0.396": {
+          "accuracy": {
+            "mean": 0.9973232323232322,
+            "std": 0.0004817874754631069
+          },
+          "auc": {
+            "mean": 0.9999773492500763,
+            "std": 9.437674588154195e-06
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.396-0.397": {
+          "accuracy": {
+            "mean": 0.9975152129817445,
+            "std": 0.0005045575238877555
+          },
+          "auc": {
+            "mean": 0.9999775765380644,
+            "std": 1.6937877310755727e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.397-0.398": {
+          "accuracy": {
+            "mean": 0.9946466809421844,
+            "std": 3.3306690738754696e-16
+          },
+          "auc": {
+            "mean": 0.9999718005034642,
+            "std": 1.8184278986634542e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.398-0.399": {
+          "accuracy": {
+            "mean": 0.9933768656716419,
+            "std": 0.0006529850746268773
+          },
+          "auc": {
+            "mean": 0.9998322287814659,
+            "std": 4.429699896950425e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 536.0,
+            "std": 0.0
+          }
+        },
+        "0.399-0.4": {
+          "accuracy": {
+            "mean": 0.994920993227991,
+            "std": 0.0005643340857787728
+          },
+          "auc": {
+            "mean": 0.9997633108958519,
+            "std": 4.5217956853238994e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 443.0000000000001,
+            "std": 5.684341886080802e-14
+          }
+        },
+        "0.4-0.401": {
+          "accuracy": {
+            "mean": 0.9959432048681542,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.99978378845418,
+            "std": 2.163386398000215e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.401-0.402": {
+          "accuracy": {
+            "mean": 0.9956221198156682,
+            "std": 0.0009359491249580332
+          },
+          "auc": {
+            "mean": 0.9998683344305463,
+            "std": 4.614944851685291e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 434.0,
+            "std": 0.0
+          }
+        },
+        "0.402-0.403": {
+          "accuracy": {
+            "mean": 0.9922169811320755,
+            "std": 0.0016842991576751889
+          },
+          "auc": {
+            "mean": 0.999694063723745,
+            "std": 5.570815218293972e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 424.0,
+            "std": 0.0
+          }
+        },
+        "0.403-0.404": {
+          "accuracy": {
+            "mean": 0.9923629242819845,
+            "std": 0.0015041408122458215
+          },
+          "auc": {
+            "mean": 0.9996523256685912,
+            "std": 5.0465285122472106e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.404-0.405": {
+          "accuracy": {
+            "mean": 0.9939058171745151,
+            "std": 0.0006785290146214269
+          },
+          "auc": {
+            "mean": 0.99968078820758,
+            "std": 4.638417832800718e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 361.0,
+            "std": 0.0
+          }
+        },
+        "0.405-0.406": {
+          "accuracy": {
+            "mean": 0.9914490861618799,
+            "std": 0.0006494696064664377
+          },
+          "auc": {
+            "mean": 0.9998568399811847,
+            "std": 4.1072937524647985e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.406-0.407": {
+          "accuracy": {
+            "mean": 0.9957638888888891,
+            "std": 0.0009291033444624726
+          },
+          "auc": {
+            "mean": 0.9999162808641977,
+            "std": 4.178616551731576e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.407-0.408": {
+          "accuracy": {
+            "mean": 0.9958584337349399,
+            "std": 0.0010515240996813616
+          },
+          "auc": {
+            "mean": 0.9995032842212221,
+            "std": 6.54143905118466e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 290.5,
+            "std": 71.88010851410841
+          }
+        },
+        "0.408-0.409": {
+          "accuracy": {
+            "mean": 0.9930186170212766,
+            "std": 0.0005758147631545388
+          },
+          "auc": {
+            "mean": 0.999325203712087,
+            "std": 8.121718025355398e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.409-0.41": {
+          "accuracy": {
+            "mean": 0.9922600619195048,
+            "std": 0.0008478677360761183
+          },
+          "auc": {
+            "mean": 0.9992068360666737,
+            "std": 6.521189458886579e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.41-0.411": {
+          "accuracy": {
+            "mean": 0.9958083832335332,
+            "std": 0.0010153188597493105
+          },
+          "auc": {
+            "mean": 0.9999390440675535,
+            "std": 1.6674204200353868e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.411-0.412": {
+          "accuracy": {
+            "mean": 0.988412408759124,
+            "std": 0.001849738588751212
+          },
+          "auc": {
+            "mean": 0.9997349352655975,
+            "std": 0.00013279148256558894
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 211.20833333333331,
+            "std": 71.97934454874306
+          }
+        },
+        "0.412-0.413": {
+          "accuracy": {
+            "mean": 0.9944866920152091,
+            "std": 0.001579206057588969
+          },
+          "auc": {
+            "mean": 0.999907473000911,
+            "std": 7.81766735652937e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 263.0,
+            "std": 0.0
+          }
+        },
+        "0.413-0.414": {
+          "accuracy": {
+            "mean": 0.9951666666666668,
+            "std": 0.0011666666666666937
+          },
+          "auc": {
+            "mean": 0.9998666666666667,
+            "std": 6.648122356291029e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 300.0,
+            "std": 0.0
+          }
+        },
+        "0.414-0.415": {
+          "accuracy": {
+            "mean": 0.9948616600790514,
+            "std": 0.001452266645918872
+          },
+          "auc": {
+            "mean": 0.9999664109734567,
+            "std": 2.5801285076959562e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.415-0.416": {
+          "accuracy": {
+            "mean": 0.9942216981132074,
+            "std": 0.0013903096842631253
+          },
+          "auc": {
+            "mean": 0.9998464756140976,
+            "std": 8.841365470945661e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.416-0.417": {
+          "accuracy": {
+            "mean": 0.9909090909090912,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 0.9992799586776859,
+            "std": 0.00011765526662630447
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.417-0.418": {
+          "accuracy": {
+            "mean": 0.9902777777777778,
+            "std": 0.0018633899812498184
+          },
+          "auc": {
+            "mean": 0.999942901234568,
+            "std": 7.190430714333778e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 180.0,
+            "std": 0.0
+          }
+        },
+        "0.418-0.419": {
+          "accuracy": {
+            "mean": 0.9994871794871795,
+            "std": 0.001025641025641022
+          },
+          "auc": {
+            "mean": 0.9999934253780408,
+            "std": 1.4100993155502356e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.419-0.42": {
+          "accuracy": {
+            "mean": 0.9883977900552487,
+            "std": 0.0011049723756906271
+          },
+          "auc": {
+            "mean": 0.999659656298648,
+            "std": 0.00016388769255787627
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 89.15925925925926,
+            "std": 51.12755327990549
+          }
+        },
+        "0.42-0.421": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.421-0.422": {
+          "accuracy": {
+            "mean": 0.9911242603550295,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9998862084660901,
+            "std": 7.417009265894511e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.422-0.423": {
+          "accuracy": {
+            "mean": 0.9805031446540882,
+            "std": 0.0012578616352201255
+          },
+          "auc": {
+            "mean": 0.9996974012103952,
+            "std": 0.00022628833508338728
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 159.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 141.33333333333334,
+            "std": 33.05130691650315
+          }
+        },
+        "0.423-0.424": {
+          "accuracy": {
+            "mean": 0.9874087591240874,
+            "std": 0.00215142812455319
+          },
+          "auc": {
+            "mean": 0.9998454899035643,
+            "std": 0.00012930535563440986
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 123.3,
+            "std": 27.4
+          }
+        },
+        "0.424-0.425": {
+          "accuracy": {
+            "mean": 0.9776859504132231,
+            "std": 0.002024371688250554
+          },
+          "auc": {
+            "mean": 0.9998087562324978,
+            "std": 0.00023422482343391464
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 121.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 121.0,
+            "std": 0.0
+          }
+        },
+        "0.425-0.426": {
+          "accuracy": {
+            "mean": 0.9957627118644071,
+            "std": 3.3306690738754696e-16
+          },
+          "auc": {
+            "mean": 0.9995224073542085,
+            "std": 0.00012902358677983916
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.426-0.427": {
+          "accuracy": {
+            "mean": 0.9817934782608697,
+            "std": 0.003110196506048817
+          },
+          "auc": {
+            "mean": 0.9991965973534974,
+            "std": 0.0003183410582539476
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 71.55555555555556,
+            "std": 24.512027785820564
+          }
+        },
+        "0.427-0.428": {
+          "accuracy": {
+            "mean": 0.9742574257425742,
+            "std": 0.001980198019801982
+          },
+          "auc": {
+            "mean": 0.999161846877757,
+            "std": 0.00040711802332331657
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 101.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 81.01041666666667,
+            "std": 26.090818198570037
+          }
+        },
+        "0.428-0.429": {
+          "accuracy": {
+            "mean": 0.9833333333333336,
+            "std": 0.0033207070253303333
+          },
+          "auc": {
+            "mean": 0.9992228523419451,
+            "std": 0.0005019030936924518
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 64.6875,
+            "std": 11.409802528966047
+          }
+        },
+        "0.429-0.43": {
+          "accuracy": {
+            "mean": 0.9710227272727275,
+            "std": 0.0017045454545454365
+          },
+          "auc": {
+            "mean": 0.9982115185950411,
+            "std": 0.00026550729848850724
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 88.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 88.0,
+            "std": 0.0
+          }
+        },
+        "0.43-0.431": {
+          "accuracy": {
+            "mean": 0.9905660377358491,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.999181203275187,
+            "std": 0.00039159843360625957
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.431-0.432": {
+          "accuracy": {
+            "mean": 0.9915254237288135,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9999856363114048,
+            "std": 6.260986704310139e-05
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.432-0.433": {
+          "accuracy": {
+            "mean": 0.9816666666666668,
+            "std": 0.003333333333333322
+          },
+          "auc": {
+            "mean": 0.9930555555555556,
+            "std": 0.0009582326839255811
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 60.0,
+            "std": 0.0
+          }
+        },
+        "0.433-0.434": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.434-0.435": {
+          "accuracy": {
+            "mean": 0.9901785714285711,
+            "std": 0.002678571428571452
+          },
+          "auc": {
+            "mean": 0.9999043367346939,
+            "std": 0.00020418125757122523
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 56.0,
+            "std": 0.0
+          }
+        },
+        "0.435-0.436": {
+          "accuracy": {
+            "mean": 0.9855263157894736,
+            "std": 0.003947368421052611
+          },
+          "auc": {
+            "mean": 0.9895775623268699,
+            "std": 0.0024432835681881307
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 38.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 2.6908472899649367,
+            "std": 0.6295280814550611
+          }
+        },
+        "0.436-0.437": {
+          "accuracy": {
+            "mean": 0.9467105263157893,
+            "std": 0.002867696673382007
+          },
+          "auc": {
+            "mean": 0.9985110803324101,
+            "std": 0.0013548474755203455
+          },
+          "rejection_0.90": {
+            "mean": 38.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 32.3,
+            "std": 8.706893820416095
+          },
+          "rejection_0.98": {
+            "mean": 26.473333333333336,
+            "std": 11.282580477099296
+          }
+        },
+        "0.437-0.438": {
+          "accuracy": {
+            "mean": 0.9545454545454544,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.438-0.439": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.439-0.44": {
+          "accuracy": {
+            "mean": 0.9991666666666668,
+            "std": 0.0036324157862839056
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.44-0.441": {
+          "accuracy": {
+            "mean": 0.9800000000000001,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9998400000000001,
+            "std": 0.00048000000000001373
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 25.0,
+            "std": 0.0
+          }
+        },
+        "0.441-0.442": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.442-0.443": {
+          "accuracy": {
+            "mean": 0.96875,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.992578125,
+            "std": 0.004605400829121717
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 8.549019607843135,
+            "std": 3.772866971233159
+          },
+          "rejection_0.98": {
+            "mean": 8.549019607843135,
+            "std": 3.772866971233159
+          }
+        },
+        "0.443-0.444": {
+          "accuracy": {
+            "mean": 0.9666666666666665,
+            "std": 2.220446049250313e-16
+          },
+          "auc": {
+            "mean": 0.9997777777777778,
+            "std": 0.0009686442096757116
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 15.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 15.0,
+            "std": 0.0
+          }
+        },
+        "0.444-0.445": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.445-0.446": {
+          "accuracy": {
+            "mean": 0.9285714285714285,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9987244897959183,
+            "std": 0.002735664616011116
+          },
+          "rejection_0.90": {
+            "mean": 14.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 14.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 14.0,
+            "std": 0.0
+          }
+        },
+        "0.446-0.447": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.447-0.448": {
+          "accuracy": {
+            "mean": 0.9285714285714285,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9795918367346941,
+            "std": 0.017074694419062786
+          },
+          "rejection_0.90": {
+            "mean": 5.666666666666666,
+            "std": 1.8104634152000358
+          },
+          "rejection_0.95": {
+            "mean": 5.666666666666666,
+            "std": 1.8104634152000358
+          },
+          "rejection_0.98": {
+            "mean": 5.666666666666666,
+            "std": 1.8104634152000358
+          }
+        },
+        "0.448-0.449": {
+          "accuracy": {
+            "mean": 0.9285714285714285,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 0.9887755102040817,
+            "std": 0.013652130775775146
+          },
+          "rejection_0.90": {
+            "mean": 6.222222222222222,
+            "std": 1.4550889837454215
+          },
+          "rejection_0.95": {
+            "mean": 6.222222222222222,
+            "std": 1.4550889837454215
+          },
+          "rejection_0.98": {
+            "mean": 6.222222222222222,
+            "std": 1.4550889837454215
+          }
+        },
+        "0.449-0.45": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.45-0.451": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.451-0.452": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.452-0.453": {
+          "accuracy": {
+            "mean": 0.9285714285714285,
+            "std": 1.1102230246251565e-16
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.453-0.454": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.454-0.455": {
+          "accuracy": {
+            "mean": 0.8333333333333334,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9972222222222221,
+            "std": 0.012108052620946321
+          },
+          "rejection_0.90": {
+            "mean": 6.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 6.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 6.0,
+            "std": 0.0
+          }
+        },
+        "0.457-0.458": {
+          "accuracy": {
+            "mean": 0.8333333333333334,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.9888888888888889,
+            "std": 0.03333333333333331
+          },
+          "rejection_0.90": {
+            "mean": 3.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 3.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 3.0,
+            "std": 0.0
+          }
+        },
+        "0.458-0.459": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.459-0.46": {
+          "accuracy": {
+            "mean": 0.5,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.461-0.462": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.462-0.463": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.463-0.464": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.465-0.466": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.466-0.467": {
+          "accuracy": {
+            "mean": 0.5,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.467-0.468": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.475-0.476": {
+          "accuracy": {
+            "mean": 0.5,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 0.95,
+            "std": 0.21794494717703372
+          },
+          "rejection_0.90": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": 1.0,
+            "std": 0.0
+          }
+        },
+        "0.48-0.481": {
+          "accuracy": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        },
+        "0.484-0.485": {
+          "accuracy": {
+            "mean": 0.75,
+            "std": 0.0
+          },
+          "auc": {
+            "mean": 1.0,
+            "std": 0.0
+          },
+          "rejection_0.90": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.95": {
+            "mean": Infinity,
+            "std": 0.0
+          },
+          "rejection_0.98": {
+            "mean": Infinity,
+            "std": 0.0
+          }
+        }
+      }
+    }
+  }
+}
