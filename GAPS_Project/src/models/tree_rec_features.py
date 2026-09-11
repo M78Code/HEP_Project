@@ -25,6 +25,9 @@ INPUT_ABLATION_CHOICES = (
     'event_only',
     'no_energy',
     'no_time',
+    'no_node_time',
+    'no_tof_dt',
+    'no_entry_position',
 )
 HIT_TOPOLOGY_FEATURE_DIM = 6
 TRACK_STAR_FEATURE_DIM = 4
@@ -78,6 +81,12 @@ def apply_input_ablation(
         # Node time plus every summary selected by earliest TOF hit time.
         node_features[:, 4] = 0.0
         graph_features[:, 38:45] = 0.0
+    elif mode == 'no_node_time':
+        node_features[:, 4] = 0.0
+    elif mode == 'no_tof_dt':
+        graph_features[:, 38] = 0.0
+    elif mode == 'no_entry_position':
+        graph_features[:, 39:45] = 0.0
     return node_features, graph_features
 
 
