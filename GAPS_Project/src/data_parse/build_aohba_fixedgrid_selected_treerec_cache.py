@@ -44,7 +44,7 @@ HIT_BRANCHES = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixedgrid-raw-dir", type=Path, required=True)
-    parser.add_argument("--fixedgrid-dataset-dir", type=Path, required=True)
+    parser.add_argument("--fixedgrid-dataset-dir", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--chunk-size", type=int, default=10_000)
     parser.add_argument("--k", type=int, default=8)
@@ -68,6 +68,9 @@ def load_provenance(raw_dir: Path, particle: str) -> dict:
     directory = raw_dir / PARTICLES[particle]["directory"]
     if not (directory / "_SUCCESS").is_file():
         raise RuntimeError(f"incomplete fixed-grid export: {directory}")
+    export_manifest = json.loads(
+        (directory / "export_manifest.json").read_text()
+    )
     file_indices = np.load(
         directory / "source_file_indices.npy", mmap_mode="r"
     )
@@ -95,6 +98,9 @@ def load_provenance(raw_dir: Path, particle: str) -> dict:
         "file_indices": file_indices,
         "entries": entries,
         "files": files,
+        "selection": export_manifest.get(
+            "selection", "stopped-toptrigger"
+        ),
     }
 
 
@@ -347,7 +353,7 @@ def build_cache(
                                 "source_selected_index"
                             ]
                             + 1,
-                            "events": len(graphs),
+                            "n_graphs": len(graphs),
                             "normalization": "train-only global_log",
                         },
                         indent=2,
@@ -381,7 +387,16 @@ def main() -> None:
         particle: load_provenance(args.fixedgrid_raw_dir, particle)
         for particle in PARTICLES
     }
-    audit_assembled_dataset(args.fixedgrid_dataset_dir, provenance)
+    selections = {
+        item["selection"] for item in provenance.values()
+    }
+    if len(selections) != 1:
+        raise RuntimeError(
+            f"particle provenance uses different selections: {selections}"
+        )
+    selection = selections.pop()
+    if args.fixedgrid_dataset_dir is not None:
+        audit_assembled_dataset(args.fixedgrid_dataset_dir, provenance)
 
     mean, std, train_nodes = fit_normalizer(
         provenance, args.chunk_size, args.k
@@ -407,10 +422,15 @@ def main() -> None:
 
     summaries = build_cache(args, provenance, mean, std)
     manifest = {
-        "purpose": "TreeRec for exact Aohba TreeMc fixed-grid 200k events",
+        "purpose": "TreeRec for exact Aohba TreeMc-selected events",
         "pairing": "source_file_indices.npy + source_entries.npy",
+        "selection": selection,
         "fixedgrid_raw_dir": str(args.fixedgrid_raw_dir.resolve()),
-        "fixedgrid_dataset_dir": str(args.fixedgrid_dataset_dir.resolve()),
+        "fixedgrid_dataset_dir": (
+            str(args.fixedgrid_dataset_dir.resolve())
+            if args.fixedgrid_dataset_dir is not None
+            else None
+        ),
         "normalization": "global_log fitted on paired train events only",
         "k": args.k,
         "splits": summaries,

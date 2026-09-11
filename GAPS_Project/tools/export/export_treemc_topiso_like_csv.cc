@@ -38,9 +38,11 @@ struct Args {
   std::string output;
   std::string output_npy_dir;
   std::string geometry_file;
+  std::string selection = "stopped-toptrigger";
   long long max_events = -1;
   long long start_entry = 0;
   int target_label = -1;
+  bool provenance_only = false;
 };
 
 void print_usage(const char* argv0) {
@@ -48,7 +50,9 @@ void print_usage(const char* argv0) {
       << "usage: " << argv0
       << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
-      << "[--target-label 0|1]\n\n"
+      << "[--target-label 0|1] "
+      << "[--selection none|toptrigger|stopped|stopped-toptrigger] "
+      << "[--provenance-only]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
       << "  col 1       : ROOT entry index\n"
@@ -60,7 +64,8 @@ void print_usage(const char* argv0) {
       << "  col 1446:1457: 11 TOF/event features\n\n"
       << "The direct NPY mode writes voxels.npy, tof_primary.npy, labels.npy,\n"
       << "betas.npy, and provenance arrays without a CSV intermediate. It\n"
-      << "requires a positive --max-events value.\n";
+      << "requires a positive --max-events value. --provenance-only omits\n"
+      << "the voxel and TOF feature arrays.\n";
 }
 
 Args parse_args(int argc, char** argv) {
@@ -83,12 +88,16 @@ Args parse_args(int argc, char** argv) {
       args.output_npy_dir = require_value("--output-npy-dir");
     } else if (key == "--geometry-file") {
       args.geometry_file = require_value("--geometry-file");
+    } else if (key == "--selection") {
+      args.selection = require_value("--selection");
     } else if (key == "--max-events") {
       args.max_events = std::stoll(require_value("--max-events"));
     } else if (key == "--start-entry") {
       args.start_entry = std::stoll(require_value("--start-entry"));
     } else if (key == "--target-label") {
       args.target_label = std::stoi(require_value("--target-label"));
+    } else if (key == "--provenance-only") {
+      args.provenance_only = true;
     } else if (key == "--help" || key == "-h") {
       print_usage(argv[0]);
       std::exit(0);
@@ -105,6 +114,16 @@ Args parse_args(int argc, char** argv) {
   }
   if (!args.output_npy_dir.empty() && args.max_events <= 0) {
     std::cerr << "--output-npy-dir requires --max-events greater than zero\n";
+    std::exit(2);
+  }
+  if (args.provenance_only && args.output_npy_dir.empty()) {
+    std::cerr << "--provenance-only requires --output-npy-dir\n";
+    std::exit(2);
+  }
+  if (args.selection != "none" && args.selection != "toptrigger" &&
+      args.selection != "stopped" &&
+      args.selection != "stopped-toptrigger") {
+    std::cerr << "invalid --selection: " << args.selection << "\n";
     std::exit(2);
   }
   if (args.geometry_file.empty()) {
@@ -298,17 +317,27 @@ class DirectNpyOutput {
  public:
   DirectNpyOutput(const std::string& output_dir,
                   std::size_t n_events,
-                  const std::vector<int>& tracker_order)
+                  const std::vector<int>& tracker_order,
+                  bool provenance_only)
       : output_dir_(output_dir),
         expected_(n_events),
-        voxels_(join_path(output_dir, "voxels.npy"), "<f4", {n_events, 10, 12, 12}),
-        tof_primary_(join_path(output_dir, "tof_primary.npy"), "<f4", {n_events, 11}),
+        provenance_only_(provenance_only),
         labels_(join_path(output_dir, "labels.npy"), "<i8", {n_events}),
         betas_(join_path(output_dir, "betas.npy"), "<f4", {n_events}),
         random_seeds_(join_path(output_dir, "random_seeds.npy"), "<i8", {n_events}),
         chain_entries_(join_path(output_dir, "chain_entries.npy"), "<i8", {n_events}),
         source_file_indices_(join_path(output_dir, "source_file_indices.npy"), "<i4", {n_events}),
         source_entries_(join_path(output_dir, "source_entries.npy"), "<i8", {n_events}) {
+    if (!provenance_only_) {
+      voxels_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "voxels.npy"),
+          "<f4",
+          std::vector<std::size_t>{n_events, 10, 12, 12});
+      tof_primary_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "tof_primary.npy"),
+          "<f4",
+          std::vector<std::size_t>{n_events, 11});
+    }
     for (std::size_t i = 0; i < tracker_order.size(); ++i) {
       channel_indices_.emplace(tracker_order[i], i);
     }
@@ -340,30 +369,32 @@ class DirectNpyOutput {
       throw std::runtime_error("attempted to write too many NPY events");
     }
 
-    std::array<float, 1440> voxel{};
-    for (const auto& item : tracker_energy) {
-      const auto index = channel_indices_.find(item.first);
-      if (index != channel_indices_.end()) {
-        voxel[index->second] = legacy_csv_float(item.second);
+    if (!provenance_only_) {
+      std::array<float, 1440> voxel{};
+      for (const auto& item : tracker_energy) {
+        const auto index = channel_indices_.find(item.first);
+        if (index != channel_indices_.end()) {
+          voxel[index->second] = legacy_csv_float(item.second);
+        }
       }
+
+      const std::array<float, 11> tof = {
+          static_cast<float>(feat.n_top_umbrella),
+          static_cast<float>(feat.n_top_cube),
+          legacy_csv_float(feat.e_top_umbrella),
+          legacy_csv_float(feat.e_top_cube),
+          legacy_csv_float(feat.tof),
+          legacy_csv_float(feat.p_top_cube.x()),
+          legacy_csv_float(feat.p_top_cube.y()),
+          legacy_csv_float(feat.p_top_cube.z()),
+          legacy_csv_float(feat.p_top_umbrella.x()),
+          legacy_csv_float(feat.p_top_umbrella.y()),
+          legacy_csv_float(feat.p_top_umbrella.z()),
+      };
+
+      voxels_->write(voxel.data(), voxel.size());
+      tof_primary_->write(tof.data(), tof.size());
     }
-
-    const std::array<float, 11> tof = {
-        static_cast<float>(feat.n_top_umbrella),
-        static_cast<float>(feat.n_top_cube),
-        legacy_csv_float(feat.e_top_umbrella),
-        legacy_csv_float(feat.e_top_cube),
-        legacy_csv_float(feat.tof),
-        legacy_csv_float(feat.p_top_cube.x()),
-        legacy_csv_float(feat.p_top_cube.y()),
-        legacy_csv_float(feat.p_top_cube.z()),
-        legacy_csv_float(feat.p_top_umbrella.x()),
-        legacy_csv_float(feat.p_top_umbrella.y()),
-        legacy_csv_float(feat.p_top_umbrella.z()),
-    };
-
-    voxels_.write(voxel.data(), voxel.size());
-    tof_primary_.write(tof.data(), tof.size());
     labels_.write_scalar<std::int64_t>(label);
     betas_.write_scalar<float>(legacy_csv_float(event->GetPrimaryBetaGenerated()));
     random_seeds_.write_scalar<std::int64_t>(event->GetRandSeed());
@@ -375,11 +406,14 @@ class DirectNpyOutput {
 
   std::size_t written() const { return written_; }
   std::size_t expected() const { return expected_; }
+  bool provenance_only() const { return provenance_only_; }
 
   void mark_complete(const Args& args,
                      const std::vector<std::string>& source_files) {
-    voxels_.flush();
-    tof_primary_.flush();
+    if (!provenance_only_) {
+      voxels_->flush();
+      tof_primary_->flush();
+    }
     labels_.flush();
     betas_.flush();
     random_seeds_.flush();
@@ -395,6 +429,9 @@ class DirectNpyOutput {
              << "  \"geometry_file\": \"" << args.geometry_file << "\",\n"
              << "  \"events\": " << written_ << ",\n"
              << "  \"target_label\": " << args.target_label << ",\n"
+             << "  \"selection\": \"" << args.selection << "\",\n"
+             << "  \"provenance_only\": "
+             << (provenance_only_ ? "true" : "false") << ",\n"
              << "  \"start_entry\": " << args.start_entry << ",\n"
              << "  \"source_files\": " << source_files.size() << ",\n"
              << "  \"legacy_csv_significant_digits\": 6,\n"
@@ -411,10 +448,11 @@ class DirectNpyOutput {
  private:
   std::string output_dir_;
   std::size_t expected_;
+  bool provenance_only_;
   std::size_t written_ = 0;
   std::unordered_map<int, std::size_t> channel_indices_;
-  NpyStream voxels_;
-  NpyStream tof_primary_;
+  std::unique_ptr<NpyStream> voxels_;
+  std::unique_ptr<NpyStream> tof_primary_;
   NpyStream labels_;
   NpyStream betas_;
   NpyStream random_seeds_;
@@ -487,6 +525,14 @@ EventFeatures compute_event_features(CTrackBase* primary) {
   out.toptrigger = hit_top_umbrella && hit_top_cube && (t_top_umbrella < t_top_cube);
   out.tof = t_top_cube - t_top_umbrella;
   return out;
+}
+
+bool passes_selection(const EventFeatures& features,
+                      const std::string& selection) {
+  if (selection == "none") return true;
+  if (selection == "toptrigger") return features.toptrigger;
+  if (selection == "stopped") return features.stopped;
+  return features.stopped && features.toptrigger;
 }
 
 std::map<int, double> collect_tracker_energy(CEventMc* event) {
@@ -577,7 +623,8 @@ int main(int argc, char** argv) {
       npy_out = std::make_unique<DirectNpyOutput>(
           args.output_npy_dir,
           static_cast<std::size_t>(args.max_events),
-          tracker_order);
+          tracker_order,
+          args.provenance_only);
     } catch (const std::exception& error) {
       std::cerr << "cannot initialize direct NPY output: " << error.what() << "\n";
       return 1;
@@ -591,6 +638,7 @@ int main(int argc, char** argv) {
   long long not_requested_label = 0;
   long long not_toptrigger = 0;
   long long not_stopped = 0;
+  long long failed_selection = 0;
 
   for (Long64_t entry = args.start_entry; entry < n_entries; ++entry) {
     if (args.max_events >= 0 && written >= args.max_events) break;
@@ -618,16 +666,17 @@ int main(int argc, char** argv) {
     }
 
     const EventFeatures feat = compute_event_features(primary);
-    if (!feat.toptrigger) {
-      ++not_toptrigger;
-      continue;
-    }
-    if (!feat.stopped) {
-      ++not_stopped;
+    if (!feat.toptrigger) ++not_toptrigger;
+    if (!feat.stopped) ++not_stopped;
+    if (!passes_selection(feat, args.selection)) {
+      ++failed_selection;
       continue;
     }
 
-    const std::map<int, double> tracker_energy = collect_tracker_energy(event);
+    std::map<int, double> tracker_energy;
+    if (!npy_out || !npy_out->provenance_only()) {
+      tracker_energy = collect_tracker_energy(event);
+    }
     try {
       if (npy_out) {
         npy_out->write(event,
@@ -667,13 +716,16 @@ int main(int argc, char** argv) {
             << (args.output.empty() ? args.output_npy_dir : args.output) << "\n";
   std::cerr << "entries_total: " << n_entries << "\n";
   std::cerr << "start_entry: " << args.start_entry << "\n";
+  std::cerr << "selection: " << args.selection << "\n";
+  std::cerr << "provenance_only: " << args.provenance_only << "\n";
   std::cerr << "events_seen: " << seen << "\n";
-  std::cerr << "written_atrest_toptrigger: " << written << "\n";
+  std::cerr << "written_selected: " << written << "\n";
   std::cerr << "no_track: " << no_track << "\n";
   std::cerr << "not_target: " << not_target << "\n";
   std::cerr << "not_requested_label: " << not_requested_label << "\n";
   std::cerr << "not_toptrigger: " << not_toptrigger << "\n";
   std::cerr << "not_stopped: " << not_stopped << "\n";
+  std::cerr << "failed_selection: " << failed_selection << "\n";
 
   return 0;
 }
