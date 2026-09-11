@@ -1,15 +1,28 @@
 #include <algorithm>
+#include <array>
+#include <cerrno>
+#include <cstdio>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+#include <sys/stat.h>
+
 #include "TChain.h"
+#include "TChainElement.h"
 #include "TGeoManager.h"
+#include "TObjArray.h"
 #include "TObjString.h"
+#include "TTree.h"
 #include "TVector3.h"
 
 #include "CEventBase.hh"
@@ -23,6 +36,7 @@ namespace {
 struct Args {
   std::string input;
   std::string output;
+  std::string output_npy_dir;
   std::string geometry_file;
   long long max_events = -1;
   long long start_entry = 0;
@@ -31,7 +45,8 @@ struct Args {
 
 void print_usage(const char* argv0) {
   std::cerr
-      << "usage: " << argv0 << " --input ROOT_OR_GLOB --output CSV "
+      << "usage: " << argv0
+      << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
@@ -42,7 +57,10 @@ void print_usage(const char* argv0) {
       << "  col 4       : generated primary beta\n"
       << "  col 5       : stopping layer\n"
       << "  col 6:1446  : 1440 Si(Li) fixed-grid energy channels\n"
-      << "  col 1446:1457: 11 TOF/event features\n";
+      << "  col 1446:1457: 11 TOF/event features\n\n"
+      << "The direct NPY mode writes voxels.npy, tof_primary.npy, labels.npy,\n"
+      << "betas.npy, and provenance arrays without a CSV intermediate. It\n"
+      << "requires a positive --max-events value.\n";
 }
 
 Args parse_args(int argc, char** argv) {
@@ -61,6 +79,8 @@ Args parse_args(int argc, char** argv) {
       args.input = require_value("--input");
     } else if (key == "--output") {
       args.output = require_value("--output");
+    } else if (key == "--output-npy-dir") {
+      args.output_npy_dir = require_value("--output-npy-dir");
     } else if (key == "--geometry-file") {
       args.geometry_file = require_value("--geometry-file");
     } else if (key == "--max-events") {
@@ -79,8 +99,12 @@ Args parse_args(int argc, char** argv) {
     }
   }
 
-  if (args.input.empty() || args.output.empty()) {
+  if (args.input.empty() || (args.output.empty() == args.output_npy_dir.empty())) {
     print_usage(argv[0]);
+    std::exit(2);
+  }
+  if (!args.output_npy_dir.empty() && args.max_events <= 0) {
+    std::cerr << "--output-npy-dir requires --max-events greater than zero\n";
     std::exit(2);
   }
   if (args.geometry_file.empty()) {
@@ -101,6 +125,18 @@ int label_from_pdg(int pdg) {
   if (pdg == -2212) return 0;
   if (pdg == -1000010020) return 1;
   return -1;
+}
+
+std::vector<std::string> chain_source_files(TChain& tree) {
+  std::vector<std::string> paths;
+  TObjArray* files = tree.GetListOfFiles();
+  if (files == nullptr) return paths;
+  paths.reserve(static_cast<std::size_t>(files->GetEntries()));
+  for (int index = 0; index < files->GetEntries(); ++index) {
+    auto* element = dynamic_cast<TChainElement*>(files->At(index));
+    if (element != nullptr) paths.emplace_back(element->GetTitle());
+  }
+  return paths;
 }
 
 std::vector<int> build_tracker_channel_order(const std::string& geometry_source) {
@@ -176,6 +212,215 @@ struct EventFeatures {
   double tof = 0.0;
   TVector3 p_top_cube;
   TVector3 p_top_umbrella;
+};
+
+std::string npy_shape(const std::vector<std::size_t>& shape) {
+  std::ostringstream out;
+  out << "(";
+  for (std::size_t i = 0; i < shape.size(); ++i) {
+    if (i > 0) out << ", ";
+    out << shape[i];
+  }
+  if (shape.size() == 1) out << ",";
+  out << ")";
+  return out.str();
+}
+
+class NpyStream {
+ public:
+  NpyStream(const std::string& path,
+            const std::string& dtype,
+            const std::vector<std::size_t>& shape)
+      : out_(path, std::ios::binary) {
+    if (!out_) throw std::runtime_error("cannot open " + path);
+
+    const std::string dict = "{'descr': '" + dtype +
+                             "', 'fortran_order': False, 'shape': " +
+                             npy_shape(shape) + ", }";
+    constexpr std::size_t prefix_size = 10;
+    const std::size_t remainder = (prefix_size + dict.size() + 1) % 16;
+    const std::size_t padding = remainder == 0 ? 0 : 16 - remainder;
+    const std::string header = dict + std::string(padding, ' ') + "\n";
+    if (header.size() > 65535) {
+      throw std::runtime_error("NPY header is too large");
+    }
+
+    const char magic[] = {static_cast<char>(0x93), 'N', 'U', 'M', 'P', 'Y'};
+    out_.write(magic, sizeof(magic));
+    const char version[] = {1, 0};
+    out_.write(version, sizeof(version));
+    const std::uint16_t length = static_cast<std::uint16_t>(header.size());
+    const char length_bytes[] = {
+        static_cast<char>(length & 0xff),
+        static_cast<char>((length >> 8) & 0xff),
+    };
+    out_.write(length_bytes, sizeof(length_bytes));
+    out_.write(header.data(), static_cast<std::streamsize>(header.size()));
+  }
+
+  template <typename T>
+  void write(const T* data, std::size_t count) {
+    out_.write(reinterpret_cast<const char*>(data),
+               static_cast<std::streamsize>(sizeof(T) * count));
+    if (!out_) throw std::runtime_error("failed while writing NPY data");
+  }
+
+  template <typename T>
+  void write_scalar(const T value) {
+    write(&value, 1);
+  }
+
+  void flush() {
+    out_.flush();
+    if (!out_) throw std::runtime_error("failed while flushing NPY data");
+  }
+
+ private:
+  std::ofstream out_;
+};
+
+float legacy_csv_float(double value) {
+  char buffer[64];
+  const int length = std::snprintf(buffer, sizeof(buffer), "%.6g", value);
+  if (length <= 0 || length >= static_cast<int>(sizeof(buffer))) {
+    throw std::runtime_error("failed to reproduce legacy CSV precision");
+  }
+  return std::strtof(buffer, nullptr);
+}
+
+std::string join_path(const std::string& directory, const std::string& name) {
+  return directory.empty() || directory.back() == '/'
+             ? directory + name
+             : directory + "/" + name;
+}
+
+class DirectNpyOutput {
+ public:
+  DirectNpyOutput(const std::string& output_dir,
+                  std::size_t n_events,
+                  const std::vector<int>& tracker_order)
+      : output_dir_(output_dir),
+        expected_(n_events),
+        voxels_(join_path(output_dir, "voxels.npy"), "<f4", {n_events, 10, 12, 12}),
+        tof_primary_(join_path(output_dir, "tof_primary.npy"), "<f4", {n_events, 11}),
+        labels_(join_path(output_dir, "labels.npy"), "<i8", {n_events}),
+        betas_(join_path(output_dir, "betas.npy"), "<f4", {n_events}),
+        random_seeds_(join_path(output_dir, "random_seeds.npy"), "<i8", {n_events}),
+        chain_entries_(join_path(output_dir, "chain_entries.npy"), "<i8", {n_events}),
+        source_file_indices_(join_path(output_dir, "source_file_indices.npy"), "<i4", {n_events}),
+        source_entries_(join_path(output_dir, "source_entries.npy"), "<i8", {n_events}) {
+    for (std::size_t i = 0; i < tracker_order.size(); ++i) {
+      channel_indices_.emplace(tracker_order[i], i);
+    }
+  }
+
+  static void prepare_directory(const std::string& output_dir) {
+    struct stat info {};
+    if (stat(output_dir.c_str(), &info) == 0) {
+      throw std::runtime_error("output directory already exists: " + output_dir);
+    }
+    if (errno != ENOENT) {
+      throw std::runtime_error("cannot inspect output directory: " + output_dir +
+                               ": " + std::strerror(errno));
+    }
+    if (mkdir(output_dir.c_str(), 0775) != 0) {
+      throw std::runtime_error("cannot create output directory: " + output_dir +
+                               ": " + std::strerror(errno));
+    }
+  }
+
+  void write(CEventMc* event,
+             Long64_t chain_entry,
+             Long64_t source_entry,
+             int source_file_index,
+             int label,
+             const EventFeatures& feat,
+             const std::map<int, double>& tracker_energy) {
+    if (written_ >= expected_) {
+      throw std::runtime_error("attempted to write too many NPY events");
+    }
+
+    std::array<float, 1440> voxel{};
+    for (const auto& item : tracker_energy) {
+      const auto index = channel_indices_.find(item.first);
+      if (index != channel_indices_.end()) {
+        voxel[index->second] = legacy_csv_float(item.second);
+      }
+    }
+
+    const std::array<float, 11> tof = {
+        static_cast<float>(feat.n_top_umbrella),
+        static_cast<float>(feat.n_top_cube),
+        legacy_csv_float(feat.e_top_umbrella),
+        legacy_csv_float(feat.e_top_cube),
+        legacy_csv_float(feat.tof),
+        legacy_csv_float(feat.p_top_cube.x()),
+        legacy_csv_float(feat.p_top_cube.y()),
+        legacy_csv_float(feat.p_top_cube.z()),
+        legacy_csv_float(feat.p_top_umbrella.x()),
+        legacy_csv_float(feat.p_top_umbrella.y()),
+        legacy_csv_float(feat.p_top_umbrella.z()),
+    };
+
+    voxels_.write(voxel.data(), voxel.size());
+    tof_primary_.write(tof.data(), tof.size());
+    labels_.write_scalar<std::int64_t>(label);
+    betas_.write_scalar<float>(legacy_csv_float(event->GetPrimaryBetaGenerated()));
+    random_seeds_.write_scalar<std::int64_t>(event->GetRandSeed());
+    chain_entries_.write_scalar<std::int64_t>(chain_entry);
+    source_file_indices_.write_scalar<std::int32_t>(source_file_index);
+    source_entries_.write_scalar<std::int64_t>(source_entry);
+    ++written_;
+  }
+
+  std::size_t written() const { return written_; }
+  std::size_t expected() const { return expected_; }
+
+  void mark_complete(const Args& args,
+                     const std::vector<std::string>& source_files) {
+    voxels_.flush();
+    tof_primary_.flush();
+    labels_.flush();
+    betas_.flush();
+    random_seeds_.flush();
+    chain_entries_.flush();
+    source_file_indices_.flush();
+    source_entries_.flush();
+
+    std::ofstream manifest(join_path(output_dir_, "export_manifest.json"));
+    if (!manifest) throw std::runtime_error("cannot write export manifest");
+    manifest << "{\n"
+             << "  \"source\": \"TreeMc direct fixed-grid export\",\n"
+             << "  \"input\": \"" << args.input << "\",\n"
+             << "  \"geometry_file\": \"" << args.geometry_file << "\",\n"
+             << "  \"events\": " << written_ << ",\n"
+             << "  \"target_label\": " << args.target_label << ",\n"
+             << "  \"start_entry\": " << args.start_entry << ",\n"
+             << "  \"source_files\": " << source_files.size() << ",\n"
+             << "  \"legacy_csv_significant_digits\": 6,\n"
+             << "  \"voxel_shape\": [10, 12, 12],\n"
+             << "  \"tof_primary_features\": 11\n"
+             << "}\n";
+    std::ofstream source_list(join_path(output_dir_, "source_files.txt"));
+    if (!source_list) throw std::runtime_error("cannot write source file list");
+    for (const std::string& path : source_files) source_list << path << "\n";
+    std::ofstream success(join_path(output_dir_, "_SUCCESS"));
+    if (!success) throw std::runtime_error("cannot write success marker");
+  }
+
+ private:
+  std::string output_dir_;
+  std::size_t expected_;
+  std::size_t written_ = 0;
+  std::unordered_map<int, std::size_t> channel_indices_;
+  NpyStream voxels_;
+  NpyStream tof_primary_;
+  NpyStream labels_;
+  NpyStream betas_;
+  NpyStream random_seeds_;
+  NpyStream chain_entries_;
+  NpyStream source_file_indices_;
+  NpyStream source_entries_;
 };
 
 EventFeatures compute_event_features(CTrackBase* primary) {
@@ -307,6 +552,7 @@ int main(int argc, char** argv) {
 
   TChain tree("TreeMc");
   tree.Add(args.input.c_str());
+  const std::vector<std::string> source_files = chain_source_files(tree);
 
   CEventBase* event_base = new CEventMc;
   tree.SetBranchAddress("Mc", &event_base);
@@ -317,10 +563,25 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  std::ofstream out(args.output);
-  if (!out) {
-    std::cerr << "cannot open output: " << args.output << "\n";
-    return 1;
+  std::ofstream csv_out;
+  std::unique_ptr<DirectNpyOutput> npy_out;
+  if (!args.output.empty()) {
+    csv_out.open(args.output);
+    if (!csv_out) {
+      std::cerr << "cannot open output: " << args.output << "\n";
+      return 1;
+    }
+  } else {
+    try {
+      DirectNpyOutput::prepare_directory(args.output_npy_dir);
+      npy_out = std::make_unique<DirectNpyOutput>(
+          args.output_npy_dir,
+          static_cast<std::size_t>(args.max_events),
+          tracker_order);
+    } catch (const std::exception& error) {
+      std::cerr << "cannot initialize direct NPY output: " << error.what() << "\n";
+      return 1;
+    }
   }
 
   long long seen = 0;
@@ -335,6 +596,9 @@ int main(int argc, char** argv) {
     if (args.max_events >= 0 && written >= args.max_events) break;
 
     tree.GetEntry(entry);
+    const Long64_t source_entry =
+        tree.GetTree() == nullptr ? -1 : tree.GetTree()->GetReadEntry();
+    const int source_file_index = tree.GetTreeNumber();
     auto* event = dynamic_cast<CEventMc*>(event_base);
     if (!event || event->GetNTracks() == 0) {
       ++no_track;
@@ -364,12 +628,43 @@ int main(int argc, char** argv) {
     }
 
     const std::map<int, double> tracker_energy = collect_tracker_energy(event);
-    write_event_row(out, event, entry, label, feat, tracker_order, tracker_energy);
+    try {
+      if (npy_out) {
+        npy_out->write(event,
+                       entry,
+                       source_entry,
+                       source_file_index,
+                       label,
+                       feat,
+                       tracker_energy);
+      } else {
+        write_event_row(
+            csv_out, event, entry, label, feat, tracker_order, tracker_energy);
+      }
+    } catch (const std::exception& error) {
+      std::cerr << "failed to write entry " << entry << ": " << error.what() << "\n";
+      return 1;
+    }
     ++written;
   }
 
+  if (npy_out) {
+    if (npy_out->written() != npy_out->expected()) {
+      std::cerr << "direct NPY output is incomplete: wrote " << npy_out->written()
+                << " events, expected " << npy_out->expected() << "\n";
+      return 1;
+    }
+    try {
+      npy_out->mark_complete(args, source_files);
+    } catch (const std::exception& error) {
+      std::cerr << "cannot finalize direct NPY output: " << error.what() << "\n";
+      return 1;
+    }
+  }
+
   std::cerr << "input: " << args.input << "\n";
-  std::cerr << "output: " << args.output << "\n";
+  std::cerr << "output: "
+            << (args.output.empty() ? args.output_npy_dir : args.output) << "\n";
   std::cerr << "entries_total: " << n_entries << "\n";
   std::cerr << "start_entry: " << args.start_entry << "\n";
   std::cerr << "events_seen: " << seen << "\n";
