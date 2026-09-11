@@ -51,7 +51,7 @@ void print_usage(const char* argv0) {
       << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
-      << "[--selection none|toptrigger|stopped|stopped-toptrigger] "
+      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger] "
       << "[--provenance-only]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
@@ -121,6 +121,7 @@ Args parse_args(int argc, char** argv) {
     std::exit(2);
   }
   if (args.selection != "none" && args.selection != "toptrigger" &&
+      args.selection != "toptrigger-nonstopped" &&
       args.selection != "stopped" &&
       args.selection != "stopped-toptrigger") {
     std::cerr << "invalid --selection: " << args.selection << "\n";
@@ -531,6 +532,9 @@ bool passes_selection(const EventFeatures& features,
                       const std::string& selection) {
   if (selection == "none") return true;
   if (selection == "toptrigger") return features.toptrigger;
+  if (selection == "toptrigger-nonstopped") {
+    return features.toptrigger && !features.stopped;
+  }
   if (selection == "stopped") return features.stopped;
   return features.stopped && features.toptrigger;
 }
