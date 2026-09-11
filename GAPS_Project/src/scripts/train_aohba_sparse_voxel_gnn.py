@@ -11,7 +11,7 @@ exports can use only the 11 primary TOF features because the paddle array is
 known to be all zeros.
 """
 
-import argparse, json, time
+import argparse, json, random, time
 from datetime import datetime
 from pathlib import Path
 
@@ -327,6 +327,14 @@ def evaluate(model, loader, device, desc="eval"):
 
 
 def train(args):
+    seed = getattr(args, "seed", None)
+    if seed is not None:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     out = Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}_SparseVoxelGNN_{args.dataset_tag}"
     out.mkdir(parents=True, exist_ok=True)
@@ -408,6 +416,7 @@ def train(args):
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
 
     print("device:", device)
+    print("random seed:", seed)
     print("train/val/test:", len(train_ds), len(val_ds), len(test_ds))
     print("batches:", len(train_loader), len(val_loader), len(test_loader))
     print("shuffle train:", not args.no_shuffle_train)
@@ -568,6 +577,7 @@ def main():
     p.add_argument("--max-test-events", type=int)
     p.add_argument("--max-train-batches", type=int)
     p.add_argument("--standardize-samples", type=int, default=None)
+    p.add_argument("--seed", type=int, default=None)
     p.add_argument("--use-beta", action="store_true")
     p.add_argument(
         "--no-shuffle-train",
