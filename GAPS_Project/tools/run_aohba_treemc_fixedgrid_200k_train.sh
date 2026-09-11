@@ -26,7 +26,8 @@ before=$(mktemp)
 find results -maxdepth 1 -type d -name "*_SparseVoxelGNN_${TAG}" -print \
     | sort >"$before"
 
-CUDA_VISIBLE_DEVICES="$GPU" python -u src/scripts/train_aohba_sparse_voxel_gnn.py \
+CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$GPU" \
+python -u src/scripts/train_aohba_sparse_voxel_gnn.py \
     --data-dir "$DATASET" \
     --dataset-tag "$TAG" \
     --model gravnet \
@@ -56,7 +57,8 @@ if test -z "$result" || ! test -f "$result/best.pt"; then
     exit 1
 fi
 
-CUDA_VISIBLE_DEVICES="$GPU" python -u src/scripts/evaluate_sparse_voxel_gnn.py \
+CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$GPU" \
+python -u src/scripts/evaluate_sparse_voxel_gnn.py \
     --data-dir "$DATASET" \
     --model-path "$result/best.pt" \
     --output-dir "$result/evaluation_test" \
