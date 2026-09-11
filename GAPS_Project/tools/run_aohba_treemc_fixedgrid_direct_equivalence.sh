@@ -4,19 +4,20 @@ set -Eeuo pipefail
 PROJECT=${PROJECT:-"$HOME/HEP_Project/GAPS_Project"}
 cd "$PROJECT"
 
-source "$HOME/miniconda3/etc/profile.d/conda.sh"
-conda activate naka
 source "$HOME/setup_ynakagami_root.sh"
 
 mkdir -p build/tools
 
-g++ -std=c++17 -O2 $(root-config --cflags) \
+/usr/bin/g++ -std=c++17 -O2 $(root-config --cflags) \
     -I/home/ynakagami/simpledet/SimpleDet/common/include \
     -I/home/ynakagami/simpledet/build/install/gaps-v1.7.0/include/gaps \
     tools/export/export_treemc_topiso_like_csv.cc \
     -L/home/ynakagami/simpledet/build/common -lGAPSCommon \
     $(root-config --libs) \
     -o build/tools/export_treemc_topiso_like_csv
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate naka
 
 EXE="$PROJECT/build/tools/export_treemc_topiso_like_csv"
 OUT=$(mktemp -d /tmp/m78code_aohba_treemc_direct_equivalence.XXXXXX)
