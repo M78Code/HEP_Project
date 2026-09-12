@@ -19,6 +19,12 @@ CANDIDATES_PER_CLASS=${CANDIDATES_PER_CLASS:-300000}
 EVENTS_PER_CLASS=${EVENTS_PER_CLASS:-100000}
 GPU=${GPU:-0}
 SEED=${SEED:-20260825}
+GROUP_A=${GROUP_A:-stopped}
+GROUP_B=${GROUP_B:-nonstopped}
+SELECTION_A=${SELECTION_A:-stopped-toptrigger}
+SELECTION_B=${SELECTION_B:-toptrigger-nonstopped}
+LABEL_A=${LABEL_A:-Stopped in tracker + top-trigger}
+LABEL_B=${LABEL_B:-Not stopped + top-trigger}
 
 cd "$PROJECT"
 
@@ -109,8 +115,8 @@ run_export_match()
         fi
     }
 
-    export_group stopped stopped-toptrigger
-    export_group nonstopped toptrigger-nonstopped
+    export_group "$GROUP_A" "$SELECTION_A"
+    export_group "$GROUP_B" "$SELECTION_B"
 
     activate_naka
     if [[ -f "$MATCHED/_SUCCESS" ]]; then
@@ -122,7 +128,9 @@ run_export_match()
         exit 1
     fi
 
-    python -u - "$CANDIDATES" "$MATCHED" "$EVENTS_PER_CLASS" "$SEED" <<'PY'
+    python -u - \
+        "$CANDIDATES" "$MATCHED" "$EVENTS_PER_CLASS" "$SEED" \
+        "$GROUP_A" "$GROUP_B" "$SELECTION_A" "$SELECTION_B" <<'PY'
 import json
 import shutil
 import sys
@@ -134,11 +142,11 @@ candidates = Path(sys.argv[1])
 output = Path(sys.argv[2])
 target = int(sys.argv[3])
 seed = int(sys.argv[4])
-groups = ("stopped", "nonstopped")
+groups = (sys.argv[5], sys.argv[6])
 particles = ("antiP", "antiD")
 expected_selection = {
-    "stopped": "stopped-toptrigger",
-    "nonstopped": "toptrigger-nonstopped",
+    groups[0]: sys.argv[7],
+    groups[1]: sys.argv[8],
 }
 array_names = (
     "labels.npy",
@@ -366,21 +374,21 @@ run_cache_train()
     }
 
     # Deliberately serial: a completed first group is retained if MC1 stops.
-    run_cache_train_group stopped
-    run_cache_train_group nonstopped
+    run_cache_train_group "$GROUP_A"
+    run_cache_train_group "$GROUP_B"
 }
 
 run_compare()
 {
     activate_naka
-    local stopped_tag nonstopped_tag stopped_run nonstopped_run out
-    stopped_tag="aohba_stopping_ablation_stopped_200k_global_log_seed${SEED}"
-    nonstopped_tag="aohba_stopping_ablation_nonstopped_200k_global_log_seed${SEED}"
-    stopped_run=$(latest_run_dir "$RESULT_ROOT/stopped" "$stopped_tag")
-    nonstopped_run=$(latest_run_dir "$RESULT_ROOT/nonstopped" "$nonstopped_tag")
+    local tag_a tag_b run_a run_b out
+    tag_a="aohba_stopping_ablation_${GROUP_A}_200k_global_log_seed${SEED}"
+    tag_b="aohba_stopping_ablation_${GROUP_B}_200k_global_log_seed${SEED}"
+    run_a=$(latest_run_dir "$RESULT_ROOT/$GROUP_A" "$tag_a")
+    run_b=$(latest_run_dir "$RESULT_ROOT/$GROUP_B" "$tag_b")
     out="$RESULT_ROOT/comparison"
 
-    for directory in "$stopped_run/evaluation_test" "$nonstopped_run/evaluation_test"; do
+    for directory in "$run_a/evaluation_test" "$run_b/evaluation_test"; do
         [[ -f "$directory/labels.npy" && -f "$directory/scores.npy" ]] || {
             echo "ERROR: evaluation arrays missing: $directory" >&2
             exit 1
@@ -388,8 +396,8 @@ run_compare()
     done
 
     python src/scripts/visual/compare_binary_eval.py \
-        --item "Stopped in tracker + top-trigger" "$stopped_run/evaluation_test" \
-        --item "Not stopped + top-trigger" "$nonstopped_run/evaluation_test" \
+        --item "$LABEL_A" "$run_a/evaluation_test" \
+        --item "$LABEL_B" "$run_b/evaluation_test" \
         --out-dir "$out" \
         --x-min 0.50 \
         --y-max 20000 \
@@ -404,6 +412,8 @@ echo "candidate events/class: $CANDIDATES_PER_CLASS"
 echo "matched events/class  : $EVENTS_PER_CLASS"
 echo "physical GPU          : $GPU"
 echo "seed                  : $SEED"
+echo "group A               : $GROUP_A ($SELECTION_A)"
+echo "group B               : $GROUP_B ($SELECTION_B)"
 
 case "$PHASE" in
     export-match) run_export_match ;;

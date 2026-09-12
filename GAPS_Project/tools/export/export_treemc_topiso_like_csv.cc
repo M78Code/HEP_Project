@@ -51,7 +51,7 @@ void print_usage(const char* argv0) {
       << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
-      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger] "
+      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger] "
       << "[--provenance-only]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
@@ -123,7 +123,9 @@ Args parse_args(int argc, char** argv) {
   if (args.selection != "none" && args.selection != "toptrigger" &&
       args.selection != "toptrigger-nonstopped" &&
       args.selection != "stopped" &&
-      args.selection != "stopped-toptrigger") {
+      args.selection != "stopped-toptrigger" &&
+      args.selection != "summary-only" &&
+      args.selection != "summary-only-toptrigger") {
     std::cerr << "invalid --selection: " << args.selection << "\n";
     std::exit(2);
   }
@@ -223,6 +225,7 @@ int channel_volume_id(int hit_volid) {
 
 struct EventFeatures {
   bool stopped = false;
+  bool summary_stopped = false;
   bool toptrigger = false;
   int stop_layer = -1;
   int n_top_umbrella = 0;
@@ -536,6 +539,12 @@ bool passes_selection(const EventFeatures& features,
     return features.toptrigger && !features.stopped;
   }
   if (selection == "stopped") return features.stopped;
+  if (selection == "summary-only") {
+    return features.summary_stopped && !features.stopped;
+  }
+  if (selection == "summary-only-toptrigger") {
+    return features.summary_stopped && !features.stopped && features.toptrigger;
+  }
   return features.stopped && features.toptrigger;
 }
 
@@ -669,7 +678,8 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    const EventFeatures feat = compute_event_features(primary);
+    EventFeatures feat = compute_event_features(primary);
+    feat.summary_stopped = event->GetPrimaryStoppingVolume() / 100000000 == 2;
     if (!feat.toptrigger) ++not_toptrigger;
     if (!feat.stopped) ++not_stopped;
     if (!passes_selection(feat, args.selection)) {
