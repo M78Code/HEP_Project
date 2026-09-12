@@ -15,6 +15,8 @@ PROVENANCE=${PROVENANCE:-/mnt/aohba/aohba_strict_stopping_treerec_4m_provenance}
 CACHE=${CACHE:-/mnt/aohba/aohba_strict_stopping_treerec_4m_global_log}
 LOGDIR=${LOGDIR:-"$HOME/aohba_strict_stopping_treerec_4m_logs"}
 RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_strict_stopping_treerec_4m"}
+ANTIP_INPUT=${ANTIP_INPUT:-'/mnt/aohba/GAPS_Sim_2tof/antiP/*.root'}
+ANTID_INPUT=${ANTID_INPUT:-'/mnt/aohba/GAPS_Sim_2tof/antiD/*.root'}
 EVENTS_PER_CLASS=${EVENTS_PER_CLASS:-2000000}
 TRAIN_PER_CLASS=${TRAIN_PER_CLASS:-1600000}
 VAL_PER_CLASS=${VAL_PER_CLASS:-200000}
@@ -92,11 +94,11 @@ run_export()
     }
 
     export_particle antiP 0 \
-        '/mnt/aohba/GAPS_Sim_2tof/antiP/*.root' \
+        "$ANTIP_INPUT" \
         /mnt/aohba/GAPS_Sim_2tof/antiP/antiP_2tof_FTFP_BERT_1781424263.root &
     local pid_antip=$!
     export_particle antiD 1 \
-        '/mnt/aohba/GAPS_Sim_2tof/antiD/*.root' \
+        "$ANTID_INPUT" \
         /mnt/aohba/GAPS_Sim_2tof/antiD/antiD_2tof_FTFP_BERT_1781253355.root &
     local pid_antid=$!
 
