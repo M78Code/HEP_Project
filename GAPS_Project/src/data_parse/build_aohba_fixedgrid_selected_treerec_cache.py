@@ -20,11 +20,6 @@ PARTICLES = {
     "antip": {"directory": "antiP", "label": 0, "pdg": -2212},
     "antid": {"directory": "antiD", "label": 1, "pdg": -1000010020},
 }
-SPLITS = {
-    "train": (0, 80_000),
-    "val": (80_000, 90_000),
-    "test": (90_000, 100_000),
-}
 FEATURE_NAMES = (
     "x_mm",
     "y_mm",
@@ -48,7 +43,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--chunk-size", type=int, default=10_000)
     parser.add_argument("--k", type=int, default=8)
+    parser.add_argument("--train-events-per-class", type=int, default=80_000)
+    parser.add_argument("--val-events-per-class", type=int, default=10_000)
+    parser.add_argument("--test-events-per-class", type=int, default=10_000)
     return parser.parse_args()
+
+
+def split_ranges(args: argparse.Namespace) -> dict[str, tuple[int, int]]:
+    train_stop = args.train_events_per_class
+    val_stop = train_stop + args.val_events_per_class
+    test_stop = val_stop + args.test_events_per_class
+    return {
+        "train": (0, train_stop),
+        "val": (train_stop, val_stop),
+        "test": (val_stop, test_stop),
+    }
 
 
 def positions_for_event(value) -> np.ndarray:
@@ -64,7 +73,7 @@ def positions_for_event(value) -> np.ndarray:
     )
 
 
-def load_provenance(raw_dir: Path, particle: str) -> dict:
+def load_provenance(raw_dir: Path, particle: str, expected_events: int) -> dict:
     directory = raw_dir / PARTICLES[particle]["directory"]
     if not (directory / "_SUCCESS").is_file():
         raise RuntimeError(f"incomplete fixed-grid export: {directory}")
@@ -81,15 +90,17 @@ def load_provenance(raw_dir: Path, particle: str) -> dict:
         for line in (directory / "source_files.txt").read_text().splitlines()
         if line.strip()
     ]
-    if len(file_indices) < 100_000 or len(entries) < 100_000:
-        raise RuntimeError(f"{particle}: fewer than 100,000 selected events")
-    if not np.all(labels[:100_000] == PARTICLES[particle]["label"]):
+    if len(file_indices) < expected_events or len(entries) < expected_events:
+        raise RuntimeError(
+            f"{particle}: fewer than {expected_events:,} selected events"
+        )
+    if not np.all(labels[:expected_events] == PARTICLES[particle]["label"]):
         raise RuntimeError(f"{particle}: label mismatch in fixed-grid export")
-    if np.any(file_indices[:100_000] < 0) or np.any(
-        file_indices[:100_000] >= len(files)
+    if np.any(file_indices[:expected_events] < 0) or np.any(
+        file_indices[:expected_events] >= len(files)
     ):
         raise RuntimeError(f"{particle}: invalid source file index")
-    if np.any(entries[:100_000] < 0):
+    if np.any(entries[:expected_events] < 0):
         raise RuntimeError(f"{particle}: invalid source ROOT entry")
     missing = [str(path) for path in files if not path.is_file()]
     if missing:
@@ -105,9 +116,11 @@ def load_provenance(raw_dir: Path, particle: str) -> dict:
 
 
 def audit_assembled_dataset(
-    dataset_dir: Path, provenance: dict[str, dict]
+    dataset_dir: Path,
+    provenance: dict[str, dict],
+    splits: dict[str, tuple[int, int]],
 ) -> None:
-    for split, (start, stop) in SPLITS.items():
+    for split, (start, stop) in splits.items():
         directory = dataset_dir / f"{split}_nakagami_style_4M"
         file_indices = np.load(directory / "source_file_indices.npy")
         entries = np.load(directory / "source_entries.npy")
@@ -253,14 +266,17 @@ def iter_events(
 
 
 def fit_normalizer(
-    provenance: dict[str, dict], chunk_size: int, k: int
+    provenance: dict[str, dict],
+    splits: dict[str, tuple[int, int]],
+    chunk_size: int,
+    k: int,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     builder = GraphBuilder(k=k, normalize=False)
     sums = np.zeros(6, dtype=np.float64)
     sums_squared = np.zeros(6, dtype=np.float64)
     n_nodes = 0
     n_events = 0
-    start, stop = SPLITS["train"]
+    start, stop = splits["train"]
     for particle in PARTICLES:
         for events in iter_events(
             provenance[particle], particle, start, stop, chunk_size
@@ -281,9 +297,10 @@ def fit_normalizer(
                 f"[STATS] {particle}: {n_events:,} cumulative train events",
                 flush=True,
             )
-    if n_events != 160_000 or n_nodes == 0:
+    expected_events = 2 * (stop - start)
+    if n_events != expected_events or n_nodes == 0:
         raise RuntimeError(
-            f"normalizer expected 160,000 events, found {n_events:,}"
+            f"normalizer expected {expected_events:,} events, found {n_events:,}"
         )
     mean = sums / n_nodes
     variance = np.maximum(sums_squared / n_nodes - np.square(mean), 0.0)
@@ -295,6 +312,7 @@ def fit_normalizer(
 def build_cache(
     args: argparse.Namespace,
     provenance: dict[str, dict],
+    splits: dict[str, tuple[int, int]],
     mean: np.ndarray,
     std: np.ndarray,
 ) -> dict:
@@ -306,7 +324,7 @@ def build_cache(
         global_feature_std=std,
     )
     summaries = {}
-    for split, (start, stop) in SPLITS.items():
+    for split, (start, stop) in splits.items():
         label_counts = {0: 0, 1: 0}
         shard_count = 0
         for particle in PARTICLES:
@@ -377,14 +395,24 @@ def build_cache(
 
 def main() -> None:
     args = parse_args()
-    if args.chunk_size < 1 or args.k < 1:
-        raise ValueError("chunk size and k must be positive")
+    counts = (
+        args.train_events_per_class,
+        args.val_events_per_class,
+        args.test_events_per_class,
+    )
+    if args.chunk_size < 1 or args.k < 1 or any(count < 1 for count in counts):
+        raise ValueError("chunk size, k, and split event counts must be positive")
     if args.output_dir.exists():
         raise FileExistsError(args.output_dir)
     args.output_dir.mkdir(parents=True)
 
+    splits = split_ranges(args)
+    expected_events_per_class = splits["test"][1]
+
     provenance = {
-        particle: load_provenance(args.fixedgrid_raw_dir, particle)
+        particle: load_provenance(
+            args.fixedgrid_raw_dir, particle, expected_events_per_class
+        )
         for particle in PARTICLES
     }
     selections = {
@@ -396,10 +424,10 @@ def main() -> None:
         )
     selection = selections.pop()
     if args.fixedgrid_dataset_dir is not None:
-        audit_assembled_dataset(args.fixedgrid_dataset_dir, provenance)
+        audit_assembled_dataset(args.fixedgrid_dataset_dir, provenance, splits)
 
     mean, std, train_nodes = fit_normalizer(
-        provenance, args.chunk_size, args.k
+        provenance, splits, args.chunk_size, args.k
     )
     normalizer = {
         "mode": "global_log",
@@ -411,7 +439,7 @@ def main() -> None:
         "mean": mean.tolist(),
         "std": std.tolist(),
         "train_nodes": train_nodes,
-        "train_events": 160_000,
+        "train_events": 2 * args.train_events_per_class,
     }
     (args.output_dir / "node_feature_normalizer.json").write_text(
         json.dumps(normalizer, indent=2)
@@ -420,7 +448,7 @@ def main() -> None:
     for name, feature_mean, feature_std in zip(FEATURE_NAMES, mean, std):
         print(f"  {name:14s} mean={feature_mean:.7g} std={feature_std:.7g}")
 
-    summaries = build_cache(args, provenance, mean, std)
+    summaries = build_cache(args, provenance, splits, mean, std)
     manifest = {
         "purpose": "TreeRec for exact Aohba TreeMc-selected events",
         "pairing": "source_file_indices.npy + source_entries.npy",

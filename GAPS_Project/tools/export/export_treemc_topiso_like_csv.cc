@@ -660,6 +660,11 @@ int main(int argc, char** argv) {
     const Long64_t source_entry =
         tree.GetTree() == nullptr ? -1 : tree.GetTree()->GetReadEntry();
     const int source_file_index = tree.GetTreeNumber();
+    const Long64_t scanned = entry - args.start_entry + 1;
+    if (scanned % 1000000 == 0) {
+      std::cerr << "progress: scanned=" << scanned
+                << " selected=" << written << "\n";
+    }
     auto* event = dynamic_cast<CEventMc*>(event_base);
     if (!event || event->GetNTracks() == 0) {
       ++no_track;
@@ -709,6 +714,7 @@ int main(int argc, char** argv) {
       return 1;
     }
     ++written;
+
   }
 
   if (npy_out) {
