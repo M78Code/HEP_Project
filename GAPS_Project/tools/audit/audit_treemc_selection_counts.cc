@@ -74,30 +74,41 @@ int label_from_pdg(int pdg) {
   return -1;
 }
 
-bool is_stopped_in_tracker(CTrackBase* primary, int& stop_layer) {
-  stop_layer = -1;
+struct TrackStopDetails {
+  bool kinetic_zero_in_tracker = false;
+  bool has_zero_step = false;
+  bool same_step_zero = false;
+  bool legacy_stopped = false;
+  int stop_layer = -1;
+};
+
+TrackStopDetails inspect_track_stop(CTrackBase* primary) {
+  TrackStopDetails result;
 
   const auto& volume_ids = primary->GetVolumeId();
   const auto& kinetic_energies = primary->GetKineticEnergy();
   const auto& step_lengths = primary->GetStepLength();
 
-  bool has_zero_step_length = false;
   for (double step_length : step_lengths) {
     if (step_length == 0.0) {
-      has_zero_step_length = true;
+      result.has_zero_step = true;
       break;
     }
   }
-  if (!has_zero_step_length) return false;
 
   for (std::size_t i = 0; i < kinetic_energies.size() && i < volume_ids.size(); ++i) {
     const int volume_id = static_cast<int>(volume_ids[i]);
     if (kinetic_energies[i] == 0.0 && GGeometryObject::IsTrackerVolume(volume_id)) {
-      stop_layer = (volume_id % 10000000) / 1000000;
-      return true;
+      result.kinetic_zero_in_tracker = true;
+      result.stop_layer = (volume_id % 10000000) / 1000000;
+      if (i < step_lengths.size() && step_lengths[i] == 0.0) {
+        result.same_step_zero = true;
+      }
     }
   }
-  return false;
+  result.legacy_stopped =
+      result.kinetic_zero_in_tracker && result.has_zero_step;
+  return result;
 }
 
 bool has_top_trigger(CTrackBase* primary) {
@@ -154,6 +165,17 @@ int main(int argc, char** argv) {
   long long stopped_toptrigger = 0;
   long long stopped_no_top = 0;
   long long top_no_stopped = 0;
+  long long summary_tracker_stopped = 0;
+  long long kinetic_zero_in_tracker = 0;
+  long long has_zero_step = 0;
+  long long same_step_zero = 0;
+  long long summary_and_legacy = 0;
+  long long summary_only = 0;
+  long long legacy_only = 0;
+  long long neither_stop_definition = 0;
+  long long summary_and_legacy_top = 0;
+  long long summary_only_top = 0;
+  long long legacy_only_top = 0;
   long long labels[2] = {0, 0};
 
   for (Long64_t entry = 0; entry < entries_loop; ++entry) {
@@ -184,21 +206,44 @@ int main(int argc, char** argv) {
     if (!(args.beta_min < beta && beta < args.beta_max)) continue;
     ++beta_in_range;
 
-    int stop_layer = -1;
-    const bool is_stopped = is_stopped_in_tracker(primary, stop_layer);
+    const TrackStopDetails track_stop = inspect_track_stop(primary);
+    const bool is_stopped = track_stop.legacy_stopped;
+    const int stopping_volume = event->GetPrimaryStoppingVolume();
+    const bool summary_stopped = stopping_volume / 100000000 == 2;
     const bool is_top = has_top_trigger(primary);
 
+    if (summary_stopped) ++summary_tracker_stopped;
+    if (track_stop.kinetic_zero_in_tracker) ++kinetic_zero_in_tracker;
+    if (track_stop.has_zero_step) ++has_zero_step;
+    if (track_stop.same_step_zero) ++same_step_zero;
     if (is_stopped) ++stopped;
     if (is_top) ++toptrigger;
     if (is_stopped && is_top) ++stopped_toptrigger;
     if (is_stopped && !is_top) ++stopped_no_top;
     if (!is_stopped && is_top) ++top_no_stopped;
+
+    if (summary_stopped && is_stopped) {
+      ++summary_and_legacy;
+      if (is_top) ++summary_and_legacy_top;
+    } else if (summary_stopped) {
+      ++summary_only;
+      if (is_top) ++summary_only_top;
+    } else if (is_stopped) {
+      ++legacy_only;
+      if (is_top) ++legacy_only_top;
+    } else {
+      ++neither_stop_definition;
+    }
   }
 
   std::cout << std::setprecision(12);
   std::cout << "input,entries_total,entries_loop,events_seen,no_track,bad_getentry,"
             << "other_pdg,label0,label1,selected_label,beta_in_range,stopped,"
-            << "toptrigger,stopped_toptrigger,stopped_no_top,top_no_stopped\n";
+            << "toptrigger,stopped_toptrigger,stopped_no_top,top_no_stopped,"
+            << "summary_tracker_stopped,kinetic_zero_in_tracker,has_zero_step,"
+            << "same_step_zero,summary_and_legacy,summary_only,legacy_only,"
+            << "neither_stop_definition,summary_and_legacy_top,summary_only_top,"
+            << "legacy_only_top\n";
   std::cout << args.input << ","
             << entries_total << ","
             << entries_loop << ","
@@ -214,7 +259,18 @@ int main(int argc, char** argv) {
             << toptrigger << ","
             << stopped_toptrigger << ","
             << stopped_no_top << ","
-            << top_no_stopped << "\n";
+            << top_no_stopped << ","
+            << summary_tracker_stopped << ","
+            << kinetic_zero_in_tracker << ","
+            << has_zero_step << ","
+            << same_step_zero << ","
+            << summary_and_legacy << ","
+            << summary_only << ","
+            << legacy_only << ","
+            << neither_stop_definition << ","
+            << summary_and_legacy_top << ","
+            << summary_only_top << ","
+            << legacy_only_top << "\n";
 
   return 0;
 }
