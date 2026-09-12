@@ -656,10 +656,27 @@ int main(int argc, char** argv) {
   for (Long64_t entry = args.start_entry; entry < n_entries; ++entry) {
     if (args.max_events >= 0 && written >= args.max_events) break;
 
-    tree.GetEntry(entry);
-    const Long64_t source_entry =
-        tree.GetTree() == nullptr ? -1 : tree.GetTree()->GetReadEntry();
+    const Long64_t source_entry = tree.LoadTree(entry);
+    if (source_entry < 0) {
+      std::cerr << "failed to load chain entry " << entry
+                << ": LoadTree returned " << source_entry << "\n";
+      return 1;
+    }
     const int source_file_index = tree.GetTreeNumber();
+    const Long64_t bytes_read = tree.GetEntry(entry);
+    if (bytes_read <= 0) {
+      const std::string source_file =
+          0 <= source_file_index &&
+                  source_file_index < static_cast<int>(source_files.size())
+              ? source_files[static_cast<std::size_t>(source_file_index)]
+              : "<unknown>";
+      std::cerr << "failed to read TreeMc entry: chain_entry=" << entry
+                << " source_file_index=" << source_file_index
+                << " source_entry=" << source_entry
+                << " source_file=" << source_file
+                << " GetEntry=" << bytes_read << "\n";
+      return 1;
+    }
     const Long64_t scanned = entry - args.start_entry + 1;
     if (scanned % 1000000 == 0) {
       std::cerr << "progress: scanned=" << scanned
