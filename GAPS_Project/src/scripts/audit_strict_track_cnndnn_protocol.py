@@ -180,8 +180,8 @@ def markdown_report(audit: dict[str, Any]) -> str:
         "## Current strict-track dataset",
         "",
         f"- Dataset: `{audit['dataset_path']}`",
-        f"- Source graph cache: `{manifest.get('source_graph_cache', 'not recorded')}`",
-        f"- Selection: `{manifest.get('selection', 'strict track stop + truth top-trigger (from runner)')}`",
+        f"- Source graph cache: `{manifest.get('source_cache', manifest.get('source_graph_cache', 'not recorded'))}`",
+        f"- Selection: `{manifest.get('event_selection', manifest.get('selection', 'strict track stop + truth top-trigger (from runner)'))}`",
         "- CNN branch: raw Si(Li) hit-energy accumulation on a 10 x 12 x 12 grid.",
         "- DNN branch: 11-D `tof_primary` from the TreeRec graph cache.",
         "- beta and TOF paddle arrays are metadata / unused by this CNN+DNN run.",
@@ -204,7 +204,7 @@ def markdown_report(audit: dict[str, Any]) -> str:
         "## CNN+DNN architecture check",
         "",
         "- The current run instantiates `CNNDNNHybrid(tof_dim=11, dropout=0.3)`.",
-        "- The model is the Fig. 7.2-style 3-D CNN branch plus 11-D DNN branch, with a reported 1,200,003 parameters.",
+        "- This is a compact 3-D CNN + 11-D TreeRec TOF baseline, with a reported 1,200,003 parameters.",
     ]
     if reference is None:
         lines += [
@@ -245,10 +245,6 @@ def markdown_report(audit: dict[str, Any]) -> str:
         "The strict sample is newly selected from TreeMc/TreeRec provenance; its grid is reconstructed from the TreeRec graph cache and its TOF vector is taken from that cache.",
         "Therefore the comparison answers: *how the Fig. 7.2-style CNN+DNN performs on the current strict TreeRec conditions*. It does not, by itself, isolate architecture from every representation-level difference versus the historical paper dataset.",
         "",
-        "## Decision for the next experiment",
-        "",
-        "If the reference checkpoint has identical tensor shapes and compatible training settings, the 200K pilot is sufficient to decide whether a 4M CNN+DNN run is warranted.",
-        "Given the observed high-efficiency gap to GravNet, do not start a 4M CNN+DNN run before resolving any material mismatch listed above.",
     ]
     return "\n".join(lines) + "\n"
 
