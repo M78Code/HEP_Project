@@ -1,0 +1,140 @@
+[
+  {
+    "label": "GravNet, TreeRec graph",
+    "result_dir": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_toptrigger_only_treerec_200k/20260911-160330_GravNet_6b_h128_aohba_toptrigger_only_treerec_200k_global_log_seed20260825/evaluation_test",
+    "n_events": 20000,
+    "label_counts": {
+      "0": 10000,
+      "1": 10000
+    },
+    "accuracy_at_0.5": 0.93325,
+    "auc": 0.983989985,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 0.0002,
+        "rejection": 5000.0,
+        "threshold": 0.951329231262207
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0009,
+        "rejection": 1111.111111111111,
+        "threshold": 0.86733478307724
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0061,
+        "rejection": 163.93442622950818,
+        "threshold": 0.7373591661453247
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.0362,
+        "rejection": 27.62430939226519,
+        "threshold": 0.5457558631896973
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.0941,
+        "rejection": 10.626992561105206,
+        "threshold": 0.43719083070755005
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.2076,
+        "rejection": 4.816955684007707,
+        "threshold": 0.31746500730514526
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.2816,
+        "rejection": 3.5511363636363633,
+        "threshold": 0.25656941533088684
+      },
+      {
+        "target_efficiency": 1.0,
+        "actual_efficiency": 1.0,
+        "fpr": 0.9467,
+        "rejection": 1.0563008344776592,
+        "threshold": 0.014933002181351185
+      }
+    ]
+  },
+  {
+    "label": "CNN+DNN, 10x12x12 + TOF",
+    "result_dir": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_toptrigger_only_200k_cnndnn/20260914-141345_CNNDNNFig72_aohba_toptrigger_only_treerec_200k_cnndnn_seed20260825/evaluation_test",
+    "n_events": 20000,
+    "label_counts": {
+      "0": 10000,
+      "1": 10000
+    },
+    "accuracy_at_0.5": 0.78865,
+    "auc": 0.86747394,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 0.0402,
+        "rejection": 24.875621890547265,
+        "threshold": 0.8212890625
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7003,
+        "fpr": 0.1287,
+        "rejection": 7.770007770007769,
+        "threshold": 0.57421875
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.2295,
+        "rejection": 4.357298474945534,
+        "threshold": 0.41064453125
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.4177,
+        "rejection": 2.3940627244433803,
+        "threshold": 0.2310791015625
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.6042,
+        "rejection": 1.6550810989738498,
+        "threshold": 0.140625
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.7612,
+        "rejection": 1.3137151865475565,
+        "threshold": 0.08740234375
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.8445,
+        "rejection": 1.1841326228537596,
+        "threshold": 0.061309814453125
+      },
+      {
+        "target_efficiency": 1.0,
+        "actual_efficiency": 1.0,
+        "fpr": 0.9936,
+        "rejection": 1.0064412238325282,
+        "threshold": 0.00679779052734375
+      }
+    ]
+  }
+]
