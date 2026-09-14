@@ -42,8 +42,8 @@ from GAPS_Project.src.models.cnn_dnn_hybrid import CNNDNNHybrid
 PROJECT_ROOT = Path(GAPS_Project.__file__).resolve().parent
 
 
-def split_dir(data_dir: Path, split: str) -> Path:
-    return data_dir / f"{split}_nakagami_style_4M"
+def split_dir(data_dir: Path, split: str, split_suffix: str) -> Path:
+    return data_dir / f"{split}_{split_suffix}"
 
 
 class NakagamiFig72CNNDNNDataset(Dataset):
@@ -52,8 +52,9 @@ class NakagamiFig72CNNDNNDataset(Dataset):
         data_dir: Path,
         split: str,
         max_events: int | None = None,
+        split_suffix: str = "nakagami_style_4M",
     ) -> None:
-        self.split_dir = split_dir(data_dir, split)
+        self.split_dir = split_dir(data_dir, split, split_suffix)
         if not self.split_dir.exists():
             raise FileNotFoundError(f"split directory not found: {self.split_dir}")
 
@@ -278,6 +279,17 @@ def save_evaluation(
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--data-dir", type=Path, required=True)
+    p.add_argument(
+        "--split-suffix",
+        default="nakagami_style_4M",
+        help="Suffix used by train_<suffix>, val_<suffix>, and test_<suffix>.",
+    )
+    p.add_argument(
+        "--result-dir",
+        type=Path,
+        default=None,
+        help="Parent directory for the timestamped run (default: project results).",
+    )
     p.add_argument("--dataset-tag", default="nakagami_fig72_cnndnn")
     p.add_argument("--epochs", type=int, default=50)
     p.add_argument("--batch-size", type=int, default=200)
@@ -316,9 +328,24 @@ def main() -> None:
         torch.backends.cudnn.benchmark = True
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    train_ds = NakagamiFig72CNNDNNDataset(args.data_dir, "train", args.max_train_events)
-    val_ds = NakagamiFig72CNNDNNDataset(args.data_dir, "val", args.max_val_events)
-    test_ds = NakagamiFig72CNNDNNDataset(args.data_dir, "test", args.max_test_events)
+    train_ds = NakagamiFig72CNNDNNDataset(
+        args.data_dir,
+        "train",
+        args.max_train_events,
+        split_suffix=args.split_suffix,
+    )
+    val_ds = NakagamiFig72CNNDNNDataset(
+        args.data_dir,
+        "val",
+        args.max_val_events,
+        split_suffix=args.split_suffix,
+    )
+    test_ds = NakagamiFig72CNNDNNDataset(
+        args.data_dir,
+        "test",
+        args.max_test_events,
+        split_suffix=args.split_suffix,
+    )
 
     loader_kw = dict(
         batch_size=args.batch_size,
@@ -341,9 +368,9 @@ def main() -> None:
     if args.resume is not None:
         run_dir = args.resume.resolve().parent
     else:
+        result_root = args.result_dir or (PROJECT_ROOT / "results")
         run_dir = (
-            PROJECT_ROOT
-            / "results"
+            result_root
             / f"{datetime.now():%Y%m%d-%H%M%S}_CNNDNNFig72_{args.dataset_tag}"
         )
     run_dir.mkdir(parents=True, exist_ok=True)

@@ -117,7 +117,7 @@ def main() -> None:
             "auc": auc,
             "rejection": [
                 rejection_at(labels, scores, target)
-                for target in [0.50, 0.70, 0.80, 0.90, 0.95, 0.98, 0.99]
+                for target in [0.50, 0.70, 0.80, 0.90, 0.95, 0.98, 0.99, 1.00]
             ],
         }
         summary.append(row)
@@ -173,7 +173,10 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    header = "model, accuracy, auc, rej50, rej70, rej80, rej90, rej95, rej98, rej99"
+    header = (
+        "model, accuracy, auc, rej50, rej70, rej80, rej90, "
+        "rej95, rej98, rej99, rej100"
+    )
     print(header)
     for row in summary:
         values = {r["target_efficiency"]: r["rejection"] for r in row["rejection"]}
@@ -181,7 +184,7 @@ def main() -> None:
             f"{row['label']}, {row['accuracy_at_0.5']:.6f}, {row['auc']:.6f}, "
             f"{values[0.50]:.3f}, {values[0.70]:.3f}, {values[0.80]:.3f}, "
             f"{values[0.90]:.3f}, {values[0.95]:.3f}, {values[0.98]:.3f}, "
-            f"{values[0.99]:.3f}"
+            f"{values[0.99]:.3f}, {values[1.00]:.3f}"
         )
     print("saved:", args.out_dir)
 
