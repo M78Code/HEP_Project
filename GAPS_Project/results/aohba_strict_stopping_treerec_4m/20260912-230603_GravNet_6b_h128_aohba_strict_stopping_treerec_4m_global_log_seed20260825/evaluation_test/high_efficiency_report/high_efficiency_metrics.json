@@ -1,0 +1,50 @@
+{
+  "evaluation_directory": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_strict_stopping_treerec_4m/20260912-230603_GravNet_6b_h128_aohba_strict_stopping_treerec_4m_global_log_seed20260825/evaluation_test",
+  "signal_events": 200000,
+  "background_events": 200000,
+  "accuracy": 0.9985675,
+  "auc": 0.9999805762624999,
+  "zero_background_95cl_rejection_lower_bound": 66761.64013906682,
+  "operating_points": [
+    {
+      "target_efficiency": 0.95,
+      "actual_efficiency": 0.95,
+      "background_pass": 3,
+      "fpr": 1.5e-05,
+      "rejection": 66666.66666666667,
+      "display_rejection": "66,666.7",
+      "threshold": 0.9946095943450928,
+      "plot_rejection": 66666.66666666667
+    },
+    {
+      "target_efficiency": 0.98,
+      "actual_efficiency": 0.98,
+      "background_pass": 7,
+      "fpr": 3.5e-05,
+      "rejection": 28571.428571428572,
+      "display_rejection": "28,571.4",
+      "threshold": 0.9722338914871216,
+      "plot_rejection": 28571.428571428572
+    },
+    {
+      "target_efficiency": 0.99,
+      "actual_efficiency": 0.99,
+      "background_pass": 22,
+      "fpr": 0.00011,
+      "rejection": 9090.90909090909,
+      "display_rejection": "9,090.9",
+      "threshold": 0.9200899004936218,
+      "plot_rejection": 9090.90909090909
+    },
+    {
+      "target_efficiency": 1.0,
+      "actual_efficiency": 1.0,
+      "background_pass": 32722,
+      "fpr": 0.16361,
+      "rejection": 6.112095837662735,
+      "display_rejection": "6.1",
+      "threshold": 0.007835905067622662,
+      "plot_rejection": 6.112095837662735
+    }
+  ]
+}

@@ -15,6 +15,14 @@ class TreeRecInputAblationTest(unittest.TestCase):
         self.assertIs(node, self.node)
         self.assertIsNone(graph)
 
+    def test_energy_only_keeps_only_node_energy(self):
+        node, graph = apply_input_ablation(
+            self.node, self.graph, 'energy_only')
+        expected_node = torch.zeros_like(self.node)
+        expected_node[:, 3] = self.node[:, 3]
+        self.assertTrue(torch.equal(node, expected_node))
+        self.assertTrue(torch.equal(graph, torch.zeros_like(self.graph)))
+
     def test_event_only_removes_node_features(self):
         node, graph = apply_input_ablation(self.node, self.graph, 'event_only')
         self.assertTrue(torch.equal(node, torch.zeros_like(self.node)))

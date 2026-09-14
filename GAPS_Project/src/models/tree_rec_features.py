@@ -21,6 +21,7 @@ BASE_GRAPH_FEATURE_DIM = 45
 LOG1P_GRAPH_FEATURE_END = 38
 INPUT_ABLATION_CHOICES = (
     'full',
+    'energy_only',
     'node_only',
     'event_only',
     'no_energy',
@@ -66,6 +67,11 @@ def apply_input_ablation(
             f'got {tuple(graph_features.shape)}')
     if mode == 'full':
         return node_features, graph_features
+    if mode == 'energy_only':
+        energy = node_features[:, 3].clone()
+        node_features = torch.zeros_like(node_features)
+        node_features[:, 3] = energy
+        return node_features, torch.zeros_like(graph_features)
     if mode == 'node_only':
         return node_features, None
     if mode == 'event_only':
