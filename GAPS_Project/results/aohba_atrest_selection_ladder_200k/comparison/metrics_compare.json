@@ -1,0 +1,209 @@
+[
+  {
+    "label": "Strict track stop + Umbrella-to-Cube",
+    "result_dir": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_atrest_selection_ladder_200k/strict_track_topology/20260915-140033_GravNet_6b_h128_aohba_atrest_selection_ladder_strict_track_topology_200k_global_log_seed20260825/evaluation_test",
+    "n_events": 20000,
+    "label_counts": {
+      "0": 10000,
+      "1": 10000
+    },
+    "accuracy_at_0.5": 0.99625,
+    "auc": 0.9998904200000001,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5001,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9967161417007446
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9925284385681152
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9868972897529602
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.0001,
+        "rejection": 10000.0,
+        "threshold": 0.970140278339386
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.0001,
+        "rejection": 10000.0,
+        "threshold": 0.9328374862670898
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.0005,
+        "rejection": 2000.0,
+        "threshold": 0.8268060684204102
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.0009,
+        "rejection": 1111.111111111111,
+        "threshold": 0.6932184100151062
+      },
+      {
+        "target_efficiency": 1.0,
+        "actual_efficiency": 1.0,
+        "fpr": 0.1091,
+        "rejection": 9.165902841429881,
+        "threshold": 0.05390869081020355
+      }
+    ]
+  },
+  {
+    "label": "Summary at-rest + Umbrella-to-Cube",
+    "result_dir": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_atrest_selection_ladder_200k/summary_atrest_topology/20260915-143732_GravNet_6b_h128_aohba_atrest_selection_ladder_summary_atrest_topology_200k_global_log_seed20260825/evaluation_test",
+    "n_events": 20000,
+    "label_counts": {
+      "0": 10000,
+      "1": 10000
+    },
+    "accuracy_at_0.5": 0.96665,
+    "auc": 0.99521156,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9791899919509888
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0002,
+        "rejection": 5000.0,
+        "threshold": 0.9371689558029175
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0006,
+        "rejection": 1666.6666666666667,
+        "threshold": 0.8711414933204651
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.0052,
+        "rejection": 192.30769230769232,
+        "threshold": 0.7150666117668152
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.0194,
+        "rejection": 51.54639175257732,
+        "threshold": 0.569563090801239
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.0559,
+        "rejection": 17.88908765652952,
+        "threshold": 0.42529889941215515
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.1117,
+        "rejection": 8.952551477170994,
+        "threshold": 0.32430437207221985
+      },
+      {
+        "target_efficiency": 1.0,
+        "actual_efficiency": 1.0,
+        "fpr": 0.7543,
+        "rejection": 1.3257324671881214,
+        "threshold": 0.019598018378019333
+      }
+    ]
+  },
+  {
+    "label": "Legacy tracker-at-rest summary",
+    "result_dir": "/home/m78code/HEP_Project/GAPS_Project/results/aohba_atrest_selection_ladder_200k/legacy_atrest/20260915-151427_GravNet_6b_h128_aohba_atrest_selection_ladder_legacy_atrest_200k_global_log_seed20260825/evaluation_test",
+    "n_events": 20000,
+    "label_counts": {
+      "0": 10000,
+      "1": 10000
+    },
+    "accuracy_at_0.5": 0.96875,
+    "auc": 0.9953711150000001,
+    "rejection": [
+      {
+        "target_efficiency": 0.5,
+        "actual_efficiency": 0.5,
+        "fpr": 0.0,
+        "rejection": Infinity,
+        "threshold": 0.9952379465103149
+      },
+      {
+        "target_efficiency": 0.7,
+        "actual_efficiency": 0.7,
+        "fpr": 0.0002,
+        "rejection": 5000.0,
+        "threshold": 0.9765016436576843
+      },
+      {
+        "target_efficiency": 0.8,
+        "actual_efficiency": 0.8,
+        "fpr": 0.0007,
+        "rejection": 1428.5714285714287,
+        "threshold": 0.9375060200691223
+      },
+      {
+        "target_efficiency": 0.9,
+        "actual_efficiency": 0.9,
+        "fpr": 0.0056,
+        "rejection": 178.57142857142858,
+        "threshold": 0.7858542799949646
+      },
+      {
+        "target_efficiency": 0.95,
+        "actual_efficiency": 0.95,
+        "fpr": 0.0172,
+        "rejection": 58.13953488372093,
+        "threshold": 0.5841139554977417
+      },
+      {
+        "target_efficiency": 0.98,
+        "actual_efficiency": 0.98,
+        "fpr": 0.0623,
+        "rejection": 16.051364365971107,
+        "threshold": 0.3524759113788605
+      },
+      {
+        "target_efficiency": 0.99,
+        "actual_efficiency": 0.99,
+        "fpr": 0.1074,
+        "rejection": 9.31098696461825,
+        "threshold": 0.25178343057632446
+      },
+      {
+        "target_efficiency": 1.0,
+        "actual_efficiency": 1.0,
+        "fpr": 0.6278,
+        "rejection": 1.5928639694170117,
+        "threshold": 0.006874405313283205
+      }
+    ]
+  }
+]
