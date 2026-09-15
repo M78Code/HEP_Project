@@ -18,7 +18,10 @@ RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_stopping_ablation_200k"}
 CANDIDATES_PER_CLASS=${CANDIDATES_PER_CLASS:-300000}
 EVENTS_PER_CLASS=${EVENTS_PER_CLASS:-100000}
 GPU=${GPU:-0}
+GPU_A=${GPU_A:-$GPU}
+GPU_B=${GPU_B:-1}
 SEED=${SEED:-20260825}
+CACHE_PREFIX=${CACHE_PREFIX:-aohba_stopping_ablation}
 GROUP_A=${GROUP_A:-stopped}
 GROUP_B=${GROUP_B:-nonstopped}
 SELECTION_A=${SELECTION_A:-stopped-toptrigger}
@@ -291,10 +294,11 @@ latest_run_dir()
 run_cache_train_group()
 {
     local group=$1
+    local gpu=$2
     local provenance="$MATCHED/$group"
-    local cache="/mnt/aohba/aohba_stopping_ablation_${group}_200k_global_log"
+    local cache="/mnt/aohba/${CACHE_PREFIX}_${group}_200k_global_log"
     local result_root="$RESULT_ROOT/$group"
-    local tag="aohba_stopping_ablation_${group}_200k_global_log_seed${SEED}"
+    local tag="${CACHE_PREFIX}_${group}_200k_global_log_seed${SEED}"
 
     if [[ -f "$cache/_SUCCESS" && -f "$cache/cache_manifest.json" ]]; then
         echo "[SKIP] $group cache already complete: $cache"
@@ -341,8 +345,8 @@ run_cache_train_group()
         train_args+=(--resume-checkpoint "$checkpoint")
     fi
 
-    echo "[TRAIN START] $group on physical GPU $GPU"
-    CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$GPU" \
+    echo "[TRAIN START] $group on physical GPU $gpu"
+    CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$gpu" \
         python -u src/scripts/train_aohba.py "${train_args[@]}"
 
     run_dir=$(latest_run_dir "$result_root" "$tag")
@@ -353,7 +357,7 @@ run_cache_train_group()
         exit 1
     }
 
-    CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$GPU" \
+    CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$gpu" \
         python -u src/scripts/evaluate_aohba_split_cache.py \
         --cache-dir "$cache" \
         --model-path "$model" \
@@ -373,17 +377,22 @@ run_cache_train()
         exit 1
     }
 
-    # Deliberately serial: a completed first group is retained if MC1 stops.
-    run_cache_train_group "$GROUP_A"
-    run_cache_train_group "$GROUP_B"
+    run_cache_train_group "$GROUP_A" "$GPU_A" &
+    local pid_a=$!
+    run_cache_train_group "$GROUP_B" "$GPU_B" &
+    local pid_b=$!
+    local status=0
+    wait "$pid_a" || status=1
+    wait "$pid_b" || status=1
+    [[ "$status" -eq 0 ]] || exit "$status"
 }
 
 run_compare()
 {
     activate_naka
     local tag_a tag_b run_a run_b out
-    tag_a="aohba_stopping_ablation_${GROUP_A}_200k_global_log_seed${SEED}"
-    tag_b="aohba_stopping_ablation_${GROUP_B}_200k_global_log_seed${SEED}"
+    tag_a="${CACHE_PREFIX}_${GROUP_A}_200k_global_log_seed${SEED}"
+    tag_b="${CACHE_PREFIX}_${GROUP_B}_200k_global_log_seed${SEED}"
     run_a=$(latest_run_dir "$RESULT_ROOT/$GROUP_A" "$tag_a")
     run_b=$(latest_run_dir "$RESULT_ROOT/$GROUP_B" "$tag_b")
     out="$RESULT_ROOT/comparison"

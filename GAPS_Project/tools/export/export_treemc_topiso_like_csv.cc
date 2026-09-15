@@ -51,7 +51,7 @@ void print_usage(const char* argv0) {
       << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
-      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger] "
+      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger|legacy-atrest] "
       << "[--provenance-only]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
@@ -125,7 +125,8 @@ Args parse_args(int argc, char** argv) {
       args.selection != "stopped" &&
       args.selection != "stopped-toptrigger" &&
       args.selection != "summary-only" &&
-      args.selection != "summary-only-toptrigger") {
+      args.selection != "summary-only-toptrigger" &&
+      args.selection != "legacy-atrest") {
     std::cerr << "invalid --selection: " << args.selection << "\n";
     std::exit(2);
   }
@@ -544,6 +545,9 @@ bool passes_selection(const EventFeatures& features,
   }
   if (selection == "summary-only-toptrigger") {
     return features.summary_stopped && !features.stopped && features.toptrigger;
+  }
+  if (selection == "legacy-atrest") {
+    return features.summary_stopped;
   }
   return features.stopped && features.toptrigger;
 }
