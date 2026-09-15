@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -37,6 +38,7 @@ struct Args {
   std::string input;
   std::string output;
   std::string output_npy_dir;
+  std::string zero_step_audit_output;
   std::string geometry_file;
   std::string selection = "stopped-toptrigger";
   long long max_events = -1;
@@ -48,7 +50,7 @@ struct Args {
 void print_usage(const char* argv0) {
   std::cerr
       << "usage: " << argv0
-      << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
+      << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR | --zero-step-audit-output JSON) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
       << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger|legacy-atrest|legacy-atrest-toptrigger|legacy-atrest-kinetic-zero-toptrigger|legacy-atrest-zero-step-toptrigger|legacy-atrest-strict-toptrigger] "
@@ -65,7 +67,8 @@ void print_usage(const char* argv0) {
       << "The direct NPY mode writes voxels.npy, tof_primary.npy, labels.npy,\n"
       << "betas.npy, and provenance arrays without a CSV intermediate. It\n"
       << "requires a positive --max-events value. --provenance-only omits\n"
-      << "the voxel and TOF feature arrays.\n";
+      << "the voxel and TOF feature arrays. --zero-step-audit-output writes\n"
+      << "a TreeMc primary-track step audit without exporting input tensors.\n";
 }
 
 Args parse_args(int argc, char** argv) {
@@ -86,6 +89,8 @@ Args parse_args(int argc, char** argv) {
       args.output = require_value("--output");
     } else if (key == "--output-npy-dir") {
       args.output_npy_dir = require_value("--output-npy-dir");
+    } else if (key == "--zero-step-audit-output") {
+      args.zero_step_audit_output = require_value("--zero-step-audit-output");
     } else if (key == "--geometry-file") {
       args.geometry_file = require_value("--geometry-file");
     } else if (key == "--selection") {
@@ -108,12 +113,16 @@ Args parse_args(int argc, char** argv) {
     }
   }
 
-  if (args.input.empty() || (args.output.empty() == args.output_npy_dir.empty())) {
+  const int output_modes = static_cast<int>(!args.output.empty()) +
+                           static_cast<int>(!args.output_npy_dir.empty()) +
+                           static_cast<int>(!args.zero_step_audit_output.empty());
+  if (args.input.empty() || output_modes != 1) {
     print_usage(argv[0]);
     std::exit(2);
   }
-  if (!args.output_npy_dir.empty() && args.max_events <= 0) {
-    std::cerr << "--output-npy-dir requires --max-events greater than zero\n";
+  if ((!args.output_npy_dir.empty() || !args.zero_step_audit_output.empty()) &&
+      args.max_events <= 0) {
+    std::cerr << "direct NPY output and zero-step audit require --max-events greater than zero\n";
     std::exit(2);
   }
   if (args.provenance_only && args.output_npy_dir.empty()) {
@@ -243,6 +252,134 @@ struct EventFeatures {
   TVector3 p_top_cube;
   TVector3 p_top_umbrella;
 };
+
+struct ZeroStepAudit {
+  long long selected_events = 0;
+  long long events_with_zero_step = 0;
+  long long events_with_zero_step_in_tracker = 0;
+  long long events_with_zero_step_same_index_kinetic_zero = 0;
+  long long events_with_zero_step_same_index_tracker_kinetic_zero = 0;
+  long long total_zero_steps = 0;
+  long long zero_steps_in_tracker = 0;
+  long long zero_steps_in_umbrella = 0;
+  long long zero_steps_in_cube = 0;
+  long long zero_steps_elsewhere = 0;
+  long long zero_steps_with_positive_edep = 0;
+  long long zero_steps_with_zero_edep = 0;
+  long long zero_steps_with_kinetic_zero = 0;
+  long long zero_steps_with_positive_kinetic_energy = 0;
+  long long zero_steps_at_first_record = 0;
+  long long zero_steps_at_last_record = 0;
+  double zero_step_edep_sum = 0.0;
+  double zero_step_kinetic_energy_sum = 0.0;
+  std::map<int, long long> zero_step_volume_ids;
+
+  void observe(CTrackBase* primary) {
+    ++selected_events;
+    const auto vids = primary->GetVolumeId();
+    const auto edeps = primary->GetEnergyDeposition();
+    const auto kinetic_energy = primary->GetKineticEnergy();
+    const auto step_lengths = primary->GetStepLength();
+
+    bool has_zero_step = false;
+    bool has_zero_step_in_tracker = false;
+    bool has_same_index_kinetic_zero = false;
+    bool has_same_index_tracker_kinetic_zero = false;
+    for (std::size_t k = 0; k < step_lengths.size(); ++k) {
+      if (step_lengths[k] != 0.0) continue;
+      has_zero_step = true;
+      ++total_zero_steps;
+      if (k == 0) ++zero_steps_at_first_record;
+      if (k + 1 == step_lengths.size()) ++zero_steps_at_last_record;
+
+      const bool has_volume = k < vids.size();
+      const int volid = has_volume ? static_cast<int>(vids[k]) : 0;
+      const bool in_tracker = has_volume && GGeometryObject::IsTrackerVolume(volid);
+      if (has_volume) ++zero_step_volume_ids[volid];
+      if (in_tracker) {
+        ++zero_steps_in_tracker;
+        has_zero_step_in_tracker = true;
+      } else if (has_volume && GGeometryObject::IsUmbrellaVolume(volid)) {
+        ++zero_steps_in_umbrella;
+      } else if (has_volume && GGeometryObject::IsCubeVolume(volid)) {
+        ++zero_steps_in_cube;
+      } else {
+        ++zero_steps_elsewhere;
+      }
+
+      if (k < edeps.size()) {
+        zero_step_edep_sum += edeps[k];
+        if (edeps[k] > 0.0) {
+          ++zero_steps_with_positive_edep;
+        } else if (edeps[k] == 0.0) {
+          ++zero_steps_with_zero_edep;
+        }
+      }
+      if (k < kinetic_energy.size()) {
+        zero_step_kinetic_energy_sum += kinetic_energy[k];
+        if (kinetic_energy[k] == 0.0) {
+          ++zero_steps_with_kinetic_zero;
+          has_same_index_kinetic_zero = true;
+          if (in_tracker) has_same_index_tracker_kinetic_zero = true;
+        } else if (kinetic_energy[k] > 0.0) {
+          ++zero_steps_with_positive_kinetic_energy;
+        }
+      }
+    }
+    if (has_zero_step) ++events_with_zero_step;
+    if (has_zero_step_in_tracker) ++events_with_zero_step_in_tracker;
+    if (has_same_index_kinetic_zero) ++events_with_zero_step_same_index_kinetic_zero;
+    if (has_same_index_tracker_kinetic_zero) {
+      ++events_with_zero_step_same_index_tracker_kinetic_zero;
+    }
+  }
+};
+
+void write_zero_step_audit(const std::string& output_path,
+                           const Args& args,
+                           const ZeroStepAudit& audit) {
+  std::ofstream out(output_path);
+  if (!out) throw std::runtime_error("cannot open zero-step audit output: " + output_path);
+
+  std::vector<std::pair<int, long long>> volumes(audit.zero_step_volume_ids.begin(),
+                                                  audit.zero_step_volume_ids.end());
+  std::sort(volumes.begin(), volumes.end(),
+            [](const auto& left, const auto& right) {
+              return left.second != right.second ? left.second > right.second
+                                                 : left.first < right.first;
+            });
+  const double count = static_cast<double>(audit.total_zero_steps);
+  out << std::setprecision(12) << "{\n"
+      << "  \"input\": \"" << args.input << "\",\n"
+      << "  \"selection\": \"" << args.selection << "\",\n"
+      << "  \"target_label\": " << args.target_label << ",\n"
+      << "  \"selected_events\": " << audit.selected_events << ",\n"
+      << "  \"events_with_zero_step\": " << audit.events_with_zero_step << ",\n"
+      << "  \"events_with_zero_step_in_tracker\": " << audit.events_with_zero_step_in_tracker << ",\n"
+      << "  \"events_with_zero_step_same_index_kinetic_zero\": " << audit.events_with_zero_step_same_index_kinetic_zero << ",\n"
+      << "  \"events_with_zero_step_same_index_tracker_kinetic_zero\": " << audit.events_with_zero_step_same_index_tracker_kinetic_zero << ",\n"
+      << "  \"total_zero_steps\": " << audit.total_zero_steps << ",\n"
+      << "  \"zero_steps_in_tracker\": " << audit.zero_steps_in_tracker << ",\n"
+      << "  \"zero_steps_in_umbrella\": " << audit.zero_steps_in_umbrella << ",\n"
+      << "  \"zero_steps_in_cube\": " << audit.zero_steps_in_cube << ",\n"
+      << "  \"zero_steps_elsewhere\": " << audit.zero_steps_elsewhere << ",\n"
+      << "  \"zero_steps_with_positive_edep\": " << audit.zero_steps_with_positive_edep << ",\n"
+      << "  \"zero_steps_with_zero_edep\": " << audit.zero_steps_with_zero_edep << ",\n"
+      << "  \"zero_steps_with_kinetic_zero\": " << audit.zero_steps_with_kinetic_zero << ",\n"
+      << "  \"zero_steps_with_positive_kinetic_energy\": " << audit.zero_steps_with_positive_kinetic_energy << ",\n"
+      << "  \"zero_steps_at_first_record\": " << audit.zero_steps_at_first_record << ",\n"
+      << "  \"zero_steps_at_last_record\": " << audit.zero_steps_at_last_record << ",\n"
+      << "  \"mean_edep_at_zero_step\": " << (count == 0.0 ? 0.0 : audit.zero_step_edep_sum / count) << ",\n"
+      << "  \"mean_kinetic_energy_at_zero_step\": " << (count == 0.0 ? 0.0 : audit.zero_step_kinetic_energy_sum / count) << ",\n"
+      << "  \"top_zero_step_volume_ids\": [\n";
+  const std::size_t limit = std::min<std::size_t>(20, volumes.size());
+  for (std::size_t index = 0; index < limit; ++index) {
+    out << "    {\"volume_id\": " << volumes[index].first
+        << ", \"zero_steps\": " << volumes[index].second << "}"
+        << (index + 1 == limit ? "\n" : ",\n");
+  }
+  out << "  ]\n}\n";
+}
 
 std::string npy_shape(const std::vector<std::size_t>& shape) {
   std::ostringstream out;
@@ -650,7 +787,10 @@ int main(int argc, char** argv) {
 
   std::ofstream csv_out;
   std::unique_ptr<DirectNpyOutput> npy_out;
-  if (!args.output.empty()) {
+  const bool zero_step_audit = !args.zero_step_audit_output.empty();
+  if (zero_step_audit) {
+    // Audit mode reads selected primary tracks but deliberately writes no tensors.
+  } else if (!args.output.empty()) {
     csv_out.open(args.output);
     if (!csv_out) {
       std::cerr << "cannot open output: " << args.output << "\n";
@@ -678,6 +818,7 @@ int main(int argc, char** argv) {
   long long not_toptrigger = 0;
   long long not_stopped = 0;
   long long failed_selection = 0;
+  ZeroStepAudit audit;
 
   for (Long64_t entry = args.start_entry; entry < n_entries; ++entry) {
     if (args.max_events >= 0 && written >= args.max_events) break;
@@ -735,6 +876,12 @@ int main(int argc, char** argv) {
       continue;
     }
 
+    if (zero_step_audit) {
+      audit.observe(primary);
+      ++written;
+      continue;
+    }
+
     std::map<int, double> tracker_energy;
     if (!npy_out || !npy_out->provenance_only()) {
       tracker_energy = collect_tracker_energy(event);
@@ -760,7 +907,14 @@ int main(int argc, char** argv) {
 
   }
 
-  if (npy_out) {
+  if (zero_step_audit) {
+    try {
+      write_zero_step_audit(args.zero_step_audit_output, args, audit);
+    } catch (const std::exception& error) {
+      std::cerr << "cannot finalize zero-step audit: " << error.what() << "\n";
+      return 1;
+    }
+  } else if (npy_out) {
     if (npy_out->written() != npy_out->expected()) {
       std::cerr << "direct NPY output is incomplete: wrote " << npy_out->written()
                 << " events, expected " << npy_out->expected() << "\n";
