@@ -26,6 +26,7 @@ SELECTION_A=${SELECTION_A:-stopped-toptrigger}
 SELECTION_B=${SELECTION_B:-toptrigger-nonstopped}
 LABEL_A=${LABEL_A:-Stopped in tracker + top-trigger}
 LABEL_B=${LABEL_B:-Not stopped + top-trigger}
+TRAIN_GROUPS=${TRAIN_GROUPS:-"$GROUP_A $GROUP_B"}
 
 cd "$PROJECT"
 
@@ -374,8 +375,10 @@ run_cache_train()
         exit 1
     }
 
-    run_cache_train_group "$GROUP_A"
-    run_cache_train_group "$GROUP_B"
+    local group
+    for group in $TRAIN_GROUPS; do
+        run_cache_train_group "$group"
+    done
 }
 
 run_compare()
