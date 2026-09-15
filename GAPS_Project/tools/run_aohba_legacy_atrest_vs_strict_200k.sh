@@ -10,8 +10,7 @@ export RESULT_ROOT="$PROJECT/results/aohba_legacy_atrest_vs_strict_200k"
 export CACHE_PREFIX=aohba_legacy_atrest_vs_strict
 export CANDIDATES_PER_CLASS=300000
 export EVENTS_PER_CLASS=100000
-export GPU_A=0
-export GPU_B=1
+export GPU=0
 export SEED=20260825
 
 export GROUP_A=strict_track_topology
