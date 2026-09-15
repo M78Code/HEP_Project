@@ -51,7 +51,7 @@ void print_usage(const char* argv0) {
       << " --input ROOT_OR_GLOB (--output CSV | --output-npy-dir DIR) "
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
-      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger|legacy-atrest|legacy-atrest-toptrigger] "
+      << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger|legacy-atrest|legacy-atrest-toptrigger|legacy-atrest-kinetic-zero-toptrigger|legacy-atrest-zero-step-toptrigger|legacy-atrest-strict-toptrigger] "
       << "[--provenance-only]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
@@ -127,7 +127,10 @@ Args parse_args(int argc, char** argv) {
       args.selection != "summary-only" &&
       args.selection != "summary-only-toptrigger" &&
       args.selection != "legacy-atrest" &&
-      args.selection != "legacy-atrest-toptrigger") {
+      args.selection != "legacy-atrest-toptrigger" &&
+      args.selection != "legacy-atrest-kinetic-zero-toptrigger" &&
+      args.selection != "legacy-atrest-zero-step-toptrigger" &&
+      args.selection != "legacy-atrest-strict-toptrigger") {
     std::cerr << "invalid --selection: " << args.selection << "\n";
     std::exit(2);
   }
@@ -229,6 +232,8 @@ struct EventFeatures {
   bool stopped = false;
   bool summary_stopped = false;
   bool toptrigger = false;
+  bool kinetic_zero_in_tracker = false;
+  bool has_zero_step = false;
   int stop_layer = -1;
   int n_top_umbrella = 0;
   int n_top_cube = 0;
@@ -484,6 +489,10 @@ EventFeatures compute_event_features(CTrackBase* primary) {
   const auto kinetic_energy = primary->GetKineticEnergy();
   const auto step_lengths = primary->GetStepLength();
 
+  out.has_zero_step = std::any_of(
+      step_lengths.begin(), step_lengths.end(),
+      [](double step_length) { return step_length == 0.0; });
+
   for (std::size_t k = 0; k < vids.size(); ++k) {
     const int volid = static_cast<int>(vids[k]);
     const double edep = edeps[k];
@@ -492,12 +501,9 @@ EventFeatures compute_event_features(CTrackBase* primary) {
 
     if (k < kinetic_energy.size() && kinetic_energy[k] == 0.0 &&
         GGeometryObject::IsTrackerVolume(volid)) {
-      for (std::size_t p = 0; p < step_lengths.size(); ++p) {
-        if (step_lengths[p] == 0.0) {
-          out.stopped = true;
-          out.stop_layer = (volid % 10000000) / 1000000;
-          break;
-        }
+      out.kinetic_zero_in_tracker = true;
+      if (out.stop_layer < 0) {
+        out.stop_layer = (volid % 10000000) / 1000000;
       }
     }
 
@@ -528,6 +534,7 @@ EventFeatures compute_event_features(CTrackBase* primary) {
     }
   }
 
+  out.stopped = out.kinetic_zero_in_tracker && out.has_zero_step;
   out.toptrigger = hit_top_umbrella && hit_top_cube && (t_top_umbrella < t_top_cube);
   out.tof = t_top_cube - t_top_umbrella;
   return out;
@@ -552,6 +559,17 @@ bool passes_selection(const EventFeatures& features,
   }
   if (selection == "legacy-atrest-toptrigger") {
     return features.summary_stopped && features.toptrigger;
+  }
+  if (selection == "legacy-atrest-kinetic-zero-toptrigger") {
+    return features.summary_stopped && features.kinetic_zero_in_tracker &&
+           features.toptrigger;
+  }
+  if (selection == "legacy-atrest-zero-step-toptrigger") {
+    return features.summary_stopped && features.has_zero_step &&
+           features.toptrigger;
+  }
+  if (selection == "legacy-atrest-strict-toptrigger") {
+    return features.summary_stopped && features.stopped && features.toptrigger;
   }
   return features.stopped && features.toptrigger;
 }
