@@ -23,7 +23,11 @@ TEST_PER_CLASS=${TEST_PER_CLASS:-$((EVENTS_PER_CLASS - TRAIN_PER_CLASS - VAL_PER
 GPU=${GPU:-0}
 SEED=${SEED:-20260825}
 CACHE_PREFIX=${CACHE_PREFIX:-aohba_treerec_proxy_threeway}
-GROUPS=(summary_atrest_topology treerec_logistic_proxy truth_strict_topology)
+EXPERIMENT_GROUPS=(
+    summary_atrest_topology
+    treerec_logistic_proxy
+    truth_strict_topology
+)
 
 cd "$PROJECT"
 
@@ -156,7 +160,7 @@ cache_train() {
         exit 1
     }
     local group
-    for group in "${GROUPS[@]}"; do
+    for group in "${EXPERIMENT_GROUPS[@]}"; do
         run_group "$group"
     done
 }
@@ -165,7 +169,7 @@ compare() {
     activate_naka
     local group tag run_dir
     local args=()
-    for group in "${GROUPS[@]}"; do
+    for group in "${EXPERIMENT_GROUPS[@]}"; do
         tag="${CACHE_PREFIX}_${group}_${EVENTS_PER_CLASS}_global_log_seed${SEED}"
         run_dir=$(latest_run_dir "$RESULT_ROOT/$group" "$tag")
         [[ -n "$run_dir" && -f "$run_dir/evaluation_test/labels.npy" && -f "$run_dir/evaluation_test/scores.npy" ]] || {
