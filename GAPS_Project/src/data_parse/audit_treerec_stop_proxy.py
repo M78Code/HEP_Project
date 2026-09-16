@@ -172,6 +172,10 @@ def summarise_records(records: list[dict]) -> dict:
 
 
 def print_result(results: dict[str, dict]) -> None:
+    def fmt_median(values: dict) -> str:
+        value = values["median"]
+        return "unavailable" if value is None else f"{value:.4g}"
+
     print("\n===== TreeRec-only stopping-proxy audit =====")
     print("No TreeMc stopping, kinetic-energy, or zero-step branch was read.\n")
     for group, particles in results.items():
@@ -188,10 +192,11 @@ def print_result(results: dict[str, dict]) -> None:
             )
             print(
                 "    median: "
-                f"hits={continuous['n_hits']['median']:.1f}, "
-                f"tracker hits={continuous['n_tracker_hits']['median']:.1f}, "
-                f"tracker Edep={continuous['tracker_energy']['median']:.4g}, "
-                f"last tracker time={continuous['last_tracker_hit_time']['median']:.4g}"
+                f"hits={fmt_median(continuous['n_hits'])}, "
+                f"tracker hits={fmt_median(continuous['n_tracker_hits'])}, "
+                f"tracker Edep={fmt_median(continuous['tracker_energy'])}, "
+                "last tracker time="
+                f"{fmt_median(continuous['last_tracker_hit_time'])}"
             )
 
     names = list(results)
