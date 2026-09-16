@@ -107,7 +107,34 @@ def matched_rate_cut(
     }
 
 
-def load_provenance(directory: Path, particle: str, limit: int) -> dict:
+def balanced_source_indices(
+    file_indices: np.ndarray, limit: int, seed: int
+) -> np.ndarray:
+    """Sample from every source ROOT file before filling remaining slots."""
+    groups = np.unique(file_indices)
+    if limit >= len(file_indices):
+        return np.arange(len(file_indices), dtype=np.int64)
+    rng = np.random.default_rng(seed)
+    selected = []
+    per_group = limit // len(groups)
+    for group in groups:
+        available = np.flatnonzero(file_indices == group)
+        take = min(per_group, len(available))
+        if take:
+            selected.append(rng.choice(available, take, replace=False))
+    selected = np.concatenate(selected) if selected else np.empty(0, dtype=np.int64)
+    remaining = limit - len(selected)
+    if remaining:
+        available = np.setdiff1d(
+            np.arange(len(file_indices), dtype=np.int64), selected,
+            assume_unique=False,
+        )
+        selected = np.concatenate((selected, rng.choice(available, remaining, replace=False)))
+    rng.shuffle(selected)
+    return selected
+
+
+def load_provenance(directory: Path, particle: str, limit: int, seed: int) -> dict:
     source = directory / particle
     required = (
         "source_file_indices.npy",
@@ -129,10 +156,11 @@ def load_provenance(directory: Path, particle: str, limit: int) -> dict:
         raise RuntimeError(f"{source}: provenance array length mismatch")
     files = [Path(line) for line in (source / "source_files.txt").read_text().splitlines()
              if line.strip()]
+    selected = balanced_source_indices(np.asarray(file_indices), count, seed)
     return {
-        "file_indices": np.asarray(file_indices[:count], dtype=np.int64),
-        "entries": np.asarray(entries[:count], dtype=np.int64),
-        "truth": np.asarray(truth[:count], dtype=bool),
+        "file_indices": np.asarray(file_indices[selected], dtype=np.int64),
+        "entries": np.asarray(entries[selected], dtype=np.int64),
+        "truth": np.asarray(truth[selected], dtype=bool),
         "files": files,
     }
 
@@ -231,15 +259,26 @@ def logistic_matrix(features: dict[str, np.ndarray]) -> np.ndarray:
     return np.column_stack(columns)
 
 
-def source_file_split(groups: np.ndarray, truth: np.ndarray, seed: int) -> np.ndarray:
-    unique_groups = np.unique(groups)
-    if len(unique_groups) < 2:
-        raise RuntimeError("need at least two source ROOT files for held-out audit")
+def source_file_split(
+    groups: np.ndarray, particles: np.ndarray, truth: np.ndarray, seed: int
+) -> np.ndarray:
     rng = np.random.default_rng(seed)
     for _ in range(100):
-        shuffled = rng.permutation(unique_groups)
-        train_groups = set(shuffled[:max(1, int(0.7 * len(shuffled)))])
-        train = np.fromiter((group in train_groups for group in groups), dtype=bool)
+        train = np.zeros(len(groups), dtype=bool)
+        for particle in PARTICLES:
+            particle_groups = np.unique(groups[particles == particle])
+            if len(particle_groups) < 2:
+                raise RuntimeError(
+                    f"{particle}: need at least two source ROOT files for held-out audit"
+                )
+            shuffled = rng.permutation(particle_groups)
+            train_count = min(
+                len(particle_groups) - 1,
+                max(1, int(0.7 * len(particle_groups))),
+            )
+            train_groups = set(shuffled[:train_count])
+            train |= (particles == particle) & np.fromiter(
+                (group in train_groups for group in groups), dtype=bool)
         test = ~train
         if truth[train].any() and (~truth[train]).any() and truth[test].any() and (~truth[test]).any():
             return train
@@ -250,7 +289,7 @@ def proxy_score_audit(
     features: dict[str, np.ndarray], truth: np.ndarray, particles: np.ndarray,
     source_groups: np.ndarray, seed: int,
 ) -> dict:
-    train = source_file_split(source_groups, truth, seed)
+    train = source_file_split(source_groups, particles, truth, seed)
     test = ~train
     model = make_pipeline(
         StandardScaler(),
@@ -339,7 +378,10 @@ def main() -> None:
     combined_particles = []
     combined_source_groups = []
     for particle in PARTICLES:
-        provenance = load_provenance(args.provenance_dir, particle, args.events_per_class)
+        provenance = load_provenance(
+            args.provenance_dir, particle, args.events_per_class,
+            args.seed + (0 if particle == "antiP" else 1),
+        )
         features = read_features(provenance)
         truth = provenance["truth"]
         result = evaluate(features, truth)
