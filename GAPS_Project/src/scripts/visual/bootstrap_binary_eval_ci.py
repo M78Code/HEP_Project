@@ -68,6 +68,8 @@ def bootstrap_item(
     observed = {
         target: capped_rejection_at(labels, scores, target) for target in targets
     }
+    print(f"[START] {label}: {len(signal):,} signal, {len(background):,} background, "
+          f"{repeats:,} bootstrap repeats", flush=True)
     samples = {target: np.empty(repeats, dtype=np.float64) for target in targets}
     auc_samples = np.empty(repeats, dtype=np.float64)
     rng = np.random.default_rng(seed)
@@ -81,6 +83,8 @@ def bootstrap_item(
         for target in targets:
             _, rejection, _ = capped_rejection_at(boot_labels, boot_scores, target)
             samples[target][repeat] = rejection
+        if (repeat + 1) % 1000 == 0 or repeat + 1 == repeats:
+            print(f"[PROGRESS] {label}: {repeat + 1:,}/{repeats:,}", flush=True)
 
     result = {
         "label": label,
@@ -100,6 +104,7 @@ def bootstrap_item(
             "finite_sample_cap": float(len(background)),
         })
         result["rejection"].append(row)
+    print(f"[DONE] {label}", flush=True)
     return result
 
 
@@ -152,6 +157,8 @@ def main() -> None:
     if any(not 0.0 < target <= 1.0 for target in args.targets):
         raise ValueError("targets must be in (0, 1]")
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    print("===== Four-way high-efficiency bootstrap CI =====", flush=True)
+    print(f"repeats: {args.repeats:,}; stratified by true class", flush=True)
     results = [
         bootstrap_item(label, Path(directory), args.repeats, args.seed + index,
                        args.targets)
