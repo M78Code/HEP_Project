@@ -9,7 +9,7 @@ REPEATS=${REPEATS:-5000}
 SEED=${SEED:-20260825}
 CACHE_PREFIX=${CACHE_PREFIX:-aohba_treerec_proxy_fourway}
 EVENTS_PER_CLASS=${EVENTS_PER_CLASS:-20000}
-GROUPS=(
+EXPERIMENT_GROUPS=(
     summary_atrest_topology
     treerec_logistic_proxy
     treerec_full_graph_oof_proxy
@@ -29,7 +29,7 @@ latest_run_dir() {
 }
 
 args=()
-for group in "${GROUPS[@]}"; do
+for group in "${EXPERIMENT_GROUPS[@]}"; do
     tag="${CACHE_PREFIX}_${group}_${EVENTS_PER_CLASS}_global_log_seed${SEED}"
     group_root="$RESULT_ROOT/$group"
     [[ -d "$group_root" ]] || { echo "ERROR: result directory missing: $group_root" >&2; exit 1; }
