@@ -45,6 +45,7 @@ struct Args {
   long long start_entry = 0;
   int target_label = -1;
   bool provenance_only = false;
+  bool truth_selection_flags = false;
 };
 
 void print_usage(const char* argv0) {
@@ -54,7 +55,7 @@ void print_usage(const char* argv0) {
       << "[--geometry-file ROOT] [--max-events N] [--start-entry N] "
       << "[--target-label 0|1] "
       << "[--selection none|toptrigger|toptrigger-nonstopped|stopped|stopped-toptrigger|summary-only|summary-only-toptrigger|legacy-atrest|legacy-atrest-toptrigger|legacy-atrest-kinetic-zero-toptrigger|legacy-atrest-zero-step-toptrigger|legacy-atrest-strict-toptrigger] "
-      << "[--provenance-only]\n\n"
+      << "[--provenance-only] [--truth-selection-flags]\n\n"
       << "Export TreeMc events to a topiso1457-like CSV:\n"
       << "  col 0       : random seed\n"
       << "  col 1       : ROOT entry index\n"
@@ -68,7 +69,9 @@ void print_usage(const char* argv0) {
       << "betas.npy, and provenance arrays without a CSV intermediate. It\n"
       << "requires a positive --max-events value. --provenance-only omits\n"
       << "the voxel and TOF feature arrays. --zero-step-audit-output writes\n"
-      << "a TreeMc primary-track step audit without exporting input tensors.\n";
+      << "a TreeMc primary-track step audit without exporting input tensors.\n"
+      << "--truth-selection-flags writes audit-only TreeMc selection flags\n"
+      << "alongside provenance; they are never part of the model input.\n";
 }
 
 Args parse_args(int argc, char** argv) {
@@ -103,6 +106,8 @@ Args parse_args(int argc, char** argv) {
       args.target_label = std::stoi(require_value("--target-label"));
     } else if (key == "--provenance-only") {
       args.provenance_only = true;
+    } else if (key == "--truth-selection-flags") {
+      args.truth_selection_flags = true;
     } else if (key == "--help" || key == "-h") {
       print_usage(argv[0]);
       std::exit(0);
@@ -127,6 +132,10 @@ Args parse_args(int argc, char** argv) {
   }
   if (args.provenance_only && args.output_npy_dir.empty()) {
     std::cerr << "--provenance-only requires --output-npy-dir\n";
+    std::exit(2);
+  }
+  if (args.truth_selection_flags && args.output_npy_dir.empty()) {
+    std::cerr << "--truth-selection-flags requires --output-npy-dir\n";
     std::exit(2);
   }
   if (args.selection != "none" && args.selection != "toptrigger" &&
@@ -466,16 +475,28 @@ class DirectNpyOutput {
   DirectNpyOutput(const std::string& output_dir,
                   std::size_t n_events,
                   const std::vector<int>& tracker_order,
-                  bool provenance_only)
+                  bool provenance_only,
+                  bool truth_selection_flags)
       : output_dir_(output_dir),
         expected_(n_events),
         provenance_only_(provenance_only),
+        truth_selection_flags_(truth_selection_flags),
         labels_(join_path(output_dir, "labels.npy"), "<i8", {n_events}),
         betas_(join_path(output_dir, "betas.npy"), "<f4", {n_events}),
         random_seeds_(join_path(output_dir, "random_seeds.npy"), "<i8", {n_events}),
         chain_entries_(join_path(output_dir, "chain_entries.npy"), "<i8", {n_events}),
         source_file_indices_(join_path(output_dir, "source_file_indices.npy"), "<i4", {n_events}),
         source_entries_(join_path(output_dir, "source_entries.npy"), "<i8", {n_events}) {
+    if (truth_selection_flags_) {
+      truth_summary_stopped_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "truth_summary_stopped.npy"), "|u1", {n_events});
+      truth_kinetic_zero_in_tracker_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "truth_kinetic_zero_in_tracker.npy"), "|u1", {n_events});
+      truth_has_zero_step_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "truth_has_zero_step.npy"), "|u1", {n_events});
+      truth_strict_stop_ = std::make_unique<NpyStream>(
+          join_path(output_dir, "truth_strict_stop.npy"), "|u1", {n_events});
+    }
     if (!provenance_only_) {
       voxels_ = std::make_unique<NpyStream>(
           join_path(output_dir, "voxels.npy"),
@@ -549,6 +570,13 @@ class DirectNpyOutput {
     chain_entries_.write_scalar<std::int64_t>(chain_entry);
     source_file_indices_.write_scalar<std::int32_t>(source_file_index);
     source_entries_.write_scalar<std::int64_t>(source_entry);
+    if (truth_selection_flags_) {
+      truth_summary_stopped_->write_scalar<std::uint8_t>(feat.summary_stopped ? 1 : 0);
+      truth_kinetic_zero_in_tracker_->write_scalar<std::uint8_t>(
+          feat.kinetic_zero_in_tracker ? 1 : 0);
+      truth_has_zero_step_->write_scalar<std::uint8_t>(feat.has_zero_step ? 1 : 0);
+      truth_strict_stop_->write_scalar<std::uint8_t>(feat.stopped ? 1 : 0);
+    }
     ++written_;
   }
 
@@ -568,6 +596,12 @@ class DirectNpyOutput {
     chain_entries_.flush();
     source_file_indices_.flush();
     source_entries_.flush();
+    if (truth_selection_flags_) {
+      truth_summary_stopped_->flush();
+      truth_kinetic_zero_in_tracker_->flush();
+      truth_has_zero_step_->flush();
+      truth_strict_stop_->flush();
+    }
 
     std::ofstream manifest(join_path(output_dir_, "export_manifest.json"));
     if (!manifest) throw std::runtime_error("cannot write export manifest");
@@ -580,6 +614,8 @@ class DirectNpyOutput {
              << "  \"selection\": \"" << args.selection << "\",\n"
              << "  \"provenance_only\": "
              << (provenance_only_ ? "true" : "false") << ",\n"
+             << "  \"truth_selection_flags\": "
+             << (truth_selection_flags_ ? "true" : "false") << ",\n"
              << "  \"start_entry\": " << args.start_entry << ",\n"
              << "  \"source_files\": " << source_files.size() << ",\n"
              << "  \"legacy_csv_significant_digits\": 6,\n"
@@ -597,6 +633,7 @@ class DirectNpyOutput {
   std::string output_dir_;
   std::size_t expected_;
   bool provenance_only_;
+  bool truth_selection_flags_;
   std::size_t written_ = 0;
   std::unordered_map<int, std::size_t> channel_indices_;
   std::unique_ptr<NpyStream> voxels_;
@@ -607,6 +644,10 @@ class DirectNpyOutput {
   NpyStream chain_entries_;
   NpyStream source_file_indices_;
   NpyStream source_entries_;
+  std::unique_ptr<NpyStream> truth_summary_stopped_;
+  std::unique_ptr<NpyStream> truth_kinetic_zero_in_tracker_;
+  std::unique_ptr<NpyStream> truth_has_zero_step_;
+  std::unique_ptr<NpyStream> truth_strict_stop_;
 };
 
 EventFeatures compute_event_features(CTrackBase* primary) {
@@ -803,7 +844,8 @@ int main(int argc, char** argv) {
           args.output_npy_dir,
           static_cast<std::size_t>(args.max_events),
           tracker_order,
-          args.provenance_only);
+          args.provenance_only,
+          args.truth_selection_flags);
     } catch (const std::exception& error) {
       std::cerr << "cannot initialize direct NPY output: " << error.what() << "\n";
       return 1;
