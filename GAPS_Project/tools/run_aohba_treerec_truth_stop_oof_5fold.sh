@@ -9,14 +9,14 @@ esac
 
 PROJECT=${PROJECT:-"$HOME/HEP_Project/GAPS_Project"}
 PROVENANCE=${PROVENANCE:-/mnt/aohba/aohba_treerec_hit_proxy_calibration_candidates_300k}
-# The candidate provenance contains four independent source ROOT files.
-# Keep entire files together; four folds are the maximum valid OOF partition.
-CACHE_ROOT=${CACHE_ROOT:-/mnt/aohba/aohba_treerec_truth_stop_oof_4fold}
-RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_treerec_truth_stop_oof_4fold"}
+# The candidate provenance contains three independent source ROOT files.
+# Keep entire files together; three folds are the maximum valid OOF partition.
+CACHE_ROOT=${CACHE_ROOT:-/mnt/aohba/aohba_treerec_truth_stop_oof_3fold}
+RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_treerec_truth_stop_oof_3fold"}
 SCORE_DIR=${SCORE_DIR:-"$RESULT_ROOT/oof_scores"}
 GPU=${GPU:-0}
 SEED=${SEED:-20260825}
-FOLDS=${FOLDS:-4}
+FOLDS=${FOLDS:-3}
 TRAIN_PER_CELL=${TRAIN_PER_CELL:-10000}
 VAL_PER_CELL=${VAL_PER_CELL:-2000}
 TEST_PER_CELL=${TEST_PER_CELL:-3000}
