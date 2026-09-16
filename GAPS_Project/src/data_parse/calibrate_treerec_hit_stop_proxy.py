@@ -15,6 +15,10 @@ from pathlib import Path
 
 import numpy as np
 import uproot
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 PARTICLES = ("antiP", "antiD")
@@ -33,12 +37,24 @@ FEATURES = (
     "tracker_layer_span",
     "max_tracker_energy_fraction",
 )
+LOGISTIC_FEATURES = (
+    "n_hits",
+    "n_tracker_hits",
+    "tracker_energy",
+    "tracker_energy_fraction",
+    "tracker_mean_energy",
+    "tracker_hit_fraction",
+    "n_tracker_layers",
+    "tracker_layer_span",
+    "max_tracker_energy_fraction",
+)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--provenance-dir", type=Path, required=True)
     parser.add_argument("--events-per-class", type=int, default=50_000)
+    parser.add_argument("--seed", type=int, default=20260825)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -203,6 +219,82 @@ def evaluate(features: dict[str, np.ndarray], truth: np.ndarray) -> dict:
     return result
 
 
+def logistic_matrix(features: dict[str, np.ndarray]) -> np.ndarray:
+    columns = []
+    for name in LOGISTIC_FEATURES:
+        values = features[name]
+        if name in {"n_hits", "n_tracker_hits", "tracker_energy",
+                    "tracker_mean_energy", "n_tracker_layers",
+                    "tracker_layer_span"}:
+            values = np.log1p(values)
+        columns.append(values)
+    return np.column_stack(columns)
+
+
+def source_file_split(groups: np.ndarray, truth: np.ndarray, seed: int) -> np.ndarray:
+    unique_groups = np.unique(groups)
+    if len(unique_groups) < 2:
+        raise RuntimeError("need at least two source ROOT files for held-out audit")
+    rng = np.random.default_rng(seed)
+    for _ in range(100):
+        shuffled = rng.permutation(unique_groups)
+        train_groups = set(shuffled[:max(1, int(0.7 * len(shuffled)))])
+        train = np.fromiter((group in train_groups for group in groups), dtype=bool)
+        test = ~train
+        if truth[train].any() and (~truth[train]).any() and truth[test].any() and (~truth[test]).any():
+            return train
+    raise RuntimeError("could not form a source-file split containing both truth classes")
+
+
+def proxy_score_audit(
+    features: dict[str, np.ndarray], truth: np.ndarray, particles: np.ndarray,
+    source_groups: np.ndarray, seed: int,
+) -> dict:
+    train = source_file_split(source_groups, truth, seed)
+    test = ~train
+    model = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=2000, class_weight="balanced", random_state=seed),
+    )
+    matrix = logistic_matrix(features)
+    model.fit(matrix[train], truth[train])
+    train_score = model.predict_proba(matrix[train])[:, 1]
+    test_score = model.predict_proba(matrix[test])[:, 1]
+    threshold = float(np.quantile(
+        train_score, 1.0 - float(truth[train].mean()), method="higher"))
+    selected = test_score >= threshold
+    positives = int(truth[test].sum())
+    selected_count = int(selected.sum())
+    true_selected = int(np.count_nonzero(selected & truth[test]))
+    classifier = model.named_steps["logisticregression"]
+    test_particles = particles[test]
+    particle_acceptance = {}
+    for particle in PARTICLES:
+        mask = test & (particles == particle)
+        selected_particle = selected[test_particles == particle]
+        particle_acceptance[particle] = {
+            "test_events": int(mask.sum()),
+            "truth_strict_fraction": float(truth[mask].mean()),
+            "proxy_selected_fraction": float(selected_particle.mean()),
+        }
+    return {
+        "split": "source-root-file held out (about 70% train / 30% test)",
+        "train_events": int(train.sum()),
+        "test_events": int(test.sum()),
+        "test_truth_strict_fraction": float(truth[test].mean()),
+        "test_auc": float(roc_auc_score(truth[test], test_score)),
+        "threshold_from_train": threshold,
+        "test_proxy_selected_fraction": float(selected.mean()),
+        "test_precision": float(true_selected / selected_count) if selected_count else None,
+        "test_recall": float(true_selected / positives) if positives else None,
+        "particle_acceptance": particle_acceptance,
+        "standardized_coefficients": {
+            name: float(value)
+            for name, value in zip(LOGISTIC_FEATURES, classifier.coef_[0])
+        },
+    }
+
+
 def format_metric(value: float | None) -> str:
     return "unavailable" if value is None else f"{value:.4f}"
 
@@ -210,7 +302,8 @@ def format_metric(value: float | None) -> str:
 def print_results(results: dict) -> None:
     print("\n===== TreeRec hitseries proxy calibration =====")
     print("Truth strict-stop is an audit label only; it is not a proxy input.\n")
-    for name, result in results.items():
+    for name in (*PARTICLES, "combined_particles"):
+        result = results[name]
         print(f"[{name}] N={result['events']:,} truth strict={result['truth_strict_fraction']:.2%}")
         print("feature                     direction  AUC(truth)  threshold  selected  precision  recall")
         for feature, metric in result["features"].items():
@@ -221,6 +314,19 @@ def print_results(results: dict) -> None:
                 f"{cut['threshold']:10.4g} {cut['proxy_selected_fraction']:8.2%} "
                 f"{format_metric(cut['precision']):>10s} {format_metric(cut['recall']):>7s}"
             )
+    proxy = results["multivariate_proxy"]
+    print("\n[source-file-held-out logistic proxy]")
+    print(
+        f"test N={proxy['test_events']:,}  AUC={proxy['test_auc']:.4f}  "
+        f"selected={proxy['test_proxy_selected_fraction']:.2%}  "
+        f"precision={format_metric(proxy['test_precision'])}  "
+        f"recall={format_metric(proxy['test_recall'])}"
+    )
+    for particle, acceptance in proxy["particle_acceptance"].items():
+        print(
+            f"  {particle}: truth strict={acceptance['truth_strict_fraction']:.2%}  "
+            f"proxy selected={acceptance['proxy_selected_fraction']:.2%}"
+        )
 
 
 def main() -> None:
@@ -230,6 +336,8 @@ def main() -> None:
     results = {}
     combined_features = {name: [] for name in FEATURES}
     combined_truth = []
+    combined_particles = []
+    combined_source_groups = []
     for particle in PARTICLES:
         provenance = load_provenance(args.provenance_dir, particle, args.events_per_class)
         features = read_features(provenance)
@@ -243,14 +351,22 @@ def main() -> None:
         for name in FEATURES:
             combined_features[name].append(features[name])
         combined_truth.append(truth)
+        combined_particles.append(np.full(len(truth), particle))
+        combined_source_groups.append(np.asarray([
+            f"{particle}:{index}" for index in provenance["file_indices"]
+        ]))
 
     features = {name: np.concatenate(parts) for name, parts in combined_features.items()}
     truth = np.concatenate(combined_truth)
+    particles = np.concatenate(combined_particles)
+    source_groups = np.concatenate(combined_source_groups)
     results["combined_particles"] = {
         "events": int(len(truth)),
         "truth_strict_fraction": float(truth.mean()),
         "features": evaluate(features, truth),
     }
+    results["multivariate_proxy"] = proxy_score_audit(
+        features, truth, particles, source_groups, args.seed)
     print_results(results)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(results, indent=2))
