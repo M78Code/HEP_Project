@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+trap 'status=$?; echo "ERROR: bootstrap runner stopped at line $LINENO (exit=$status)" >&2' ERR
 
 PROJECT=${PROJECT:-"$HOME/HEP_Project/GAPS_Project"}
 RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_treerec_proxy_fourway_20k"}
@@ -16,6 +17,10 @@ GROUPS=(
 )
 
 cd "$PROJECT"
+echo "[START] four-way high-efficiency bootstrap CI"
+echo "project : $PROJECT"
+echo "results : $RESULT_ROOT"
+echo "repeats : $REPEATS"
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
 conda activate naka
 
@@ -26,7 +31,10 @@ latest_run_dir() {
 args=()
 for group in "${GROUPS[@]}"; do
     tag="${CACHE_PREFIX}_${group}_${EVENTS_PER_CLASS}_global_log_seed${SEED}"
-    run_dir=$(latest_run_dir "$RESULT_ROOT/$group" "$tag")
+    group_root="$RESULT_ROOT/$group"
+    [[ -d "$group_root" ]] || { echo "ERROR: result directory missing: $group_root" >&2; exit 1; }
+    echo "[RESOLVE] $group"
+    run_dir=$(latest_run_dir "$group_root" "$tag" || true)
     eval_dir="$run_dir/evaluation_test"
     [[ -n "$run_dir" && -f "$eval_dir/labels.npy" && -f "$eval_dir/scores.npy" ]] || {
         echo "ERROR: evaluation missing for $group" >&2; exit 1;
