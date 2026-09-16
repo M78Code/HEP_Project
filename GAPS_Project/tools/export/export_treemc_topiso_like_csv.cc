@@ -489,13 +489,17 @@ class DirectNpyOutput {
         source_entries_(join_path(output_dir, "source_entries.npy"), "<i8", {n_events}) {
     if (truth_selection_flags_) {
       truth_summary_stopped_ = std::make_unique<NpyStream>(
-          join_path(output_dir, "truth_summary_stopped.npy"), "|u1", {n_events});
+          join_path(output_dir, "truth_summary_stopped.npy"), "|u1",
+          std::vector<std::size_t>{n_events});
       truth_kinetic_zero_in_tracker_ = std::make_unique<NpyStream>(
-          join_path(output_dir, "truth_kinetic_zero_in_tracker.npy"), "|u1", {n_events});
+          join_path(output_dir, "truth_kinetic_zero_in_tracker.npy"), "|u1",
+          std::vector<std::size_t>{n_events});
       truth_has_zero_step_ = std::make_unique<NpyStream>(
-          join_path(output_dir, "truth_has_zero_step.npy"), "|u1", {n_events});
+          join_path(output_dir, "truth_has_zero_step.npy"), "|u1",
+          std::vector<std::size_t>{n_events});
       truth_strict_stop_ = std::make_unique<NpyStream>(
-          join_path(output_dir, "truth_strict_stop.npy"), "|u1", {n_events});
+          join_path(output_dir, "truth_strict_stop.npy"), "|u1",
+          std::vector<std::size_t>{n_events});
     }
     if (!provenance_only_) {
       voxels_ = std::make_unique<NpyStream>(
