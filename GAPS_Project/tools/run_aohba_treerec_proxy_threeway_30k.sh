@@ -16,9 +16,10 @@ DERIVED=${DERIVED:-/mnt/aohba/aohba_treerec_proxy_threeway_candidates_300k}
 MATCHED=${MATCHED:-/mnt/aohba/aohba_treerec_proxy_threeway_beta_matched_30k}
 RESULT_ROOT=${RESULT_ROOT:-"$PROJECT/results/aohba_treerec_proxy_threeway_30k"}
 EVENTS_PER_CLASS=${EVENTS_PER_CLASS:-30000}
-TRAIN_PER_CLASS=${TRAIN_PER_CLASS:-24000}
-VAL_PER_CLASS=${VAL_PER_CLASS:-3000}
-TEST_PER_CLASS=${TEST_PER_CLASS:-3000}
+# Keep small pilots at the same 8:1:1 split when EVENTS_PER_CLASS is overridden.
+TRAIN_PER_CLASS=${TRAIN_PER_CLASS:-$((EVENTS_PER_CLASS * 8 / 10))}
+VAL_PER_CLASS=${VAL_PER_CLASS:-$((EVENTS_PER_CLASS / 10))}
+TEST_PER_CLASS=${TEST_PER_CLASS:-$((EVENTS_PER_CLASS - TRAIN_PER_CLASS - VAL_PER_CLASS))}
 GPU=${GPU:-0}
 SEED=${SEED:-20260825}
 CACHE_PREFIX=${CACHE_PREFIX:-aohba_treerec_proxy_threeway}
