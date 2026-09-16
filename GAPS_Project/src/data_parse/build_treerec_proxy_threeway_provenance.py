@@ -152,6 +152,7 @@ def oof_scores(pools: dict[str, dict], seed: int, requested_folds: int) -> tuple
             "proxy_truth_recall": float((mask & target).sum() / target.sum()) if target.any() else None,
         }
         pools[particle]["proxy_mask"] = mask
+        pools[particle]["proxy_score"] = scores[offset:offset + count]
         offset += count
     return selected, summary
 
