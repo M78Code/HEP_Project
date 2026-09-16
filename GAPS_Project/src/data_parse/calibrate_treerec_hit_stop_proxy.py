@@ -22,7 +22,17 @@ HIT_BRANCHES = {
     "volume": "Rec/hitseries_/hitseries_.volume_id_",
     "energy": "Rec/hitseries_/hitseries_.energydep_",
 }
-FEATURES = ("n_hits", "n_tracker_hits", "tracker_energy")
+FEATURES = (
+    "n_hits",
+    "n_tracker_hits",
+    "tracker_energy",
+    "tracker_energy_fraction",
+    "tracker_mean_energy",
+    "tracker_hit_fraction",
+    "n_tracker_layers",
+    "tracker_layer_span",
+    "max_tracker_energy_fraction",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,10 +67,16 @@ def roc_auc(values: np.ndarray, target: np.ndarray) -> float | None:
                  / (positives * negatives))
 
 
-def matched_rate_cut(values: np.ndarray, target: np.ndarray) -> dict:
+def matched_rate_cut(
+    values: np.ndarray, target: np.ndarray, direction: str
+) -> dict:
     truth_rate = float(target.mean())
-    threshold = float(np.quantile(values, 1.0 - truth_rate, method="higher"))
-    chosen = values >= threshold
+    if direction == "high":
+        threshold = float(np.quantile(values, 1.0 - truth_rate, method="higher"))
+        chosen = values >= threshold
+    else:
+        threshold = float(np.quantile(values, truth_rate, method="lower"))
+        chosen = values <= threshold
     positives = int(target.sum())
     selected = int(chosen.sum())
     true_selected = int(np.count_nonzero(chosen & target))
@@ -127,10 +143,38 @@ def read_features(provenance: dict) -> dict[str, np.ndarray]:
             if len(event_volume) != len(event_energy):
                 raise RuntimeError(f"{path}: hit-array mismatch at entry {entry}")
             tracker = (event_volume // 100_000_000) == 2
+            tracker_energy = float(event_energy[tracker].sum())
+            total_energy = float(event_energy.sum())
+            n_tracker_hits = int(tracker.sum())
+            tracker_layers = (
+                (event_volume[tracker] // 1_000_000) % 100
+                if n_tracker_hits else np.asarray([], dtype=np.int64)
+            )
+            max_tracker_energy = (
+                float(event_energy[tracker].max()) if n_tracker_hits else 0.0
+            )
             rows[int(output_index)] = {
                 "n_hits": float(len(event_volume)),
-                "n_tracker_hits": float(tracker.sum()),
-                "tracker_energy": float(event_energy[tracker].sum()),
+                "n_tracker_hits": float(n_tracker_hits),
+                "tracker_energy": tracker_energy,
+                "tracker_energy_fraction": (
+                    tracker_energy / total_energy if total_energy > 0.0 else 0.0
+                ),
+                "tracker_mean_energy": (
+                    tracker_energy / n_tracker_hits if n_tracker_hits else 0.0
+                ),
+                "tracker_hit_fraction": (
+                    n_tracker_hits / len(event_volume) if len(event_volume) else 0.0
+                ),
+                "n_tracker_layers": float(len(np.unique(tracker_layers))),
+                "tracker_layer_span": float(
+                    tracker_layers.max() - tracker_layers.min()
+                    if len(tracker_layers) else 0
+                ),
+                "max_tracker_energy_fraction": (
+                    max_tracker_energy / tracker_energy
+                    if tracker_energy > 0.0 else 0.0
+                ),
             }
     if any(row is None for row in rows):
         raise RuntimeError("failed to read every TreeRec event")
@@ -139,13 +183,24 @@ def read_features(provenance: dict) -> dict[str, np.ndarray]:
 
 
 def evaluate(features: dict[str, np.ndarray], truth: np.ndarray) -> dict:
-    return {
-        name: {
-            "auc_truth_strict": roc_auc(values, truth),
-            "matched_truth_rate_cut": matched_rate_cut(values, truth),
+    result = {}
+    for name, values in features.items():
+        raw_auc = roc_auc(values, truth)
+        if raw_auc is None:
+            direction, auc = "unavailable", None
+        elif raw_auc >= 0.5:
+            direction, auc = "high", raw_auc
+        else:
+            direction, auc = "low", 1.0 - raw_auc
+        result[name] = {
+            "auc_best_direction": auc,
+            "strict_direction": direction,
+            "matched_truth_rate_cut": (
+                matched_rate_cut(values, truth, direction)
+                if direction != "unavailable" else None
+            ),
         }
-        for name, values in features.items()
-    }
+    return result
 
 
 def format_metric(value: float | None) -> str:
@@ -157,11 +212,12 @@ def print_results(results: dict) -> None:
     print("Truth strict-stop is an audit label only; it is not a proxy input.\n")
     for name, result in results.items():
         print(f"[{name}] N={result['events']:,} truth strict={result['truth_strict_fraction']:.2%}")
-        print("feature                 AUC(truth)  threshold  selected  precision  recall")
+        print("feature                     direction  AUC(truth)  threshold  selected  precision  recall")
         for feature, metric in result["features"].items():
             cut = metric["matched_truth_rate_cut"]
             print(
-                f"{feature:23s} {format_metric(metric['auc_truth_strict']):>10s} "
+                f"{feature:27s} {metric['strict_direction']:>9s} "
+                f"{format_metric(metric['auc_best_direction']):>10s} "
                 f"{cut['threshold']:10.4g} {cut['proxy_selected_fraction']:8.2%} "
                 f"{format_metric(cut['precision']):>10s} {format_metric(cut['recall']):>7s}"
             )
