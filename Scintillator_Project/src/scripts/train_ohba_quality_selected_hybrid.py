@@ -269,10 +269,10 @@ def plot_result(
     edges = np.asarray(model_fit["histogram_edges_cm"])
     centers = (edges[:-1] + edges[1:]) / 2.0
     fig, ax = plt.subplots(figsize=(8.4, 5.2))
-    ax.step(centers, baseline_fit["histogram_counts"], where="mid", label=(
+    ax.step(centers, baseline_fit["histogram_counts"], where="mid", color="#d95f02", label=(
         f"Traditional selected baseline, sigma={baseline_fit['sigma_cm']:.3f} cm"
     ))
-    ax.step(centers, model_fit["histogram_counts"], where="mid", label=(
+    ax.step(centers, model_fit["histogram_counts"], where="mid", color="#1b9e77", label=(
         f"Hybrid waveform model, sigma={model_fit['sigma_cm']:.3f} cm"
     ))
     ax.set_xlabel("Position residual [cm]")
