@@ -1,0 +1,18 @@
+{
+  "protocol": "repeated stratified event-level splits; train-only traditional calibration",
+  "cache": "/home/m78code/HEP_Project/Scintillator_Project/dataset/cache/ohba_all_usable_events_roi450_800.npz",
+  "model_seed": 20260825,
+  "trials": [
+    {
+      "split_seed": 42,
+      "traditional_sigma_cm": 4.961624629174948,
+      "hybrid_sigma_cm": 2.9974196751569178,
+      "improvement_cm": 1.9642049540180304,
+      "traditional_rmse_cm": 6.669384002685547,
+      "hybrid_rmse_cm": 5.669646739959717
+    }
+  ],
+  "improvement_mean_cm": 1.9642049540180304,
+  "improvement_sample_std_cm": 0.0,
+  "all_trials_hybrid_better": true
+}
