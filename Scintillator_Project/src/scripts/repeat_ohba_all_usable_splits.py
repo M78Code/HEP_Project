@@ -80,6 +80,7 @@ def build_cache(source: list[Path], target: Path) -> None:
     waveforms: list[np.ndarray] = []
     features: list[np.ndarray] = []
     labels: list[float] = []
+    event_ids: list[int] = []
     charge_ratio: list[float] = []
     time_difference: list[float] = []
     excluded = 0
@@ -133,6 +134,7 @@ def build_cache(source: list[Path], target: Path) -> None:
             waveforms.append(waveform.astype(np.float32))
             features.append(feature)
             labels.append(float(event["position_label"]))
+            event_ids.append(int(event["event_id"]))
             charge_ratio.append(ratio)
             time_difference.append(time_diff)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +143,7 @@ def build_cache(source: list[Path], target: Path) -> None:
         waveforms=np.asarray(waveforms, dtype=np.float32),
         features=np.asarray(features, dtype=np.float32),
         labels=np.asarray(labels, dtype=np.float32),
+        event_ids=np.asarray(event_ids, dtype=np.int32),
         charge_ratio=np.asarray(charge_ratio, dtype=np.float64),
         time_difference=np.asarray(time_difference, dtype=np.float64),
     )
@@ -150,8 +153,10 @@ def build_cache(source: list[Path], target: Path) -> None:
 def ensure_cache(source: list[Path], target: Path) -> None:
     newest_source = max(path.stat().st_mtime for path in source)
     if target.is_file() and target.stat().st_mtime >= newest_source:
-        print(f"[CACHE USE] {target}", flush=True)
-        return
+        with np.load(target) as existing:
+            if "event_ids" in existing.files:
+                print(f"[CACHE USE] {target}", flush=True)
+                return
     build_cache(source, target)
 
 
@@ -165,6 +170,20 @@ def make_split(labels: np.ndarray, seed: int) -> dict[str, np.ndarray]:
         pieces["train"].append(indices[:train_stop])
         pieces["val"].append(indices[train_stop:val_stop])
         pieces["test"].append(indices[val_stop:])
+    return {name: np.concatenate(parts) for name, parts in pieces.items()}
+
+
+def make_chronological_split(labels: np.ndarray, event_ids: np.ndarray) -> dict[str, np.ndarray]:
+    """Split every position into earliest train, middle validation, latest test."""
+    pieces = {"train": [], "val": [], "test": []}
+    for position in np.unique(labels):
+        indices = np.flatnonzero(labels == position)
+        ordered = indices[np.argsort(event_ids[indices], kind="stable")]
+        train_stop = int(ordered.size * 0.70)
+        val_stop = train_stop + int(ordered.size * 0.15)
+        pieces["train"].append(ordered[:train_stop])
+        pieces["val"].append(ordered[train_stop:val_stop])
+        pieces["test"].append(ordered[val_stop:])
     return {name: np.concatenate(parts) for name, parts in pieces.items()}
 
 
