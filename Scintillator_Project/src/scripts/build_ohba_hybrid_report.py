@@ -45,8 +45,8 @@ def draw_calibration_transfer(rows: list[dict[str, object]], output: Path) -> No
     offsets = (-0.13, 0.13)
     fig, ax = plt.subplots(figsize=(8.8, 5.2))
     for (label, color, key), offset in zip((
-        ("Traditional CFD + charge", "#d95f02", "traditional_sigma_cm"),
-        ("Hybrid waveform residual", "#1b9e77", "hybrid_sigma_cm"),
+        ("従来法（CFD＋電荷比融合）", "#d95f02", "traditional_sigma_cm"),
+        ("ハイブリッド波形残差学習", "#1b9e77", "hybrid_sigma_cm"),
     ), offsets):
         stats = np.asarray([row[key] for row in rows], dtype=np.float64)
         median = stats[:, 1]
@@ -57,9 +57,9 @@ def draw_calibration_transfer(rows: list[dict[str, object]], output: Path) -> No
             ax.annotate(f"{value:.2f}", (coordinate, value), xytext=(0, 8), textcoords="offset points",
                         ha="center", color=color, fontsize=9, fontweight="bold")
     ax.set_xticks(x, [f"K={value}" for value in k])
-    ax.set_xlabel("Known reference events per unseen position/run")
-    ax.set_ylabel("Gaussian core sigma [cm] - lower is better")
-    ax.set_title("Unseen position/run: small-reference calibration")
+    ax.set_xlabel("各未学習位置・runの参照事象数")
+    ax.set_ylabel("ガウス近似標準偏差 σ [cm]（小さいほど良い）")
+    ax.set_title("未学習位置・runに対する少数参照事象校正")
     ax.set_ylim(bottom=3.5)
     ax.grid(alpha=0.28)
     ax.legend()
@@ -77,17 +77,17 @@ def draw_position_holdout(audit: dict[str, object], output: Path) -> None:
     traditional_bias = np.asarray([row["traditional_bias_cm"] for row in rows], dtype=float)
     bias = np.asarray([row["hybrid_bias_cm"] for row in rows], dtype=float)
     fig, axes = plt.subplots(2, 1, figsize=(10.2, 6.8), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
-    axes[0].plot(x, traditional, "o-", color="#d95f02", label="Traditional")
-    axes[0].plot(x, hybrid, "o-", color="#1b9e77", label="Hybrid")
-    axes[0].set_ylabel("Gaussian core sigma [cm]")
-    axes[0].set_title("Complete unseen-position/run test")
+    axes[0].plot(x, traditional, "o-", color="#d95f02", label="従来法")
+    axes[0].plot(x, hybrid, "o-", color="#1b9e77", label="ハイブリッド")
+    axes[0].set_ylabel("ガウス近似標準偏差 σ [cm]")
+    axes[0].set_title("未学習位置・runの完全評価")
     axes[0].grid(alpha=0.28)
     axes[0].legend()
     axes[1].axhline(0.0, color="black", linewidth=0.8)
-    axes[1].bar(x - 0.18, traditional_bias, width=0.36, color="#d95f02", label="Traditional")
-    axes[1].bar(x + 0.18, bias, width=0.36, color="#1b9e77", label="Hybrid")
-    axes[1].set_ylabel("Mean residual / bias [cm]")
-    axes[1].set_xlabel("Held-out position [cm]")
+    axes[1].bar(x - 0.18, traditional_bias, width=0.36, color="#d95f02", label="従来法")
+    axes[1].bar(x + 0.18, bias, width=0.36, color="#1b9e77", label="ハイブリッド")
+    axes[1].set_ylabel("平均残差（バイアス）[cm]")
+    axes[1].set_xlabel("未学習位置 [cm]")
     axes[1].set_xticks(x, positions)
     axes[1].grid(axis="y", alpha=0.28)
     axes[1].legend(ncol=2)
@@ -159,7 +159,7 @@ def main() -> None:
 
 再現値は公開値 4.93 cm と整合し、新手法との比較基準として利用できます。
 
-## Hybrid waveform residual model
+## ハイブリッド波形残差学習 model
 
 Hybrid は同じ従来法の位置推定値を基準とし、2 チャンネル波形 ROI と非ラベル物理特徴量から残差のみを学習します。位置ラベルは教師値であり、入力特徴量には含めません。
 

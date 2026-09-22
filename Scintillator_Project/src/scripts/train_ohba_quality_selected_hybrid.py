@@ -270,13 +270,13 @@ def plot_result(
     centers = (edges[:-1] + edges[1:]) / 2.0
     fig, ax = plt.subplots(figsize=(8.4, 5.2))
     ax.step(centers, baseline_fit["histogram_counts"], where="mid", color="#d95f02", label=(
-        f"Traditional selected baseline, sigma={baseline_fit['sigma_cm']:.3f} cm"
+        f"従来法（CFD＋電荷比融合）、σ={baseline_fit['sigma_cm']:.3f} cm"
     ))
     ax.step(centers, model_fit["histogram_counts"], where="mid", color="#1b9e77", label=(
-        f"Hybrid waveform model, sigma={model_fit['sigma_cm']:.3f} cm"
+        f"ハイブリッド波形残差学習、σ={model_fit['sigma_cm']:.3f} cm"
     ))
-    ax.set_xlabel("Position residual [cm]")
-    ax.set_ylabel("Events / 0.5 cm")
+    ax.set_xlabel("位置残差 [cm]")
+    ax.set_ylabel("事象数 / 0.5 cm")
     ax.set_title(title)
     ax.grid(alpha=0.3)
     ax.legend()

@@ -14,7 +14,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("predictions", type=Path)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--title", default="All-usable same-position held-out test")
+    parser.add_argument("--title", default="同一測定位置分布での独立テスト")
     args = parser.parse_args()
     with np.load(args.predictions) as data:
         plot_result(
