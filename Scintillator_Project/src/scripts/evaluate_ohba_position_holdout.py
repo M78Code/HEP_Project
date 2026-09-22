@@ -163,7 +163,10 @@ def main() -> None:
     )
     improvements = np.asarray([row["improvement_cm"] for row in results])
     summary = {
-        "protocol": "five-fold complete-position/run holdout; chronological development split",
+        "protocol": (
+            f"{args.folds}-fold complete-position/run holdout; "
+            "chronological development split"
+        ),
         "model_seed": args.model_seed,
         "folds": results,
         "pooled_out_of_position": pooled,
