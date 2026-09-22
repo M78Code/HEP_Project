@@ -254,11 +254,19 @@ def train_trial(
     checkpoint = trial_dir / "best_model.pth"
     best_rmse = float("inf")
     stale = 0
+    history: list[dict[str, float | int]] = []
     for epoch in range(1, args.epochs + 1):
         loss = train_epoch(model, loaders["train"], optimizer, device)
         val_prediction, _, val_labels = predict(model, loaders["val"], device)
         val_rmse = float(np.sqrt(np.mean((val_prediction - val_labels) ** 2)))
         scheduler.step(val_rmse)
+        learning_rate = float(optimizer.param_groups[0]["lr"])
+        history.append({
+            "epoch": epoch,
+            "train_loss": float(loss),
+            "validation_rmse_cm": val_rmse,
+            "learning_rate": learning_rate,
+        })
         if val_rmse < best_rmse - 1e-4:
             best_rmse, stale = val_rmse, 0
             torch.save(model.state_dict(), checkpoint)
@@ -268,7 +276,7 @@ def train_trial(
             marker = ""
         print(
             f"Epoch {epoch:3d}/{args.epochs} loss={loss:.5f} val_rmse={val_rmse:.4f}"
-            f" lr={optimizer.param_groups[0]['lr']:.2e}{marker}", flush=True
+            f" lr={learning_rate:.2e}{marker}", flush=True
         )
         if epoch >= 50 and stale >= args.patience:
             print(f"early stopping at epoch {epoch}", flush=True)
@@ -287,6 +295,7 @@ def train_trial(
         traditional_baseline=test_baseline, hybrid_prediction=test_prediction,
     )
     (trial_dir / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (trial_dir / "history.json").write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
     plot_result(trial_dir / "test_residual_comparison.png", test_labels, test_baseline, test_prediction)
     return report
 

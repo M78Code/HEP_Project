@@ -333,11 +333,19 @@ def main() -> None:
 
     best_rmse = float("inf")
     stale = 0
+    history: list[dict[str, float | int]] = []
     for epoch in range(1, args.epochs + 1):
         train_loss = train_epoch(model, loaders["train"], optimizer, device)
         val_prediction, _, val_labels = predict(model, loaders["val"], device)
         val_rmse = float(np.sqrt(np.mean((val_prediction - val_labels) ** 2)))
         scheduler.step(val_rmse)
+        learning_rate = float(optimizer.param_groups[0]["lr"])
+        history.append({
+            "epoch": epoch,
+            "train_loss": float(train_loss),
+            "validation_rmse_cm": val_rmse,
+            "learning_rate": learning_rate,
+        })
         if val_rmse < best_rmse - 1e-4:
             best_rmse = val_rmse
             stale = 0
@@ -348,7 +356,7 @@ def main() -> None:
             marker = ""
         print(
             f"Epoch {epoch:3d}/{args.epochs} train_loss={train_loss:.5f} "
-            f"val_rmse={val_rmse:.4f} lr={optimizer.param_groups[0]['lr']:.2e}{marker}",
+            f"val_rmse={val_rmse:.4f} lr={learning_rate:.2e}{marker}",
             flush=True,
         )
         if epoch >= 50 and stale >= args.patience:
@@ -369,6 +377,7 @@ def main() -> None:
         "hybrid_waveform_model": gaussian_metrics(test_labels, test_prediction),
     }
     (args.output_dir / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (args.output_dir / "history.json").write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
     np.savez_compressed(
         args.output_dir / "predictions.npz",
         labels=test_labels,
