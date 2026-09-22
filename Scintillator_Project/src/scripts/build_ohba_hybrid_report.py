@@ -41,20 +41,26 @@ def read_json(path: Path) -> dict[str, object]:
 
 def draw_calibration_transfer(rows: list[dict[str, object]], output: Path) -> None:
     k = np.asarray([int(row["calibration_events_per_position"]) for row in rows])
-    fig, ax = plt.subplots(figsize=(8.2, 5.0))
-    for label, color, key in (
+    x = np.arange(k.size, dtype=float)
+    offsets = (-0.13, 0.13)
+    fig, ax = plt.subplots(figsize=(8.8, 5.2))
+    for (label, color, key), offset in zip((
         ("Traditional CFD + charge", "#d95f02", "traditional_sigma_cm"),
         ("Hybrid waveform residual", "#1b9e77", "hybrid_sigma_cm"),
-    ):
+    ), offsets):
         stats = np.asarray([row[key] for row in rows], dtype=np.float64)
         median = stats[:, 1]
         errors = np.vstack((median - stats[:, 0], stats[:, 2] - median))
-        ax.errorbar(k, median, yerr=errors, marker="o", capsize=4, linewidth=2.2, label=label, color=color)
-    ax.set_xscale("symlog", linthresh=1)
-    ax.set_xticks(k, [str(value) for value in k])
-    ax.set_xlabel("Known reference events per unseen position/run (K)")
-    ax.set_ylabel("Gaussian core sigma [cm]")
-    ax.set_title("Leave-one-position-out calibration transfer")
+        point_x = x + offset
+        ax.errorbar(point_x, median, yerr=errors, marker="o", capsize=4, linewidth=2.2, label=label, color=color)
+        for coordinate, value in zip(point_x, median):
+            ax.annotate(f"{value:.2f}", (coordinate, value), xytext=(0, 8), textcoords="offset points",
+                        ha="center", color=color, fontsize=9, fontweight="bold")
+    ax.set_xticks(x, [f"K={value}" for value in k])
+    ax.set_xlabel("Known reference events per unseen position/run")
+    ax.set_ylabel("Gaussian core sigma [cm] - lower is better")
+    ax.set_title("Unseen position/run: small-reference calibration")
+    ax.set_ylim(bottom=3.5)
     ax.grid(alpha=0.28)
     ax.legend()
     fig.tight_layout()
