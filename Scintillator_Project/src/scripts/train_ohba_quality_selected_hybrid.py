@@ -42,6 +42,10 @@ def parse_args() -> argparse.Namespace:
         default=PROJECT_ROOT / "results/ohba_quality_selection/quality_selection_results.json",
     )
     parser.add_argument("--split-dir", type=Path, default=PROJECT_ROOT / "dataset/split")
+    parser.add_argument(
+        "--quality-mode", choices=("selected", "all_usable"), default="selected",
+        help="Use the validation-selected SNR cut or the predeclared no-cut usable-event reference.",
+    )
     return parser.parse_args()
 
 
@@ -60,11 +64,16 @@ def choose_device() -> torch.device:
 
 
 def load_selected_split(
-    path: Path, protocol: dict[str, object]
+    path: Path, protocol: dict[str, object], quality_mode: str
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Return jointly normalized ROI waveforms, raw features, baseline, labels."""
     config = protocol["config"]
-    selected = protocol["selected"]
+    if quality_mode == "selected":
+        selected = protocol["selected"]
+    else:
+        selected = next(
+            row for row in protocol["candidates"] if row["target_train_retention"] == 1.0
+        )
     baseline_stop = int(config["baseline_stop"])
     roi_start = int(config["roi_start"])
     roi_stop = int(config["roi_stop"])
@@ -276,6 +285,11 @@ def main() -> None:
     if not args.quality_results.is_file():
         raise FileNotFoundError(f"quality-selection results not found: {args.quality_results}")
     protocol = json.loads(args.quality_results.read_text(encoding="utf-8"))
+    active_quality_rule = (
+        protocol["selected"]
+        if args.quality_mode == "selected"
+        else next(row for row in protocol["candidates"] if row["target_train_retention"] == 1.0)
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     device = choose_device()
 
@@ -285,7 +299,7 @@ def main() -> None:
         if not path.is_file():
             raise FileNotFoundError(f"split file not found: {path}")
         print(f"[LOAD] {name}: {path}", flush=True)
-        raw_splits[name] = load_selected_split(path, protocol)
+        raw_splits[name] = load_selected_split(path, protocol, args.quality_mode)
 
     train_waveforms, train_features, train_baseline, train_labels = raw_splits["train"]
     feature_mean = train_features.mean(axis=0, dtype=np.float64).astype(np.float32)
@@ -305,7 +319,8 @@ def main() -> None:
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=8, factor=0.5)
     checkpoint = args.output_dir / "best_model.pth"
 
-    print("===== Quality-selected hybrid waveform training =====", flush=True)
+    print("===== Hybrid waveform training =====", flush=True)
+    print(f"quality mode: {args.quality_mode}", flush=True)
     print(f"device: {device}", flush=True)
     print(
         "events train/val/test: "
@@ -347,7 +362,8 @@ def main() -> None:
         "seed": args.seed,
         "device": str(device),
         "quality_selection_source": str(args.quality_results),
-        "snr_threshold": protocol["selected"]["snr_threshold"],
+        "quality_mode": args.quality_mode,
+        "snr_threshold": active_quality_rule["snr_threshold"],
         "split_events": {name: len(dataset) for name, dataset in datasets.items()},
         "traditional_selected_baseline": gaussian_metrics(test_labels, test_baseline),
         "hybrid_waveform_model": gaussian_metrics(test_labels, test_prediction),
@@ -360,7 +376,7 @@ def main() -> None:
         hybrid_prediction=test_prediction,
     )
     plot_result(args.output_dir / "test_residual_comparison.png", test_labels, test_baseline, test_prediction)
-    print("===== Held-out quality-selected test =====", flush=True)
+    print(f"===== Held-out {args.quality_mode} test =====", flush=True)
     print(
         f"traditional sigma={report['traditional_selected_baseline']['gaussian_fit']['sigma_cm']:.3f} cm | "
         f"hybrid sigma={report['hybrid_waveform_model']['gaussian_fit']['sigma_cm']:.3f} cm | "
