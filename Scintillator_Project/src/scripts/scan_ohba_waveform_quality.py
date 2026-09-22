@@ -322,6 +322,7 @@ def main() -> None:
     if not eligible_candidates:
         raise RuntimeError("no quality cut satisfies the support and retention constraints")
     selected = min(eligible_candidates, key=lambda row: row["validation_metrics"]["fusion"]["sigma_cm"])
+    reference = next(row for row in candidates if row["target_train_retention"] == 1.0)
     threshold = float(selected["snr_threshold"])
     selected_masks = {
         name: values[name]["peak_inside_roi"] & (values[name]["min_channel_snr"] >= threshold)
@@ -331,6 +332,19 @@ def main() -> None:
     train_charge, train_time = residuals(values["train"], selected_masks["train"], calibration)
     weight = float(selected["charge_weight"])
     test_charge, test_time = residuals(values["test"], selected_masks["test"], calibration)
+    reference_threshold = float(reference["snr_threshold"])
+    reference_masks = {
+        name: values[name]["peak_inside_roi"] & (values[name]["min_channel_snr"] >= reference_threshold)
+        for name in values
+    }
+    reference_calibration = reference["calibration"]
+    reference_charge, reference_time = residuals(
+        values["test"], reference_masks["test"], reference_calibration
+    )
+    reference_weight = float(reference["charge_weight"])
+    reference_metrics = compact_metrics(
+        reference_charge, reference_time, reference_weight, config, include_histogram=True
+    )
     final = {
         "protocol": "train calibration, validation cut selection, one held-out test evaluation",
         "quality_proxy": "min channel pulse SNR with both peak indices inside ROI",
@@ -346,6 +360,12 @@ def main() -> None:
             "test_events": int(selected_masks["test"].sum()),
             "test_retention": float(selected_masks["test"].mean()),
             "train_metrics": compact_metrics(train_charge, train_time, weight, config),
+        },
+        "predeclared_no_quality_cut_test_reference": {
+            "test_events": int(reference_masks["test"].sum()),
+            "test_retention": float(reference_masks["test"].mean()),
+            "charge_weight": reference_weight,
+            "test_metrics": reference_metrics,
         },
     }
     output_json = args.output_dir / "quality_selection_results.json"
@@ -363,6 +383,12 @@ def main() -> None:
         f"test charge sigma={final['selected']['test_metrics']['charge']['sigma_cm']:.3f} cm | "
         f"test CFD sigma={final['selected']['test_metrics']['cfd']['sigma_cm']:.3f} cm | "
         f"test fusion sigma={test_fusion['sigma_cm']:.3f} cm | w_charge={weight:.2f}",
+        flush=True,
+    )
+    reference_fusion = reference_metrics["fusion"]
+    print(
+        f"no-cut reference test fusion sigma={reference_fusion['sigma_cm']:.3f} cm | "
+        f"selected improvement={reference_fusion['sigma_cm'] - test_fusion['sigma_cm']:.3f} cm",
         flush=True,
     )
     print(f"saved: {output_json}", flush=True)
