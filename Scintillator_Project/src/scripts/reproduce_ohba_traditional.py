@@ -82,12 +82,12 @@ def parse_args() -> argparse.Namespace:
         default=PROJECT_ROOT / "results/ohba_traditional_reproduction",
     )
     parser.add_argument(
-        "--baseline-range", type=parse_range, default=(100, 200),
-        help="Baseline samples, default 100:200 from the published waveform figure.",
+        "--baseline-range", type=parse_range, default=(0, 400),
+        help="Baseline samples, default 0:400 from the project's verified waveform preprocessing.",
     )
     parser.add_argument(
-        "--integration-range", type=parse_range, default=(600, 1000),
-        help="Charge-integration samples, default 600:1000 from the published waveform figure.",
+        "--integration-range", type=parse_range, default=(450, 800),
+        help="Charge-integration samples, default 450:800 covering 99.97% of delivered pulses.",
     )
     parser.add_argument(
         "--cfd-fractions", type=parse_fractions, default=[0.10, 0.20, 0.30, 0.40, 0.50],

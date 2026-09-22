@@ -21,8 +21,8 @@ echo "CFD scan: 0.10, 0.20, 0.30, 0.40, 0.50"
 "$PYTHON_BIN" -m Scintillator_Project.src.scripts.reproduce_ohba_traditional \
     --raw-dir "$RAW_DIR" \
     --output-dir "$RESULT_DIR" \
-    --baseline-range "${BASELINE_RANGE:-100:200}" \
-    --integration-range "${INTEGRATION_RANGE:-600:1000}" \
+    --baseline-range "${BASELINE_RANGE:-0:400}" \
+    --integration-range "${INTEGRATION_RANGE:-450:800}" \
     --cfd-fractions "${CFD_FRACTIONS:-0.10,0.20,0.30,0.40,0.50}" \
     --mode-bins "${MODE_BINS:-120}" \
     --residual-range "${RESIDUAL_MIN:--40}" "${RESIDUAL_MAX:-40}" \
