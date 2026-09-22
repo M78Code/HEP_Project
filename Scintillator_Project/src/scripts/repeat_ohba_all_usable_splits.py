@@ -296,7 +296,13 @@ def train_trial(
     )
     (trial_dir / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     (trial_dir / "history.json").write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
-    plot_result(trial_dir / "test_residual_comparison.png", test_labels, test_baseline, test_prediction)
+    plot_result(
+        trial_dir / "test_residual_comparison.png",
+        test_labels,
+        test_baseline,
+        test_prediction,
+        title="All-usable same-position held-out test",
+    )
     return report
 
 

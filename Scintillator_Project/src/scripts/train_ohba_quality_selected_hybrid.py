@@ -257,7 +257,13 @@ def gaussian_metrics(labels: np.ndarray, predictions: np.ndarray) -> dict[str, o
     }
 
 
-def plot_result(path: Path, labels: np.ndarray, baseline: np.ndarray, prediction: np.ndarray) -> None:
+def plot_result(
+    path: Path,
+    labels: np.ndarray,
+    baseline: np.ndarray,
+    prediction: np.ndarray,
+    title: str = "Quality-selected held-out test",
+) -> None:
     baseline_fit = fit_residual_sigma(baseline - labels, -40.0, 40.0, 0.5)
     model_fit = fit_residual_sigma(prediction - labels, -40.0, 40.0, 0.5)
     edges = np.asarray(model_fit["histogram_edges_cm"])
@@ -271,7 +277,7 @@ def plot_result(path: Path, labels: np.ndarray, baseline: np.ndarray, prediction
     ))
     ax.set_xlabel("Position residual [cm]")
     ax.set_ylabel("Events / 0.5 cm")
-    ax.set_title("Quality-selected held-out test")
+    ax.set_title(title)
     ax.grid(alpha=0.3)
     ax.legend()
     fig.tight_layout()

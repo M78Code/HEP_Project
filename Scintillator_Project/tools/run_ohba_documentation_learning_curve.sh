@@ -19,5 +19,7 @@ python3 src/scripts/repeat_ohba_all_usable_splits.py \
 HISTORY="$OUTPUT/split_${SPLIT_SEED}_model_20260825/history.json"
 python3 src/scripts/plot_ohba_learning_history.py "$HISTORY"
 cp "$OUTPUT/split_${SPLIT_SEED}_model_20260825/learning_curve.png" "$(dirname "$OUTPUT")/learning_curve.png"
-cp "$OUTPUT/split_${SPLIT_SEED}_model_20260825/test_residual_comparison.png" "$(dirname "$OUTPUT")/same_position_residual_comparison.png"
+python3 src/scripts/render_ohba_residual_comparison.py \
+  "$OUTPUT/split_${SPLIT_SEED}_model_20260825/predictions.npz" \
+  --output "$(dirname "$OUTPUT")/same_position_residual_comparison.png"
 echo "OHBA DOCUMENTATION LEARNING CURVE: COMPLETE"
