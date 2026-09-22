@@ -69,11 +69,12 @@ def draw_calibration_transfer(rows: list[dict[str, object]], output: Path) -> No
 
 
 def draw_position_holdout(audit: dict[str, object], output: Path) -> None:
-    rows = audit["per_fold"]
+    rows = sorted(audit["per_fold"], key=lambda row: float(row["test_positions_cm"][0]))
     positions = [str(int(row["test_positions_cm"][0])) for row in rows]
     x = np.arange(len(rows))
     traditional = np.asarray([row["traditional_sigma_cm"] for row in rows], dtype=float)
     hybrid = np.asarray([row["hybrid_sigma_cm"] for row in rows], dtype=float)
+    traditional_bias = np.asarray([row["traditional_bias_cm"] for row in rows], dtype=float)
     bias = np.asarray([row["hybrid_bias_cm"] for row in rows], dtype=float)
     fig, axes = plt.subplots(2, 1, figsize=(10.2, 6.8), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
     axes[0].plot(x, traditional, "o-", color="#d95f02", label="Traditional")
@@ -83,11 +84,13 @@ def draw_position_holdout(audit: dict[str, object], output: Path) -> None:
     axes[0].grid(alpha=0.28)
     axes[0].legend()
     axes[1].axhline(0.0, color="black", linewidth=0.8)
-    axes[1].bar(x, bias, color="#7570b3")
-    axes[1].set_ylabel("Hybrid bias [cm]")
+    axes[1].bar(x - 0.18, traditional_bias, width=0.36, color="#d95f02", label="Traditional")
+    axes[1].bar(x + 0.18, bias, width=0.36, color="#1b9e77", label="Hybrid")
+    axes[1].set_ylabel("Mean residual / bias [cm]")
     axes[1].set_xlabel("Held-out position [cm]")
     axes[1].set_xticks(x, positions)
     axes[1].grid(axis="y", alpha=0.28)
+    axes[1].legend(ncol=2)
     fig.tight_layout()
     fig.savefig(output, dpi=220)
     plt.close(fig)
